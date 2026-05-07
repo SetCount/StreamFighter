@@ -81,18 +81,22 @@ function App() {
             </header>
 
             <main className="content">
-                <SetInfoEditor
-                    value={state.setInfo}
-                    onChange={onSetInfoChange}
-                />
-                <div className="board">
-                    <ScoreEntitiesEditor
-                        value={state.scoreEntities}
-                        onChange={se => setSt({ ...state, scoreEntities: se })}
-                        canResize={canResize(state.setInfo.format)}
-                        format={state.setInfo.format}
-                        bestOf={state.setInfo.bestOf}
-                    />
+                <div className="layout-grid">
+                    <div className="layout-main">
+                        <SetInfoEditor
+                            value={state.setInfo}
+                            onChange={onSetInfoChange}
+                        />
+                        <div className="board">
+                            <ScoreEntitiesEditor
+                                value={state.scoreEntities}
+                                onChange={se => setSt({ ...state, scoreEntities: se })}
+                                canResize={canResize(state.setInfo.format)}
+                                format={state.setInfo.format}
+                                bestOf={state.setInfo.bestOf}
+                            />
+                        </div>
+                    </div>
                     <CastersEditor
                         value={state.casters}
                         onChange={c => setSt({ ...state, casters: c })}

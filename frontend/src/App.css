@@ -171,6 +171,44 @@ body {
     gap: 14px;
 }
 
+/* ---------- Top-level two-column layout -------------------------------- */
+
+.layout-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    gap: 16px;
+    align-items: start;
+}
+.layout-main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+
+/* ---------- Set Info card (inline label/control rows) ------------------ */
+
+.set-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px 18px;
+}
+.set-info-grid > label {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+}
+.set-info-grid > label > span {
+    flex: 0 0 auto;
+    min-width: 90px;
+}
+.set-info-grid > label > input,
+.set-info-grid > label > .segmented {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.set-info-grid > label + label { margin-top: 0; }
+
 label {
     display: flex;
     flex-direction: column;
