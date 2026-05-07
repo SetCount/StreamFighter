@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>StreamAssist Overlay</title>
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; color: #fff;
+         background: transparent; }
+  .scoreboard { display: flex; gap: 16px; padding: 16px; align-items: center;
+                background: rgba(0,0,0,0.6); }
+  .entity { display: flex; flex-direction: column; min-width: 180px; }
+  .entity .players { font-size: 18px; }
+  .entity .score { font-size: 36px; font-weight: 700; }
+  .meta { margin-left: auto; text-align: right; font-size: 14px; opacity: 0.8; }
+  .casters { padding: 8px 16px; background: rgba(0,0,0,0.4); font-size: 14px; }
+</style>
+</head>
+<body>
+  <div class="scoreboard" id="scoreboard"></div>
+  <div class="casters" id="casters"></div>
+
+<script>
+function render(state) {
+  const sb = document.getElementById('scoreboard');
+  sb.innerHTML = '';
+  for (const e of state.scoreEntities || []) {
+    const div = document.createElement('div');
+    div.className = 'entity';
+    div.style.borderLeft = `4px solid ${e.portColor || '#888'}`;
+    div.style.paddingLeft = '8px';
+    const names = (e.players || []).map(p => p.name || '???').join(' / ');
+    const chars = (e.players || []).map(p => p.character).filter(Boolean).join(' / ');
+    div.innerHTML = `
+      <div class="players">${names}</div>
+      <div class="score">${e.currentScore ?? 0}</div>
+      <div style="font-size:12px;opacity:0.7">${chars}</div>`;
+    sb.appendChild(div);
+  }
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const si = state.setInfo || {};
+  meta.innerHTML = `
+    <div>${si.tournamentName || ''}</div>
+    <div>${si.roundLabel || ''} - Bo${si.bestOf || ''}</div>`;
+  sb.appendChild(meta);
+
+  const casters = document.getElementById('casters');
+  casters.textContent = (state.casters || [])
+    .map(c => c.name + (c.socials?.length ? ' (' + c.socials.map(s => s.handle).join(', ') + ')' : ''))
+    .join(' | ');
+}
+
+fetch('/state.json').then(r => r.json()).then(render).catch(() => {});
+const es = new EventSource('/events');
+es.onmessage = (ev) => {
+  try { render(JSON.parse(ev.data)); } catch {}
+};
+</script>
+</body>
+</html>
