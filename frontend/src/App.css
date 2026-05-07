@@ -1,59 +1,384 @@
-#app {
-    height: 100vh;
+* { box-sizing: border-box; }
+
+:root {
+    color-scheme: dark;
+
+    /* Fluid type scale. Min keeps things legible at the 1024px Wails
+       default; max keeps very wide windows from getting silly. */
+    --font-xs:   clamp(11px, calc(0.25vw +  9.5px), 14px);
+    --font-sm:   clamp(13px, calc(0.30vw + 10.5px), 16px);
+    --font-md:   clamp(14px, calc(0.35vw + 11.5px), 18px);
+    --font-base: clamp(15px, calc(0.40vw + 12.5px), 19px);
+    --font-lg:   clamp(17px, calc(0.45vw + 14.0px), 22px);
+
+    --bg-page:    #1b2636;
+    --bg-bar:     #0f1722;
+    --bg-card:    #243144;
+    --bg-sunken:  #1b2636;
+    --line:       #2a3a52;
+    --line-hover: #4d6b9c;
+    --text:       #e6e9ef;
+    --text-muted: #8c9aaf;
+    --text-soft:  #c8d2e1;
+    --accent:     #3b82f6;
+}
+
+html, body, #root, #app {
+    margin: 0;
+    height: 100%;
+}
+
+body {
+    background: var(--bg-page);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: var(--font-base);
+    line-height: 1.4;
+}
+
+/* ---------- Layout shell ------------------------------------------------ */
+
+.app { height: 100vh; display: flex; flex-direction: column; }
+
+.loading {
+    padding: 60px;
     text-align: center;
+    color: var(--text-muted);
 }
 
-#logo {
-    display: block;
-    width: 50%;
-    height: 50%;
-    margin: auto;
-    padding: 10% 0 0;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-origin: content-box;
+.topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    background: var(--bg-bar);
+    border-bottom: 1px solid var(--line);
+    flex: 0 0 auto;
+}
+.topbar h1 {
+    margin: 0;
+    font-size: var(--font-lg);
+    font-weight: 700;
+}
+.overlay-url {
+    flex: 1;
+    font-size: var(--font-sm);
+    color: var(--text-muted);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.overlay-url code {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: var(--font-sm);
+    background: var(--bg-page);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
 }
 
-.result {
-    height: 20px;
-    line-height: 20px;
-    margin: 1.5rem auto;
+.settings-btn {
+    padding: 8px 16px;
+    font-size: var(--font-sm);
 }
 
-.input-box .btn {
-    width: 60px;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 3px;
-    border: none;
-    margin: 0 0 0 20px;
-    padding: 0 8px;
+.update-area {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    min-width: 120px;
+}
+.update-btn {
+    padding: 8px 22px;
+    font-weight: 600;
+    font-size: var(--font-base);
+}
+.update-area .status {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    text-align: center;
+    min-height: 1.4em;
+    line-height: 1.4;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ---------- Cards ------------------------------------------------------- */
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px;
+}
+.card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    gap: 12px;
+}
+.card-head h2 {
+    margin: 0;
+    font-size: var(--font-sm);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.card-head-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* ---------- Board (entity cards + casters card side-by-side) ----------- */
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    align-items: start;
+}
+
+.add-card {
+    border: 2px dashed var(--line);
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 16px;
+    min-height: 120px;
     cursor: pointer;
+    font-size: var(--font-sm);
+}
+.add-card:hover {
+    border-color: var(--line-hover);
+    color: var(--text);
 }
 
-.input-box .btn:hover {
-    background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-    color: #333333;
+/* ---------- Forms ------------------------------------------------------- */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
 }
 
-.input-box .input {
-    border: none;
-    border-radius: 3px;
-    outline: none;
-    height: 30px;
-    line-height: 30px;
-    padding: 0 10px;
-    background-color: rgba(240, 240, 240, 1);
-    -webkit-font-smoothing: antialiased;
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: var(--font-md);
+    color: var(--text-muted);
+}
+label + label { margin-top: 12px; }
+
+input, select {
+    width: 100%;
+    min-height: 2.2em;
+    padding: 0.4em 0.6em;
+    font-size: var(--font-base);
 }
 
-.input-box .input:hover {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
+.icon-btn {
+    flex: 0 0 32px;
+    width: 32px;
+    padding: 0;
+    font-size: var(--font-md);
 }
 
-.input-box .input:focus {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
+/* ---------- Segmented control (radio quickbuttons) --------------------- */
+
+.segmented {
+    display: flex;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    min-height: 2.2em;
+}
+.segmented-btn {
+    flex: 1;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0 12px;
+    font-size: var(--font-md);
+    line-height: 1;
+}
+.segmented-btn + .segmented-btn {
+    border-left: 1px solid var(--line);
+}
+.segmented-btn:hover:not([aria-pressed="true"]) {
+    background: var(--line);
+}
+.segmented-btn[aria-pressed="true"] {
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+}
+
+/* ---------- Entity card ------------------------------------------------- */
+
+.entity-card {
+    border-left: 4px solid var(--port-color, var(--line));
+}
+
+.pips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 2.2em;
+}
+.pip {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: background 80ms ease, border-color 80ms ease;
+    flex: 0 0 auto;
+}
+.pip:hover { border-color: var(--line-hover); }
+.pip[aria-pressed="true"] {
+    background: var(--port-color, var(--accent));
+    border-color: var(--port-color, var(--accent));
+}
+
+.color-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.color-input .swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    flex: 0 0 auto;
+}
+
+/* ---------- Players (inside an entity card) ---------------------------- */
+
+.players {
+    display: flex;
+    flex-direction: column;
+    margin-top: 14px;
+    gap: 10px;
+}
+.player {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+}
+.player:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+.player-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.player-row .name { flex: 1; }
+
+.add-row {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px dashed var(--line);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    font-size: var(--font-sm);
+    margin-top: 4px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+.add-row:hover { background: var(--line); color: var(--text); }
+
+/* ---------- Casters card (single column inside a thin card) ------------ */
+
+.casters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.caster {
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+.caster-head {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.caster-head input { flex: 1; }
+
+.socials {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.social {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.social select { flex: 0 0 110px; }
+.social input { flex: 1; }
+
+/* ---------- Settings dialog -------------------------------------------- */
+
+.settings-dialog {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    max-width: 640px;
+    width: 90vw;
+    margin: auto;
+}
+.settings-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+}
+.settings-dialog .card {
+    margin: 0;
+}
+
+.checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+.checkbox-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-soft);
+    font-size: var(--font-md);
+}
+.checkbox-row input { width: auto; min-height: 0; }
+
+.empty {
+    color: var(--text-muted);
+    font-size: var(--font-md);
+    padding: 6px 0 12px 0;
 }
