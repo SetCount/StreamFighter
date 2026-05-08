@@ -32,7 +32,7 @@ links the Wails runtime needs it.
     `ReloadGames`, `Update`, `GetSecrets`, `SetSecrets`,
     `ListPlayerPresets`, `SavePlayerPreset`, `DeletePlayerPreset`,
     `ListCasterPresets`, `SaveCasterPreset`, `DeleteCasterPreset`,
-    `FetchStartggSets`.
+    `FetchStartggSets`, `FetchStartggTournament`.
   - `defaultOverlayHTML` is `go:embed`'d — used as a **seed only**.
   - `OutputConfig` is persisted to a cwd-relative
     `streamassist.config.json` on every `SetConfig`. `loadConfig` merges
@@ -61,6 +61,10 @@ links the Wails runtime needs it.
   `start.gg/tournament/<slug>[/...]` URL or accepts a bare slug.
   `FetchTournamentSets` pulls events × recent sets in one query and
   flattens slots → entrants → players for the picker UI.
+  `FetchTournament` pulls just `name` + `slug` — wired to URL-blur in
+  the Tournament card so the name auto-populates without paying for
+  the full sets query. Both methods funnel through a private `post`
+  helper that owns the auth/JSON/status boilerplate.
 - `games.go` — game-pack loader. `GamePack`/`Character`/`Costume` types
   plus `loadGames(dir)`, which walks the configured games directory and
   skips malformed packs with a stderr warning. Display names default to
@@ -110,7 +114,12 @@ games/<gameId>/
   "characterNames": {
     "mr_game_and_watch": "Mr. Game & Watch",
     "dr_mario": "Dr. Mario"
-  }
+  },
+  "characterLayout": [
+    ["dr_mario", "mario", "luigi", "bowser", "peach", "yoshi", "donkey_kong", "captain_falcon", "ganondorf"],
+    ["falco", "fox", "ness", "ice_climbers", "kirby", "samus", "zelda", "link", "young_link"],
+    ["pichu", "pikachu", "jigglypuff", "mewtwo", "mr_game_and_watch", "marth", "roy"]
+  ]
 }
 ```
 
@@ -120,6 +129,12 @@ games/<gameId>/
 - Character display names default to `humanizeID(charId)` (snake_case →
   Title Case) and only need an entry in `characterNames` when that
   doesn't produce the right text (`Mr. Game & Watch`, `R.O.B.`).
+- `characterLayout` is optional. When present, each inner array is one
+  row of the character-select screen, rendered horizontally centered in
+  `CharacterPicker`. IDs that don't match an on-disk character are
+  silently skipped; characters present on disk but missing from every
+  row are appended as a trailing row. When omitted or empty, the picker
+  falls back to a single auto-fill grid of all characters.
 - We deliberately **do not** ship character art. `games/melee/` and
   `games/pplus/` only contain `game.json` skeletons; users drop their
   own portraits/stocks into the `characters/<id>/<NN>/` tree.
@@ -130,7 +145,10 @@ games/<gameId>/
 ### Frontend (React + TypeScript, `frontend/src/`)
 - `App.tsx` — state coordination, dialog refs, top-level layout. Owns
   the picker dialog state and preset lists (loaded once on startup,
-  refreshed by row save/delete).
+  refreshed by row save/delete). Page layout is a flex column inside
+  `.content`: the `<SetInfoEditor>` sits at the top as a full-width
+  bar, then `.layout-grid` (2-col grid: entities left `1fr`, casters
+  right `minmax(360px, 460px)`) holds the rest.
 - `types.ts` — **plain interfaces** mirroring the Wails-generated
   classes. Components use these everywhere. The generated
   `main.StreamState` etc. are classes with a `convertValues` method that
@@ -144,17 +162,26 @@ games/<gameId>/
 - `startgg.ts` — `applyStartggSet(prev, tournamentName, set, presets)`
   rebuilds `StreamState` after a Pick Set. Match priority: startgg ID
   → name (case-insensitive) → alias → blank player carrying gamerTag
-  + startggPlayerId. Format inferred from entrant shape; BestOf is
-  preserved (start.gg doesn't expose it reliably).
+  + startggPlayerId. Format inferred from entrant shape; BestOf comes
+  from `set.totalGames` when it's a recognized 3/5/7, otherwise prev
+  is preserved (start.gg only populates `totalGames` when the
+  tournament configures per-round bestOf).
 - `portColors.ts` — shared `PORT_COLORS` palette used by the entity
   editor, reshape defaults, and preset color swatches.
 - `components/`
-  - `SetInfoEditor` — tournament + round inputs, segmented Bo3/5/7,
-    segmented 1v1/2v2/FFA, plus a second row with the StartGG URL
-    input and a Pick Set button. URL persists via `SetConfig` on
-    blur. Wrapped in a `<fieldset>` with `<legend>Set Info</legend>`.
-    Game selection lives in `ConfigEditor`, not here — it's a property
-    of the rig that rarely changes mid-session.
+  - `SetInfoEditor` — renders a `.set-info-bar` flex-row holding two
+    side-by-side `.set-info-card` fieldsets that flex-share the bar
+    width (each `flex: 1 1 0; min-width: 280px`, wrap-stack on narrow
+    viewports). First fieldset (`<legend>Tournament</legend>`):
+    tournament name input on top, then a `.startgg-row` with just the
+    StartGG URL input. The URL persists via `SetConfig` on blur, and
+    on blur App also calls `FetchStartggTournament` to auto-populate
+    the name field (silent on failure — Pick Set surfaces real
+    errors). Second fieldset (`<legend>Set Info</legend>`): Round
+    label input, segmented Bo3/5/7, segmented 1v1/2v2/FFA, and the
+    Pick Set button (lives here because it rebuilds set content, not
+    tournament identity). Game selection lives in the topbar, not
+    here — it's a property of the rig that rarely changes mid-session.
   - `ScoreEntitiesEditor` — **returns a Fragment** of
     `<fieldset class="entity-card">` elements (no outer wrapper). Each
     legend carries a `.legend-swatch` colored from `--port-color` plus
@@ -205,8 +232,10 @@ games/<gameId>/
     (with a "no preference" clear option).
   - `SetPicker` — modal `<dialog class="set-picker">` opened from
     SetInfoEditor's Pick Set button. Substring filter across event,
-    round, and entrant tags. Each row shows event · round · entrants ·
-    state badge. Mirrors the `CharacterPicker` ref/effect pattern.
+    round, and entrant tags, plus a "Hide completed" checkbox (default
+    on, drops `state === 3` rows) since unplayed sets are the streaming
+    target. Each row shows event · round · entrants · state badge.
+    Mirrors the `CharacterPicker` ref/effect pattern.
   - `Segmented` — generic radio quickbutton row, active state via
     `aria-pressed`.
 - `wailsjs/` — Wails-generated bindings. **Do not edit.** Regenerated by
@@ -293,9 +322,10 @@ Defaults: HTTP port `35920` → overlay URL
   unmatched becomes a blank player carrying the gamer tag and startgg
   ID so a future preset can be made from it.
 - **Pick Set flow**: paste a `https://www.start.gg/tournament/<slug>`
-  URL into Set Info → click Pick Set → modal lists recent sets across
-  events. Picking a set rebuilds entities (1v1/2v2/FFA inferred),
-  populates round label and tournament name, preserves BestOf.
+  URL into the Tournament card → click Pick Set → modal lists recent
+  sets across events. Picking a set rebuilds entities (1v1/2v2/FFA
+  inferred), populates round label and tournament name, and adopts
+  BestOf from `set.totalGames` when it's 3/5/7 (else preserves prev).
   Tournament URL persists in `OutputConfig` so it survives restarts.
 
 ## Known soft edges
