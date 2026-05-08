@@ -1,13 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import {
     GetState, SetState, GetConfig, SetConfig, OverlayURL, AssetsBaseURL, Update, ListGames,
+    GetSecrets, SetSecrets,
+    ListPlayerPresets, SavePlayerPreset, DeletePlayerPreset,
+    ListCasterPresets, SaveCasterPreset, DeleteCasterPreset,
+    FetchStartggSets,
 } from '../wailsjs/go/main/App';
-import type { StreamState, OutputConfig, SetInfo, GamePack } from './types';
+import type {
+    StreamState, OutputConfig, SetInfo, GamePack,
+    PlayerPreset, CasterPreset, StartggSet,
+} from './types';
 import { reshapeForFormat, canResize, clampScores } from './reshape';
+import { applyStartggSet } from './startgg';
 import SetInfoEditor from './components/SetInfoEditor';
 import ScoreEntitiesEditor from './components/ScoreEntitiesEditor';
 import CastersEditor from './components/CastersEditor';
 import ConfigEditor from './components/ConfigEditor';
+import PresetsEditor from './components/PresetsEditor';
+import SetPicker from './components/SetPicker';
 import './App.css';
 
 function App() {
@@ -17,16 +27,32 @@ function App() {
     const [assetsBase, setAssetsBase] = useState('');
     const [games, setGames] = useState<GamePack[]>([]);
     const [status, setStatus] = useState('');
+    const [token, setToken] = useState('');
+    const [playerPresets, setPlayerPresets] = useState<PlayerPreset[]>([]);
+    const [casterPresets, setCasterPresets] = useState<CasterPreset[]>([]);
+
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const [pickerSets, setPickerSets] = useState<StartggSet[]>([]);
+    const [pickerLoading, setPickerLoading] = useState(false);
+    const [pickerError, setPickerError] = useState<string | null>(null);
+    const [pickerTournament, setPickerTournament] = useState('');
+
     const dialogRef = useRef<HTMLDialogElement>(null);
 
     useEffect(() => {
-        Promise.all([GetState(), GetConfig(), OverlayURL(), AssetsBaseURL(), ListGames()])
-            .then(([s, c, u, a, g]) => {
+        Promise.all([
+            GetState(), GetConfig(), OverlayURL(), AssetsBaseURL(), ListGames(),
+            GetSecrets(), ListPlayerPresets(), ListCasterPresets(),
+        ])
+            .then(([s, c, u, a, g, sec, pp, cp]) => {
                 setSt(s as unknown as StreamState);
                 setCfg(c as unknown as OutputConfig);
                 setOverlayUrl(u);
                 setAssetsBase(a);
                 setGames((g ?? []) as unknown as GamePack[]);
+                setToken((sec as any)?.startggToken ?? '');
+                setPlayerPresets((pp ?? []) as unknown as PlayerPreset[]);
+                setCasterPresets((cp ?? []) as unknown as CasterPreset[]);
             })
             .catch(e => setStatus('Failed to load: ' + e));
     }, []);
@@ -73,6 +99,91 @@ function App() {
         setSt({ ...state, setInfo: si, scoreEntities: entities });
     };
 
+    const onTournamentUrlChange = (v: string) => {
+        setCfg({ ...config, startggTournamentUrl: v });
+    };
+    const onTournamentUrlBlur = () => {
+        SetConfig(config as any).catch(e => setStatus('Error saving URL: ' + e));
+    };
+
+    const onPickSet = async () => {
+        setPickerOpen(true);
+        setPickerLoading(true);
+        setPickerError(null);
+        setPickerSets([]);
+        try {
+            const res = await FetchStartggSets(config.startggTournamentUrl ?? '');
+            setPickerSets((res?.sets ?? []) as unknown as StartggSet[]);
+            setPickerTournament(res?.tournament?.name ?? '');
+        } catch (e: any) {
+            setPickerError(String(e?.message ?? e));
+        } finally {
+            setPickerLoading(false);
+        }
+    };
+    const onSelectSet = (s: StartggSet) => {
+        setSt(applyStartggSet(state, pickerTournament, s, playerPresets));
+        setPickerOpen(false);
+    };
+
+    const onTokenChange = (v: string) => setToken(v);
+    const onTokenBlur = () => {
+        SetSecrets({ startggToken: token } as any)
+            .catch(e => setStatus('Error saving token: ' + e));
+    };
+
+    const onAddPlayerPreset = () => {
+        setPlayerPresets([...playerPresets, { id: '', name: '' }]);
+    };
+    const onSavePlayerPresetRow = async (p: PlayerPreset) => {
+        try {
+            const saved = await SavePlayerPreset(p as any) as unknown as PlayerPreset;
+            const next = [...playerPresets];
+            const idx = p.id
+                ? next.findIndex(x => x.id === p.id)
+                : next.findIndex(x => !x.id && x.name === p.name);
+            if (idx >= 0) next[idx] = saved; else next.push(saved);
+            setPlayerPresets(next);
+            setStatus('Saved player preset');
+        } catch (e: any) {
+            setStatus('Error: ' + e);
+        }
+    };
+    const onDeletePlayerPresetRow = async (id: string) => {
+        try {
+            await DeletePlayerPreset(id);
+            setPlayerPresets(playerPresets.filter(p => p.id !== id));
+        } catch (e: any) {
+            setStatus('Error: ' + e);
+        }
+    };
+
+    const onAddCasterPreset = () => {
+        setCasterPresets([...casterPresets, { id: '', name: '', socials: [] }]);
+    };
+    const onSaveCasterPresetRow = async (c: CasterPreset) => {
+        try {
+            const saved = await SaveCasterPreset(c as any) as unknown as CasterPreset;
+            const next = [...casterPresets];
+            const idx = c.id
+                ? next.findIndex(x => x.id === c.id)
+                : next.findIndex(x => !x.id && x.name === c.name);
+            if (idx >= 0) next[idx] = saved; else next.push(saved);
+            setCasterPresets(next);
+            setStatus('Saved caster preset');
+        } catch (e: any) {
+            setStatus('Error: ' + e);
+        }
+    };
+    const onDeleteCasterPresetRow = async (id: string) => {
+        try {
+            await DeleteCasterPreset(id);
+            setCasterPresets(casterPresets.filter(c => c.id !== id));
+        } catch (e: any) {
+            setStatus('Error: ' + e);
+        }
+    };
+
     const openSettings = () => dialogRef.current?.showModal();
     const closeSettings = () => dialogRef.current?.close();
 
@@ -108,6 +219,10 @@ function App() {
                             value={state.setInfo}
                             onChange={onSetInfoChange}
                             matchCols={state.scoreEntities.length}
+                            tournamentUrl={config.startggTournamentUrl ?? ''}
+                            onTournamentUrlChange={onTournamentUrlChange}
+                            onTournamentUrlBlur={onTournamentUrlBlur}
+                            onPickSet={onPickSet}
                         />
                         <div className="board">
                             <ScoreEntitiesEditor
@@ -119,12 +234,14 @@ function App() {
                                 games={games}
                                 gameId={config.game}
                                 assetsBase={assetsBase}
+                                presets={playerPresets}
                             />
                         </div>
                     </div>
                     <CastersEditor
                         value={state.casters}
                         onChange={c => setSt({ ...state, casters: c })}
+                        presets={casterPresets}
                     />
                 </div>
             </main>
@@ -135,8 +252,36 @@ function App() {
                     onChange={setCfg}
                     onSave={onSaveConfig}
                     onClose={closeSettings}
+                    startggToken={token}
+                    onTokenChange={onTokenChange}
+                    onTokenBlur={onTokenBlur}
+                />
+                <PresetsEditor
+                    players={playerPresets}
+                    casters={casterPresets}
+                    games={games}
+                    gameId={config.game}
+                    assetsBase={assetsBase}
+                    onSavePlayer={onSavePlayerPresetRow}
+                    onDeletePlayer={onDeletePlayerPresetRow}
+                    onAddPlayer={onAddPlayerPreset}
+                    onChangePlayers={setPlayerPresets}
+                    onSaveCaster={onSaveCasterPresetRow}
+                    onDeleteCaster={onDeleteCasterPresetRow}
+                    onAddCaster={onAddCasterPreset}
+                    onChangeCasters={setCasterPresets}
                 />
             </dialog>
+
+            <SetPicker
+                open={pickerOpen}
+                onClose={() => setPickerOpen(false)}
+                onSelect={onSelectSet}
+                loading={pickerLoading}
+                error={pickerError}
+                sets={pickerSets}
+                tournamentName={pickerTournament}
+            />
         </div>
     );
 }

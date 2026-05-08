@@ -13,6 +13,7 @@ export type Player = {
     name: string;
     character: string;
     costume: number;
+    startggPlayerId?: number;
 };
 
 export type ScoreEntity = {
@@ -46,6 +47,56 @@ export type OutputConfig = {
     writeFieldFiles: boolean;
     writeJson: boolean;
     enableServer: boolean;
+    startggTournamentUrl?: string;
+};
+
+export type Secrets = {
+    startggToken?: string;
+};
+
+export type PlayerPreset = {
+    id: string;
+    name: string;
+    aliases?: string[];
+    startggPlayerId?: number;
+    character?: string;
+    costume?: number;
+    portColor?: string;
+};
+
+export type CasterPreset = {
+    id: string;
+    name: string;
+    socials: Social[];
+};
+
+// start.gg pull types — flattened from the GraphQL response.
+export type StartggPlayer = {
+    id: number;
+    gamerTag: string;
+};
+
+export type StartggEntrant = {
+    name: string;
+    players: StartggPlayer[];
+};
+
+export type StartggSet = {
+    id: string;
+    fullRoundText: string;
+    eventName: string;
+    state: number;
+    entrants: StartggEntrant[];
+};
+
+export type StartggTournament = {
+    name: string;
+    slug: string;
+};
+
+export type StartggSetsResult = {
+    tournament: StartggTournament;
+    sets: StartggSet[];
 };
 
 // Mirrors of the GamePack/Character/Costume types in games.go.

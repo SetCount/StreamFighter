@@ -6,6 +6,10 @@ type Props = {
     value: SetInfo;
     onChange: (v: SetInfo) => void;
     matchCols?: number;
+    tournamentUrl: string;
+    onTournamentUrlChange: (v: string) => void;
+    onTournamentUrlBlur: () => void;
+    onPickSet: () => void;
 };
 
 const BEST_OF_OPTIONS = [
@@ -20,7 +24,10 @@ const FORMAT_OPTIONS = [
     { value: 'FFA', label: 'FFA' },
 ];
 
-export default function SetInfoEditor({ value, onChange, matchCols }: Props) {
+export default function SetInfoEditor({
+    value, onChange, matchCols,
+    tournamentUrl, onTournamentUrlChange, onTournamentUrlBlur, onPickSet,
+}: Props) {
     const set = (patch: Partial<SetInfo>) => onChange({ ...value, ...patch });
     const style = matchCols
         ? ({ '--cols': matchCols } as CSSProperties)
@@ -58,6 +65,24 @@ export default function SetInfoEditor({ value, onChange, matchCols }: Props) {
                         options={FORMAT_OPTIONS}
                         onChange={f => set({ format: f })}
                     />
+                </label>
+            </div>
+            <div className="set-info-row startgg-row">
+                <label className="grow">
+                    StartGG URL
+                    <input
+                        type="url"
+                        placeholder="https://www.start.gg/tournament/<slug>"
+                        value={tournamentUrl}
+                        onChange={e => onTournamentUrlChange(e.target.value)}
+                        onBlur={onTournamentUrlBlur}
+                    />
+                </label>
+                <label className="shrink">
+                    &nbsp;
+                    <button type="button" className="pick-set-btn" onClick={onPickSet}>
+                        Pick Set
+                    </button>
                 </label>
             </div>
         </fieldset>

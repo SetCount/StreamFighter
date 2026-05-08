@@ -5,9 +5,15 @@ type Props = {
     onChange: (v: OutputConfig) => void;
     onSave: () => void;
     onClose?: () => void;
+    startggToken: string;
+    onTokenChange: (v: string) => void;
+    onTokenBlur: () => void;
 };
 
-export default function ConfigEditor({ value, onChange, onSave, onClose }: Props) {
+export default function ConfigEditor({
+    value, onChange, onSave, onClose,
+    startggToken, onTokenChange, onTokenBlur,
+}: Props) {
     const set = (patch: Partial<OutputConfig>) => onChange({ ...value, ...patch });
     return (
         <fieldset className="config-editor">
@@ -19,6 +25,17 @@ export default function ConfigEditor({ value, onChange, onSave, onClose }: Props
                 )}
             </div>
             <div className="grid">
+                <label>
+                    StartGG Token
+                    <input
+                        type="password"
+                        autoComplete="off"
+                        placeholder="from start.gg/admin/profile/developer"
+                        value={startggToken}
+                        onChange={e => onTokenChange(e.target.value)}
+                        onBlur={onTokenBlur}
+                    />
+                </label>
                 <label>
                     Output Directory
                     <input

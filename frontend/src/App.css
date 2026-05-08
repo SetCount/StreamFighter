@@ -675,3 +675,160 @@ input, select {
     font-size: var(--font-md);
     padding: 6px 0 12px 0;
 }
+.error-msg {
+    color: #f08080;
+}
+
+/* ---------- Pick Set button + StartGG row ------------------------------ */
+
+.set-info-row.startgg-row {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+}
+.pick-set-btn {
+    padding: 6px 14px;
+    font-size: var(--font-sm);
+    background: transparent;
+    color: var(--text-soft);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+    min-height: 2.2em;
+}
+.pick-set-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--line-hover);
+    color: var(--text);
+}
+
+/* ---------- SetPicker dialog ------------------------------------------- */
+
+.set-picker {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    background: var(--bg-page);
+    color: inherit;
+    max-width: 720px;
+    width: 90vw;
+    max-height: 80vh;
+    margin: auto;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.set-picker::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+}
+.set-picker-filter {
+    margin-bottom: 10px;
+}
+.set-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.set-row {
+    display: grid;
+    grid-template-columns: minmax(80px, 1fr) minmax(80px, 1fr) 2fr auto;
+    gap: 10px;
+    align-items: baseline;
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text-soft);
+    font-size: var(--font-sm);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 80ms ease, background 80ms ease;
+}
+.set-row:hover {
+    border-color: var(--line-hover);
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.04);
+}
+.set-event {
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.set-round {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.set-entrants {
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.set-state {
+    font-size: var(--font-xs);
+    padding: 2px 6px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+}
+.set-state.state-2 { color: #80c080; border-color: #80c08055; }
+.set-state.state-3 { color: var(--text-muted); }
+
+/* ---------- Presets editor (inside Settings dialog) -------------------- */
+
+.presets-section {
+    margin-top: 16px;
+}
+.preset-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+.preset-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg-sunken);
+}
+.preset-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: end;
+}
+.preset-grid > label.grow { flex: 1 1 160px; min-width: 120px; }
+.preset-grid > label.shrink { flex: 0 0 9em; }
+.preset-art {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 220px;
+}
+.preset-portrait {
+    aspect-ratio: 4 / 3;
+}
+.preset-color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.preset-color-label {
+    font-size: var(--font-sm);
+    color: var(--text-soft);
+}
+.color-swatch.clear-swatch {
+    background:
+        linear-gradient(45deg, transparent 45%, var(--text-muted) 45%, var(--text-muted) 55%, transparent 55%),
+        var(--bg-sunken);
+}
+.preset-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}

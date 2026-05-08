@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react';
-import type { ScoreEntity, Player, GamePack } from '../types';
+import type { ScoreEntity, Player, GamePack, PlayerPreset } from '../types';
 import { winCount } from '../reshape';
 import { findPack, findCharacter, portraitURL, stockURL } from '../assets';
 import { PORT_COLORS } from '../portColors';
@@ -14,6 +14,7 @@ type Props = {
     games: GamePack[];
     gameId: string;
     assetsBase: string;
+    presets?: PlayerPreset[];
 };
 
 const blankPlayer = (): Player => ({
@@ -33,7 +34,7 @@ function entityTitle(format: string, i: number): string {
 
 export default function ScoreEntitiesEditor({
     value, onChange, canResize, format, bestOf,
-    games, gameId, assetsBase,
+    games, gameId, assetsBase, presets = [],
 }: Props) {
     const pipCount = winCount(bestOf);
     const pack = findPack(games, gameId);
@@ -64,6 +65,36 @@ export default function ScoreEntitiesEditor({
     // When picking a character we default to the first available costume
     // in the pack so the portrait renders immediately. If no costumes are
     // loaded we fall back to 0 (unset) and the stock row stays empty.
+    // When the typed name matches a preset (by name or alias,
+    // case-insensitive), apply it: name, character/costume (only if the
+    // preset defines them), startgg ID, and port color (preset wins).
+    // Plain edits that don't hit a preset just update the name.
+    const onNameChange = (ei: number, pi: number, raw: string) => {
+        const lc = raw.toLowerCase();
+        const wasLc = value[ei].players[pi].name.toLowerCase();
+        const match = presets.find(p =>
+            p.name.toLowerCase() === lc ||
+            p.aliases?.some(a => a.toLowerCase() === lc));
+        if (match && wasLc !== lc) {
+            const cur = value[ei].players[pi];
+            const playerPatch: Partial<Player> = {
+                name: match.name,
+                character: match.character ?? cur.character,
+                costume: match.costume ?? cur.costume,
+                startggPlayerId: match.startggPlayerId,
+            };
+            if (match.portColor) {
+                const players = [...value[ei].players];
+                players[pi] = { ...players[pi], ...playerPatch };
+                setEntity(ei, { players, portColor: match.portColor });
+            } else {
+                setPlayer(ei, pi, playerPatch);
+            }
+        } else {
+            setPlayer(ei, pi, { name: raw });
+        }
+    };
+
     const onPickCharacter = (charId: string | null) => {
         if (pickerFor) {
             const char = charId ? findCharacter(pack, charId) : undefined;
@@ -78,6 +109,9 @@ export default function ScoreEntitiesEditor({
 
     return (
         <>
+            <datalist id="player-preset-names">
+                {presets.map(p => <option key={p.id} value={p.name} />)}
+            </datalist>
             {value.map((e, i) => (
                 <fieldset
                     key={i}
@@ -143,7 +177,8 @@ export default function ScoreEntitiesEditor({
                                             className="name"
                                             placeholder="Player name"
                                             value={p.name}
-                                            onChange={ev => setPlayer(i, pi, { name: ev.target.value })}
+                                            list="player-preset-names"
+                                            onChange={ev => onNameChange(i, pi, ev.target.value)}
                                         />
                                         {canResize && (
                                             <button
