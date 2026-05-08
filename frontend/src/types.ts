@@ -12,7 +12,7 @@ export type SetInfo = {
 export type Player = {
     name: string;
     character: string;
-    characterColor: string;
+    costume: number;
 };
 
 export type ScoreEntity = {
@@ -40,8 +40,28 @@ export type StreamState = {
 export type OutputConfig = {
     outputDir: string;
     overlayPath: string;
+    gamesDir: string;
+    game: string;
     httpPort: number;
     writeFieldFiles: boolean;
     writeJson: boolean;
     enableServer: boolean;
+};
+
+// Mirrors of the GamePack/Character/Costume types in games.go.
+export type Costume = {
+    index: number;
+};
+
+export type Character = {
+    id: string;
+    name: string;
+    costumes: Costume[];
+};
+
+export type GamePack = {
+    id: string;
+    name: string;
+    shortName: string;
+    characters: Character[];
 };

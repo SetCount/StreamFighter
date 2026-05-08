@@ -43,11 +43,14 @@ type Caster struct {
 	Socials []Social `json:"socials"`
 }
 
-// Player is a single competitor.
+// Player is a single competitor. Character holds the character ID
+// within the active game pack (e.g. "captain_falcon"); Costume is the
+// 1-based costume index matching the on-disk NN dir, with 0 meaning
+// "unset".
 type Player struct {
-	Name           string `json:"name"`
-	Character      string `json:"character"`
-	CharacterColor string `json:"characterColor"`
+	Name      string `json:"name"`
+	Character string `json:"character"`
+	Costume   int    `json:"costume"`
 }
 
 // ScoreEntity is one side of the scoreboard: a player (1v1), a team (2v2),
@@ -74,10 +77,14 @@ type StreamState struct {
 }
 
 // OutputConfig controls where Update sends data. Persisted separately from
-// the match state since it's a property of the rig, not the match.
+// the match state since it's a property of the rig, not the match. Game
+// is the ID of a pack discovered under GamesDir; an empty string means
+// no pack is selected yet.
 type OutputConfig struct {
 	OutputDir       string `json:"outputDir"`
 	OverlayPath     string `json:"overlayPath"`
+	GamesDir        string `json:"gamesDir"`
+	Game            string `json:"game"`
 	HTTPPort        int    `json:"httpPort"`
 	WriteFieldFiles bool   `json:"writeFieldFiles"`
 	WriteJSON       bool   `json:"writeJson"`

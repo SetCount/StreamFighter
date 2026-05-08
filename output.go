@@ -10,12 +10,20 @@ import (
 
 // flattenFields produces the set of per-field files written for OBS Text
 // sources. Keys are filenames (relative to OutputDir), values are contents.
-func flattenFields(s StreamState) map[string]string {
+// gameID names the active pack (from OutputConfig.Game); packs is
+// consulted to resolve character IDs into display names.
+func flattenFields(s StreamState, gameID string, packs []GamePack) map[string]string {
+	pack := findGamePack(packs, gameID)
+	gameName := gameID
+	if pack != nil {
+		gameName = pack.Name
+	}
 	out := map[string]string{
 		"tournament_name.txt": s.SetInfo.TournamentName,
 		"round_label.txt":     s.SetInfo.RoundLabel,
 		"best_of.txt":         strconv.Itoa(int(s.SetInfo.BestOf)),
 		"format.txt":          string(s.SetInfo.Format),
+		"game.txt":            gameName,
 	}
 	for i, c := range s.Casters {
 		prefix := fmt.Sprintf("caster_%d", i+1)
@@ -33,8 +41,8 @@ func flattenFields(s StreamState) map[string]string {
 		for j, p := range e.Players {
 			pp := fmt.Sprintf("%s_player_%d", prefix, j+1)
 			out[pp+"_name.txt"] = p.Name
-			out[pp+"_character.txt"] = p.Character
-			out[pp+"_character_color.txt"] = p.CharacterColor
+			out[pp+"_character.txt"] = characterDisplayName(pack, p.Character)
+			out[pp+"_costume.txt"] = strconv.Itoa(p.Costume)
 		}
 	}
 	return out
@@ -44,11 +52,11 @@ func flattenFields(s StreamState) map[string]string {
 // app wrote on a previous call that are no longer present in the new set.
 // previous is the manifest from the last write; the returned map is the
 // caller's new manifest.
-func writeFieldFiles(dir string, s StreamState, previous map[string]struct{}) (map[string]struct{}, error) {
+func writeFieldFiles(dir string, s StreamState, gameID string, packs []GamePack, previous map[string]struct{}) (map[string]struct{}, error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return previous, err
 	}
-	files := flattenFields(s)
+	files := flattenFields(s, gameID, packs)
 	written := make(map[string]struct{}, len(files))
 	for name, contents := range files {
 		path := filepath.Join(dir, name)
