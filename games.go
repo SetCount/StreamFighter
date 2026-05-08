@@ -20,6 +20,12 @@ type GamePack struct {
 	Name       string      `json:"name"`
 	ShortName  string      `json:"shortName"`
 	Characters []Character `json:"characters"`
+	// CharacterLayout mirrors the in-game CSS row layout: each inner
+	// slice is one row of character IDs, rendered horizontally centered
+	// in CharacterPicker. Optional; when empty the picker falls back to
+	// an alphabetical auto-grid. Characters present on disk but missing
+	// from the layout are appended as a trailing row.
+	CharacterLayout [][]string `json:"characterLayout,omitempty"`
 }
 
 // Character is one playable fighter within a GamePack.
@@ -37,9 +43,10 @@ type Costume struct {
 
 // gameManifest is the on-disk shape of game.json.
 type gameManifest struct {
-	Name           string            `json:"name"`
-	ShortName      string            `json:"shortName"`
-	CharacterNames map[string]string `json:"characterNames"`
+	Name            string            `json:"name"`
+	ShortName       string            `json:"shortName"`
+	CharacterNames  map[string]string `json:"characterNames"`
+	CharacterLayout [][]string        `json:"characterLayout"`
 }
 
 // portraitRE matches per-costume portrait files in a character dir.
@@ -84,9 +91,10 @@ func loadGamePack(dir, id string) (GamePack, error) {
 		return GamePack{}, fmt.Errorf("parse game.json: %w", err)
 	}
 	pack := GamePack{
-		ID:        id,
-		Name:      coalesce(m.Name, humanizeID(id)),
-		ShortName: coalesce(m.ShortName, m.Name, humanizeID(id)),
+		ID:              id,
+		Name:            coalesce(m.Name, humanizeID(id)),
+		ShortName:       coalesce(m.ShortName, m.Name, humanizeID(id)),
+		CharacterLayout: m.CharacterLayout,
 	}
 
 	charsDir := filepath.Join(dir, "characters")

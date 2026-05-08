@@ -86,6 +86,7 @@ export type StartggSet = {
     fullRoundText: string;
     eventName: string;
     state: number;
+    totalGames: number;
     entrants: StartggEntrant[];
 };
 
@@ -115,4 +116,5 @@ export type GamePack = {
     name: string;
     shortName: string;
     characters: Character[];
+    characterLayout?: string[][];
 };

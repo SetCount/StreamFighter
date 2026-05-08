@@ -4,7 +4,7 @@ import {
     GetSecrets, SetSecrets,
     ListPlayerPresets, SavePlayerPreset, DeletePlayerPreset,
     ListCasterPresets, SaveCasterPreset, DeleteCasterPreset,
-    FetchStartggSets,
+    FetchStartggSets, FetchStartggTournament,
 } from '../wailsjs/go/main/App';
 import type {
     StreamState, OutputConfig, SetInfo, GamePack,
@@ -102,8 +102,21 @@ function App() {
     const onTournamentUrlChange = (v: string) => {
         setCfg({ ...config, startggTournamentUrl: v });
     };
-    const onTournamentUrlBlur = () => {
+    const onTournamentUrlBlur = async () => {
         SetConfig(config as any).catch(e => setStatus('Error saving URL: ' + e));
+        const url = (config.startggTournamentUrl ?? '').trim();
+        if (!url) return;
+        try {
+            const t = await FetchStartggTournament(url);
+            const name = (t as any)?.name ?? '';
+            if (!name) return;
+            setSt(prev => prev
+                ? { ...prev, setInfo: { ...prev.setInfo, tournamentName: name } }
+                : prev);
+        } catch {
+            // Stay quiet — the user might still be typing the URL, or the
+            // token might not be set yet. Pick Set will surface the error.
+        }
     };
 
     const onPickSet = async () => {
@@ -213,30 +226,27 @@ function App() {
             <div className="status-bar" aria-live="polite">{status}</div>
 
             <main className="content">
+                <SetInfoEditor
+                    value={state.setInfo}
+                    onChange={onSetInfoChange}
+                    tournamentUrl={config.startggTournamentUrl ?? ''}
+                    onTournamentUrlChange={onTournamentUrlChange}
+                    onTournamentUrlBlur={onTournamentUrlBlur}
+                    onPickSet={onPickSet}
+                />
                 <div className="layout-grid">
-                    <div className="layout-main">
-                        <SetInfoEditor
-                            value={state.setInfo}
-                            onChange={onSetInfoChange}
-                            matchCols={state.scoreEntities.length}
-                            tournamentUrl={config.startggTournamentUrl ?? ''}
-                            onTournamentUrlChange={onTournamentUrlChange}
-                            onTournamentUrlBlur={onTournamentUrlBlur}
-                            onPickSet={onPickSet}
+                    <div className="board">
+                        <ScoreEntitiesEditor
+                            value={state.scoreEntities}
+                            onChange={se => setSt({ ...state, scoreEntities: se })}
+                            canResize={canResize(state.setInfo.format)}
+                            format={state.setInfo.format}
+                            bestOf={state.setInfo.bestOf}
+                            games={games}
+                            gameId={config.game}
+                            assetsBase={assetsBase}
+                            presets={playerPresets}
                         />
-                        <div className="board">
-                            <ScoreEntitiesEditor
-                                value={state.scoreEntities}
-                                onChange={se => setSt({ ...state, scoreEntities: se })}
-                                canResize={canResize(state.setInfo.format)}
-                                format={state.setInfo.format}
-                                bestOf={state.setInfo.bestOf}
-                                games={games}
-                                gameId={config.game}
-                                assetsBase={assetsBase}
-                                presets={playerPresets}
-                            />
-                        </div>
                     </div>
                     <CastersEditor
                         value={state.casters}

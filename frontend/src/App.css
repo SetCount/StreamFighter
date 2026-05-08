@@ -211,44 +211,29 @@ legend {
     gap: 14px;
 }
 
-/* ---------- Top-level two-column layout -------------------------------- */
+/* ---------- Top-level layout ------------------------------------------- */
+/* Set Info bar spans the full content width above the entity/casters row.
+   The grid below splits remaining space: entities flex-fill the left, a
+   capped casters column sits on the right. */
 
 .layout-grid {
-    /* `auto` left column sizes to its content (set-info card + entity row,
-       both driven by --cols), instead of stretching to 1fr and leaving
-       dead space between the columns. align-self: start keeps the grid
-       container from stretching across .content's flex row, so the empty
-       area sits to the right of casters rather than inside the layout. */
     display: grid;
-    grid-template-columns: auto minmax(360px, 460px);
+    grid-template-columns: 1fr minmax(360px, 460px);
     gap: 16px;
     align-items: start;
-    align-self: start;
 }
-.layout-main {
-    --cols: 2;
+
+/* ---------- Set Info bar ----------------------------------------------- */
+
+.set-info-bar {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
-    /* Track the entity row's natural width (220px column / 14px gap, in
-       sync with `.board`) so set-info and the entity row line up and the
-       column doesn't sprawl. min-width: 220px keeps at least one entity
-       column visible if the user shrinks the window aggressively. */
-    width: calc(var(--cols) * 220px + (var(--cols) - 1) * 14px);
-    min-width: 220px;
-    max-width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 14px;
 }
-
-/* ---------- Set Info ---------------------------------------------------- */
-/* The card width tracks the entity row below it via --cols (entity count).
-   Falls back to full width when --cols isn't set or the window is too
-   narrow to fit that many 220px entity columns. Numbers must stay in sync
-   with `.board` (220px column / 14px gap). */
-
 .set-info-card {
-    --cols: 2;
-    align-self: flex-start;
-    width: min(100%, calc(var(--cols) * 220px + (var(--cols) - 1) * 14px));
+    flex: 1 1 0;
+    min-width: 280px;
 }
 
 .set-info-row {
@@ -521,6 +506,25 @@ input, select {
     gap: 8px;
     max-height: 60vh;
     overflow-y: auto;
+}
+/* Layout-driven mode: a flex column of horizontally-centered rows.
+   Tiles use a fixed basis so rows stay readable; the row wraps on
+   narrow viewports rather than squeezing into a single line. */
+.character-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.character-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}
+.character-row .character-tile {
+    flex: 0 0 96px;
 }
 .character-tile {
     display: flex;

@@ -10,6 +10,8 @@ export function DeletePlayerPreset(arg1:string):Promise<void>;
 
 export function FetchStartggSets(arg1:string):Promise<main.StartggSetsResult>;
 
+export function FetchStartggTournament(arg1:string):Promise<main.StartggTournament>;
+
 export function GetConfig():Promise<main.OutputConfig>;
 
 export function GetSecrets():Promise<main.Secrets>;

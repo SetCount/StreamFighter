@@ -132,6 +132,7 @@ export namespace main {
 	    name: string;
 	    shortName: string;
 	    characters: Character[];
+	    characterLayout?: string[][];
 	
 	    static createFrom(source: any = {}) {
 	        return new GamePack(source);
@@ -143,6 +144,7 @@ export namespace main {
 	        this.name = source["name"];
 	        this.shortName = source["shortName"];
 	        this.characters = this.convertValues(source["characters"], Character);
+	        this.characterLayout = source["characterLayout"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -350,6 +352,7 @@ export namespace main {
 	    fullRoundText: string;
 	    eventName: string;
 	    state: number;
+	    totalGames: number;
 	    entrants: StartggEntrant[];
 	
 	    static createFrom(source: any = {}) {
@@ -362,6 +365,7 @@ export namespace main {
 	        this.fullRoundText = source["fullRoundText"];
 	        this.eventName = source["eventName"];
 	        this.state = source["state"];
+	        this.totalGames = source["totalGames"];
 	        this.entrants = this.convertValues(source["entrants"], StartggEntrant);
 	    }
 	

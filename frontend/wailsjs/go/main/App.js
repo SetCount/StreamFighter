@@ -18,6 +18,10 @@ export function FetchStartggSets(arg1) {
   return window['go']['main']['App']['FetchStartggSets'](arg1);
 }
 
+export function FetchStartggTournament(arg1) {
+  return window['go']['main']['App']['FetchStartggTournament'](arg1);
+}
+
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
