@@ -1,39 +1,25 @@
 # TODO
 
-## Data Models
+## Next Steps
 
-### Set Info
+- StartGG Integration
+- Player/Caster presets
+- Tying the above two things together
 
-- Tournament Name
-- Round Label
-- Best Of: (3 | 5 | 7)
-- Format: (1v1 | 2v2)
+### StartGG Integration
 
-### Caster
+- User should be able to set a tournament via the URL which should persist
+- A button should then appear to let the user pick a given set from the tournament
+- The info pulled from the selected set will be used to populate the set info and player info
 
-- Name
-- []Socials
-    - Icon (enum)
-    - Handle
+### Player/Caster presets
 
-### Player
+- User should be able to save configurations for players and casters
+- These should be saved in a format that is humanly readable/editable if needed
+- Casters should be able to set up their socials which will then auto-populate on future selections of that caster
+- Players can be saved, which should associate player name (and/or StartGG Player ID) and character and color for easy selection in the future
 
-- Name
-- Character
-- Character Color
+### Linking the above two
 
-### Score Entity
-
-- []Players
-- CurrentScore
-- Port/Team Color
-
-### Overall Model
-
-- SetInfo
-- []Casters
-- []ScoreEntities
-    - 1v1 will have 2 entities, each containing 1 player
-    - 2v2 will have 2 entities, each containing 2 players
-    - FFA or 1v1v1 will have 3 or 4 entities, each containing 1+ players
-    - etc
+- Associate player saved configs with player name and/or StartGG ID
+- Players might use different tags but have same config, or there might be two players with the same tag and different characters
