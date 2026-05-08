@@ -1,0 +1,11 @@
+{
+  "outputDir": "obs-output",
+  "overlayPath": "overlay.html",
+  "gamesDir": "games",
+  "game": "pplus",
+  "httpPort": 35920,
+  "writeFieldFiles": true,
+  "writeJson": true,
+  "enableServer": true,
+  "startggTournamentUrl": "https://www.start.gg/tournament/the-atwood-classic-38"
+}

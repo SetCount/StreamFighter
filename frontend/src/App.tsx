@@ -204,7 +204,7 @@ function App() {
         <div className="app">
             <header className="topbar">
                 <div style={{ "display": "flex", "flexDirection": "column", "flexGrow": "1" }}>
-                    <h1>StreamAssist</h1>
+                    <h1>StreamFighter</h1>
                     <div className="overlay-url">
                         OBS source: <code>{overlayUrl}</code>
                     </div>

@@ -1,4 +1,4 @@
-# StreamAssist
+# StreamFighter
 
 Wails (Go + React/TS) desktop tool for managing live tournament info and
 pushing it to OBS overlays. Built primarily for Super Smash Bros. Melee
@@ -35,10 +35,10 @@ links the Wails runtime needs it.
     `FetchStartggSets`, `FetchStartggTournament`.
   - `defaultOverlayHTML` is `go:embed`'d — used as a **seed only**.
   - `OutputConfig` is persisted to a cwd-relative
-    `streamassist.config.json` on every `SetConfig`. `loadConfig` merges
+    `streamfighter.config.json` on every `SetConfig`. `loadConfig` merges
     the file over `defaultConfig()` so newly-added fields keep their
     defaults until the user saves again.
-  - `Secrets` is persisted separately to `streamassist.secrets.json`
+  - `Secrets` is persisted separately to `streamfighter.secrets.json`
     (gitignored, mode 0600). Holds the start.gg API token. Same
     forward-compat unmarshal pattern as `loadConfig`.
 - `models.go` — domain types and enums: `SetInfo`, `Caster`, `Player`,
@@ -221,7 +221,7 @@ games/<gameId>/
   - `ConfigEditor` — `<fieldset>` inside the Settings `<dialog>`. Save
     Config + optional × close live in a `.dialog-actions` row above the
     fields. Holds the StartGG token (password input, persisted on blur
-    via `SetSecrets` to `streamassist.secrets.json`), paths, port, and
+    via `SetSecrets` to `streamfighter.secrets.json`), paths, port, and
     server toggles only — Game selection is in the topbar (auto-saves
     via `SetConfig` on change so it persists without opening Settings).
   - `PresetsEditor` — sibling of `ConfigEditor` inside the Settings
@@ -301,14 +301,14 @@ Defaults: HTTP port `35920` → overlay URL
   `<select class="game-select">` for the active game pack, Settings
   button, Update button. The Game select auto-saves: changing it calls
   `SetConfig` immediately, which persists to
-  `streamassist.config.json`. So if a user only ever streams P+, they
+  `streamfighter.config.json`. So if a user only ever streams P+, they
   pick once and never see it again.
 
 ## Presets & StartGG integration
 
-- **`streamassist.secrets.json`** (gitignored, mode 0600). Holds the
+- **`streamfighter.secrets.json`** (gitignored, mode 0600). Holds the
   start.gg API token. Loaded once on startup, written on `SetSecrets`.
-  Same forward-compat unmarshal pattern as `streamassist.config.json`.
+  Same forward-compat unmarshal pattern as `streamfighter.config.json`.
 - **`players.json` / `casters.json`** are flat JSON arrays of presets,
   cwd-relative, hand-editable. The `List*` Wails methods reload from
   disk on every call, so a hand-edit shows up on the next refresh

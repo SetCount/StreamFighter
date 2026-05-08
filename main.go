@@ -17,7 +17,7 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "StreamAssist",
+		Title:  "StreamFighter",
 		Width:  1000,
 		Height: 700,
 		AssetServer: &assetserver.Options{

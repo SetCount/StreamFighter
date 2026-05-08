@@ -118,7 +118,7 @@ type CasterPreset struct {
 }
 
 // Secrets holds credentials we don't want to commit. Persisted to
-// streamassist.secrets.json (gitignored). StartggToken is a personal
+// streamfighter.secrets.json (gitignored). StartggToken is a personal
 // access token from https://start.gg/admin/profile/developer.
 type Secrets struct {
 	StartggToken string `json:"startggToken,omitempty"`

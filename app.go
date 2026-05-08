@@ -13,12 +13,12 @@ import (
 
 // configPath is the cwd-relative file we persist OutputConfig to so
 // settings (game pack, paths, port toggles) survive across launches.
-const configPath = "streamassist.config.json"
+const configPath = "streamfighter.config.json"
 
 // secretsPath holds credentials that are gitignored — currently the
 // start.gg API token. Loaded the same way as configPath but never
 // included in build artifacts or commits.
-const secretsPath = "streamassist.secrets.json"
+const secretsPath = "streamfighter.secrets.json"
 
 // defaultOverlayHTML is written to OverlayPath on first run if no file
 // exists there. The server always reads from disk afterwards so user

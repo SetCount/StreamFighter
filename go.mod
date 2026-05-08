@@ -1,4 +1,4 @@
-module StreamAssist
+module StreamFighter
 
 go 1.23.0
 
