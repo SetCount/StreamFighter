@@ -31,6 +31,7 @@ export default function SetPicker({
 }: Props) {
     const ref = useRef<HTMLDialogElement>(null);
     const [filter, setFilter] = useState('');
+    const [hideCompleted, setHideCompleted] = useState(true);
 
     useEffect(() => {
         const d = ref.current;
@@ -44,9 +45,9 @@ export default function SetPicker({
     }, [open]);
 
     const f = filter.trim().toLowerCase();
-    const filtered = f
-        ? sets.filter(s => setSearchHaystack(s).includes(f))
-        : sets;
+    let filtered = sets;
+    if (hideCompleted) filtered = filtered.filter(s => s.state !== 3);
+    if (f) filtered = filtered.filter(s => setSearchHaystack(s).includes(f));
 
     return (
         <dialog ref={ref} className="set-picker" onClose={onClose}>
@@ -59,13 +60,23 @@ export default function SetPicker({
                 {error && <div className="empty error-msg">{error}</div>}
                 {!loading && !error && (
                     <>
-                        <input
-                            className="set-picker-filter"
-                            placeholder="Filter by event, round, or tag…"
-                            value={filter}
-                            onChange={e => setFilter(e.target.value)}
-                            autoFocus
-                        />
+                        <div className="set-picker-controls">
+                            <input
+                                className="set-picker-filter"
+                                placeholder="Filter by event, round, or tag…"
+                                value={filter}
+                                onChange={e => setFilter(e.target.value)}
+                                autoFocus
+                            />
+                            <label className="set-picker-toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={hideCompleted}
+                                    onChange={e => setHideCompleted(e.target.checked)}
+                                />
+                                Hide completed
+                            </label>
+                        </div>
                         {filtered.length === 0 ? (
                             <div className="empty">
                                 {sets.length === 0

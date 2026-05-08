@@ -65,9 +65,10 @@ export default function CharacterPicker({
                                         type="button"
                                         className="character-tile"
                                         onClick={() => onSelect(c.id)}
+                                        aria-label={c.name}
+                                        title={c.name}
                                     >
                                         <img src={selectURL(assetsBase, pack.id, c.id)} alt="" />
-                                        <span className="character-tile-name">{c.name}</span>
                                     </button>
                                 ))}
                             </div>
