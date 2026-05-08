@@ -80,6 +80,19 @@ body {
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
 }
 
+.game-select {
+    /* Override the global `select { width: 100% }` so the topbar select
+       is sized to its content like the buttons next to it. */
+    width: auto;
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    min-height: 0;
+    font-size: var(--font-sm);
+    color: var(--text-soft);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+}
+
 .settings-btn {
     padding: 6px 14px;
     font-size: var(--font-sm);
@@ -166,7 +179,10 @@ legend {
 
 .board {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    /* Cards sized to ~match the portrait width (188px native) — fixed so
+       cards don't balloon when there's only two entities on a wide
+       screen. */
+    grid-template-columns: repeat(auto-fit, 220px);
     gap: 14px;
     align-items: start;
 }
@@ -198,29 +214,63 @@ legend {
 /* ---------- Top-level two-column layout -------------------------------- */
 
 .layout-grid {
+    /* `auto` left column sizes to its content (set-info card + entity row,
+       both driven by --cols), instead of stretching to 1fr and leaving
+       dead space between the columns. align-self: start keeps the grid
+       container from stretching across .content's flex row, so the empty
+       area sits to the right of casters rather than inside the layout. */
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
+    grid-template-columns: auto minmax(360px, 460px);
     gap: 16px;
     align-items: start;
+    align-self: start;
 }
 .layout-main {
+    --cols: 2;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    min-width: 0;
+    /* Track the entity row's natural width (220px column / 14px gap, in
+       sync with `.board`) so set-info and the entity row line up and the
+       column doesn't sprawl. min-width: 220px keeps at least one entity
+       column visible if the user shrinks the window aggressively. */
+    width: calc(var(--cols) * 220px + (var(--cols) - 1) * 14px);
+    min-width: 220px;
+    max-width: 100%;
 }
 
 /* ---------- Set Info ---------------------------------------------------- */
+/* The card width tracks the entity row below it via --cols (entity count).
+   Falls back to full width when --cols isn't set or the window is too
+   narrow to fit that many 220px entity columns. Numbers must stay in sync
+   with `.board` (220px column / 14px gap). */
 
-.set-info-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px 18px;
+.set-info-card {
+    --cols: 2;
+    align-self: flex-start;
+    width: min(100%, calc(var(--cols) * 220px + (var(--cols) - 1) * 14px));
 }
-@media (max-width: 520px) {
-    .set-info-grid { grid-template-columns: 1fr; }
+
+.set-info-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 10px 14px;
 }
-.set-info-grid > label + label { margin-top: 0; }
+.set-info-row > label { flex: 0 1 auto; margin-top: 0; }
+.set-info-row > label.grow { flex: 1 1 220px; min-width: 160px; }
+.set-info-row > label.round { flex: 0 1 9em; min-width: 6em; }
+.set-info-row > label.shrink { flex: 0 0 auto; }
+
+/* Segmented controls inside Set Info: size buttons to their text instead
+   of stretching to fill the label. Smaller font to match the input
+   labels' visual weight. */
+.set-info-row .segmented { width: max-content; }
+.set-info-row .segmented-btn {
+    flex: 0 0 auto;
+    padding: 0 10px;
+    font-size: var(--font-sm);
+}
 
 label {
     display: flex;
@@ -284,11 +334,17 @@ input, select {
    on the score pips, not as a chrome border — keeping the fieldset's UA
    border consistent on all four sides. */
 
+.score-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    min-height: 2.2em;
+}
 .pips {
     display: flex;
     align-items: center;
     gap: 8px;
-    min-height: 2.2em;
 }
 .pip {
     width: 22px;
@@ -310,12 +366,11 @@ input, select {
 .color-swatches {
     display: flex;
     align-items: center;
-    gap: 8px;
-    min-height: 2.2em;
+    gap: 6px;
 }
 .color-swatch {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     border: 2px solid var(--line);
     padding: 0;
@@ -370,6 +425,135 @@ input, select {
     background: rgba(255, 255, 255, 0.05);
     border-color: var(--text-muted);
     color: var(--text);
+}
+
+/* ---------- Player character/costume picker ---------------------------- */
+/* Portrait is a click target that opens the CharacterPicker dialog. The
+   stock row below is a radiogroup of <button><img></button> tiles, one
+   per costume discovered for the selected character. Both inherit the
+   entity's --port-color via the fieldset's inline style — selected stock
+   uses it for the border. */
+
+.player-portrait {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border: 1px dashed var(--line-hover);
+    background: var(--bg-sunken);
+    color: var(--text-muted);
+    border-radius: 6px;
+    padding: 0;
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 80ms ease, background 80ms ease;
+}
+.player-portrait:hover {
+    border-color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
+}
+.player-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+.portrait-empty {
+    font-size: var(--font-sm);
+    text-align: center;
+    padding: 8px;
+}
+
+.stock-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    min-height: 2em;
+}
+.stock-btn {
+    width: 28px;
+    height: 28px;
+    padding: 2px;
+    border: 2px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 80ms ease, background 80ms ease;
+}
+.stock-btn:hover { background: rgba(255, 255, 255, 0.06); }
+.stock-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+.stock-btn[aria-checked="true"] {
+    border-color: var(--port-color, var(--accent));
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* ---------- CharacterPicker dialog ------------------------------------- */
+
+.character-picker {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    background: var(--bg-page);
+    color: inherit;
+    max-width: 720px;
+    width: 90vw;
+    max-height: 80vh;
+    margin: auto;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.character-picker::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+}
+.character-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 8px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.character-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--text-soft);
+    cursor: pointer;
+    font-size: var(--font-xs);
+    transition: border-color 80ms ease, background 80ms ease;
+}
+.character-tile:hover {
+    border-color: var(--line-hover);
+    color: var(--text);
+}
+.character-tile img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    display: block;
+}
+.character-tile-name {
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-word;
+}
+.character-tile.clear {
+    aspect-ratio: 1 / 1;
+    justify-content: center;
 }
 
 /* ---------- Casters ----------------------------------------------------- */

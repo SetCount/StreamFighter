@@ -34,6 +34,13 @@ export default function ConfigEditor({ value, onChange, onSave, onClose }: Props
                     />
                 </label>
                 <label>
+                    Games Directory
+                    <input
+                        value={value.gamesDir}
+                        onChange={e => set({ gamesDir: e.target.value })}
+                    />
+                </label>
+                <label>
                     HTTP Port
                     <input
                         type="number"

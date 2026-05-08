@@ -51,22 +51,25 @@ func (h *sseHub) broadcast(msg []byte) {
 // overlayServer wraps the SSE hub with the HTTP routes the OBS browser
 // source connects to.
 type overlayServer struct {
-	hub             *sseHub
-	srv             *http.Server
-	getState        func() StreamState
-	getOverlayPath  func() string
+	hub            *sseHub
+	srv            *http.Server
+	getState       func() StreamState
+	getOverlayPath func() string
+	getGamesDir    func() string
 }
 
-func newOverlayServer(port int, getOverlayPath func() string, getState func() StreamState) *overlayServer {
+func newOverlayServer(port int, getOverlayPath, getGamesDir func() string, getState func() StreamState) *overlayServer {
 	o := &overlayServer{
 		hub:            newSSEHub(),
 		getState:       getState,
 		getOverlayPath: getOverlayPath,
+		getGamesDir:    getGamesDir,
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/overlay", o.handleOverlay)
 	mux.HandleFunc("/state.json", o.handleState)
 	mux.HandleFunc("/events", o.handleEvents)
+	mux.Handle("/games/", http.StripPrefix("/games/", o.handleGameAsset()))
 	o.srv = &http.Server{
 		Addr:              fmt.Sprintf(":%d", port),
 		Handler:           mux,
@@ -106,6 +109,21 @@ func (o *overlayServer) handleState(w http.ResponseWriter, _ *http.Request) {
 	if err := writeJSON(w, s); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// handleGameAsset serves files under the configured games directory so
+// both the Wails frontend and the OBS browser source can <img>-load
+// character art without going through the bindings.
+func (o *overlayServer) handleGameAsset() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		dir := o.getGamesDir()
+		if dir == "" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		http.FileServer(http.Dir(dir)).ServeHTTP(w, r)
+	})
 }
 
 func (o *overlayServer) handleEvents(w http.ResponseWriter, r *http.Request) {
