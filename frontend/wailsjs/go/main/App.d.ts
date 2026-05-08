@@ -4,17 +4,35 @@ import {main} from '../models';
 
 export function AssetsBaseURL():Promise<string>;
 
+export function DeleteCasterPreset(arg1:string):Promise<void>;
+
+export function DeletePlayerPreset(arg1:string):Promise<void>;
+
+export function FetchStartggSets(arg1:string):Promise<main.StartggSetsResult>;
+
 export function GetConfig():Promise<main.OutputConfig>;
+
+export function GetSecrets():Promise<main.Secrets>;
 
 export function GetState():Promise<main.StreamState>;
 
+export function ListCasterPresets():Promise<Array<main.CasterPreset>>;
+
 export function ListGames():Promise<Array<main.GamePack>>;
+
+export function ListPlayerPresets():Promise<Array<main.PlayerPreset>>;
 
 export function OverlayURL():Promise<string>;
 
 export function ReloadGames():Promise<Array<main.GamePack>>;
 
+export function SaveCasterPreset(arg1:main.CasterPreset):Promise<main.CasterPreset>;
+
+export function SavePlayerPreset(arg1:main.PlayerPreset):Promise<main.PlayerPreset>;
+
 export function SetConfig(arg1:main.OutputConfig):Promise<void>;
+
+export function SetSecrets(arg1:main.Secrets):Promise<void>;
 
 export function SetState(arg1:main.StreamState):Promise<void>;
 

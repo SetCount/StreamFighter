@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
@@ -14,6 +15,11 @@ import (
 // settings (game pack, paths, port toggles) survive across launches.
 const configPath = "streamassist.config.json"
 
+// secretsPath holds credentials that are gitignored — currently the
+// start.gg API token. Loaded the same way as configPath but never
+// included in build artifacts or commits.
+const secretsPath = "streamassist.secrets.json"
+
 // defaultOverlayHTML is written to OverlayPath on first run if no file
 // exists there. The server always reads from disk afterwards so user
 // edits are picked up on the next browser-source refresh.
@@ -23,12 +29,15 @@ var defaultOverlayHTML []byte
 
 // App struct
 type App struct {
-	ctx    context.Context
-	mu     sync.RWMutex
-	state  StreamState
-	config OutputConfig
-	server *overlayServer
-	games  []GamePack
+	ctx           context.Context
+	mu            sync.RWMutex
+	state         StreamState
+	config        OutputConfig
+	secrets       Secrets
+	server        *overlayServer
+	games         []GamePack
+	playerPresets []PlayerPreset
+	casterPresets []CasterPreset
 	// fileManifest tracks which per-field files we wrote on the previous
 	// Update so we can clean up entries that have since gone away.
 	fileManifest map[string]struct{}
@@ -37,9 +46,12 @@ type App struct {
 // NewApp creates a new App application struct
 func NewApp() *App {
 	return &App{
-		state:        defaultState(),
-		config:       loadConfig(),
-		fileManifest: map[string]struct{}{},
+		state:         defaultState(),
+		config:        loadConfig(),
+		secrets:       loadSecrets(),
+		playerPresets: loadPlayerPresets(),
+		casterPresets: loadCasterPresets(),
+		fileManifest:  map[string]struct{}{},
 	}
 }
 
@@ -73,6 +85,33 @@ func saveConfig(cfg OutputConfig) {
 	}
 	if err := os.WriteFile(configPath, b, 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "save config: %v\n", err)
+	}
+}
+
+func loadSecrets() Secrets {
+	var s Secrets
+	raw, err := os.ReadFile(secretsPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "load secrets: %v\n", err)
+		}
+		return s
+	}
+	if err := json.Unmarshal(raw, &s); err != nil {
+		fmt.Fprintf(os.Stderr, "load secrets: %v (using empty)\n", err)
+		return Secrets{}
+	}
+	return s
+}
+
+func saveSecrets(s Secrets) {
+	b, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "save secrets: %v\n", err)
+		return
+	}
+	if err := os.WriteFile(secretsPath, b, 0o600); err != nil {
+		fmt.Fprintf(os.Stderr, "save secrets: %v\n", err)
 	}
 }
 
@@ -176,6 +215,155 @@ func (a *App) ReloadGames() []GamePack {
 	a.games = packs
 	a.mu.Unlock()
 	return packs
+}
+
+// GetSecrets returns the current secrets to the frontend. The token
+// field is sent in the clear; the dialog input should mask it.
+func (a *App) GetSecrets() Secrets {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return a.secrets
+}
+
+// SetSecrets updates the in-memory secrets and persists them to
+// secretsPath. Empty token clears the file's value.
+func (a *App) SetSecrets(s Secrets) {
+	a.mu.Lock()
+	a.secrets = s
+	a.mu.Unlock()
+	saveSecrets(s)
+}
+
+// ListPlayerPresets reloads from players.json on every call so a
+// hand-edit of the file shows up immediately on the next refresh.
+func (a *App) ListPlayerPresets() []PlayerPreset {
+	p := loadPlayerPresets()
+	a.mu.Lock()
+	a.playerPresets = p
+	a.mu.Unlock()
+	return p
+}
+
+// SavePlayerPreset upserts by ID, assigning a new ID when blank, and
+// returns the saved preset (with the assigned ID) so the frontend can
+// adopt it for subsequent edits.
+func (a *App) SavePlayerPreset(p PlayerPreset) (PlayerPreset, error) {
+	if p.ID == "" {
+		p.ID = newPresetID()
+	}
+	list := loadPlayerPresets()
+	replaced := false
+	for i, existing := range list {
+		if existing.ID == p.ID {
+			list[i] = p
+			replaced = true
+			break
+		}
+	}
+	if !replaced {
+		list = append(list, p)
+	}
+	if err := savePlayerPresets(list); err != nil {
+		return p, err
+	}
+	a.mu.Lock()
+	a.playerPresets = list
+	a.mu.Unlock()
+	return p, nil
+}
+
+// DeletePlayerPreset removes by ID. Missing IDs are a no-op.
+func (a *App) DeletePlayerPreset(id string) error {
+	list := loadPlayerPresets()
+	out := list[:0]
+	for _, p := range list {
+		if p.ID != id {
+			out = append(out, p)
+		}
+	}
+	if err := savePlayerPresets(out); err != nil {
+		return err
+	}
+	a.mu.Lock()
+	a.playerPresets = out
+	a.mu.Unlock()
+	return nil
+}
+
+// ListCasterPresets reloads from casters.json on every call.
+func (a *App) ListCasterPresets() []CasterPreset {
+	c := loadCasterPresets()
+	a.mu.Lock()
+	a.casterPresets = c
+	a.mu.Unlock()
+	return c
+}
+
+// SaveCasterPreset upserts by ID, assigning a new ID when blank.
+func (a *App) SaveCasterPreset(c CasterPreset) (CasterPreset, error) {
+	if c.ID == "" {
+		c.ID = newPresetID()
+	}
+	list := loadCasterPresets()
+	replaced := false
+	for i, existing := range list {
+		if existing.ID == c.ID {
+			list[i] = c
+			replaced = true
+			break
+		}
+	}
+	if !replaced {
+		list = append(list, c)
+	}
+	if err := saveCasterPresets(list); err != nil {
+		return c, err
+	}
+	a.mu.Lock()
+	a.casterPresets = list
+	a.mu.Unlock()
+	return c, nil
+}
+
+// FetchStartggSets pulls the tournament's recent sets from start.gg
+// using the saved API token. The frontend uses the result to populate
+// the Pick Set dialog.
+func (a *App) FetchStartggSets(rawURL string) (StartggSetsResult, error) {
+	a.mu.RLock()
+	token := a.secrets.StartggToken
+	a.mu.RUnlock()
+	if token == "" {
+		return StartggSetsResult{}, errors.New("no start.gg token configured (Settings → StartGG token)")
+	}
+	slug, err := ParseTournamentSlug(rawURL)
+	if err != nil {
+		return StartggSetsResult{}, err
+	}
+	parent := a.ctx
+	if parent == nil {
+		parent = context.Background()
+	}
+	ctx, cancel := context.WithTimeout(parent, 15*time.Second)
+	defer cancel()
+	return newStartggClient(token).FetchTournamentSets(ctx, slug, 64)
+}
+
+// DeleteCasterPreset removes by ID. Missing IDs are a no-op.
+func (a *App) DeleteCasterPreset(id string) error {
+	list := loadCasterPresets()
+	out := list[:0]
+	for _, c := range list {
+		if c.ID != id {
+			out = append(out, c)
+		}
+	}
+	if err := saveCasterPresets(out); err != nil {
+		return err
+	}
+	a.mu.Lock()
+	a.casterPresets = out
+	a.mu.Unlock()
+	return nil
 }
 
 // Update writes the current state out through every enabled channel:

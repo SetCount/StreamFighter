@@ -6,16 +6,40 @@ export function AssetsBaseURL() {
   return window['go']['main']['App']['AssetsBaseURL']();
 }
 
+export function DeleteCasterPreset(arg1) {
+  return window['go']['main']['App']['DeleteCasterPreset'](arg1);
+}
+
+export function DeletePlayerPreset(arg1) {
+  return window['go']['main']['App']['DeletePlayerPreset'](arg1);
+}
+
+export function FetchStartggSets(arg1) {
+  return window['go']['main']['App']['FetchStartggSets'](arg1);
+}
+
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
+}
+
+export function GetSecrets() {
+  return window['go']['main']['App']['GetSecrets']();
 }
 
 export function GetState() {
   return window['go']['main']['App']['GetState']();
 }
 
+export function ListCasterPresets() {
+  return window['go']['main']['App']['ListCasterPresets']();
+}
+
 export function ListGames() {
   return window['go']['main']['App']['ListGames']();
+}
+
+export function ListPlayerPresets() {
+  return window['go']['main']['App']['ListPlayerPresets']();
 }
 
 export function OverlayURL() {
@@ -26,8 +50,20 @@ export function ReloadGames() {
   return window['go']['main']['App']['ReloadGames']();
 }
 
+export function SaveCasterPreset(arg1) {
+  return window['go']['main']['App']['SaveCasterPreset'](arg1);
+}
+
+export function SavePlayerPreset(arg1) {
+  return window['go']['main']['App']['SavePlayerPreset'](arg1);
+}
+
 export function SetConfig(arg1) {
   return window['go']['main']['App']['SetConfig'](arg1);
+}
+
+export function SetSecrets(arg1) {
+  return window['go']['main']['App']['SetSecrets'](arg1);
 }
 
 export function SetState(arg1) {
