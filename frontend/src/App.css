@@ -11,16 +11,18 @@
     --font-base: clamp(15px, calc(0.40vw + 12.5px), 19px);
     --font-lg:   clamp(17px, calc(0.45vw + 14.0px), 22px);
 
-    --bg-page:    #1b2636;
-    --bg-bar:     #0f1722;
-    --bg-card:    #243144;
-    --bg-sunken:  #1b2636;
-    --line:       #2a3a52;
-    --line-hover: #4d6b9c;
-    --text:       #e6e9ef;
-    --text-muted: #8c9aaf;
-    --text-soft:  #c8d2e1;
-    --accent:     #3b82f6;
+    /* Neutral grays modeled on Adwaita dark — feels native under
+       GTK/WebKit2 instead of the previous saturated navy. */
+    --bg-page:    #242424;
+    --bg-bar:     #303030;
+    --bg-card:    #303030;
+    --bg-sunken:  #1e1e1e;
+    --line:       rgba(255, 255, 255, 0.09);
+    --line-hover: rgba(255, 255, 255, 0.18);
+    --text:       #ffffff;
+    --text-muted: rgba(255, 255, 255, 0.55);
+    --text-soft:  rgba(255, 255, 255, 0.78);
+    --accent:     #3584e4;
 }
 
 html, body, #root, #app {
@@ -50,15 +52,17 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 12px 24px;
+    padding: 10px 16px;
     background: var(--bg-bar);
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
     flex: 0 0 auto;
 }
 .topbar h1 {
     margin: 0;
-    font-size: var(--font-lg);
+    font-size: var(--font-md);
     font-weight: 700;
+    letter-spacing: 0;
 }
 .overlay-url {
     flex: 1;
@@ -77,28 +81,44 @@ body {
 }
 
 .settings-btn {
-    padding: 8px 16px;
+    padding: 6px 14px;
     font-size: var(--font-sm);
+    background: transparent;
+    color: var(--text-soft);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+.settings-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--line-hover);
+    color: var(--text);
 }
 
-.update-area {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
-    min-width: 120px;
-}
 .update-btn {
-    padding: 8px 22px;
+    padding: 6px 20px;
     font-weight: 600;
     font-size: var(--font-base);
+    background: var(--accent);
+    color: white;
+    border: 1px solid var(--accent);
+    border-radius: 6px;
+    cursor: pointer;
+    flex: 0 0 auto;
 }
-.update-area .status {
-    font-size: var(--font-xs);
+.update-btn:hover { filter: brightness(1.1); }
+.update-btn:active { filter: brightness(0.95); }
+
+.status-bar {
+    flex: 0 0 auto;
+    padding: 4px 16px;
+    background: var(--bg-bar);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
     color: var(--text-muted);
-    text-align: center;
-    min-height: 1.4em;
+    font-size: var(--font-xs);
     line-height: 1.4;
+    min-height: 1.6em;
 }
 
 .content {
@@ -110,33 +130,36 @@ body {
     gap: 16px;
 }
 
-/* ---------- Cards ------------------------------------------------------- */
+/* ---------- Sections: native fieldset/legend --------------------------- */
+/* All section grouping is done with <fieldset>/<legend> so the UA
+   stylesheet (under color-scheme: dark) draws the borders. We only add
+   layout glue here — never background/border/color overrides. */
 
-.card {
-    background: var(--bg-card);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 16px;
-}
-.card-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
-    gap: 12px;
-}
-.card-head h2 {
+fieldset {
+    /* min-width: min-content is the UA default and breaks shrinkable
+       grids; everything else is left alone. */
+    min-width: 0;
     margin: 0;
-    font-size: var(--font-sm);
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-muted);
 }
-.card-head-actions {
+
+legend {
     display: flex;
-    gap: 8px;
     align-items: center;
+    gap: 8px;
+    /* Slight padding so the legend "tab" reads as a label, not flush
+       text. UA already gives it a small inline padding, but explicit
+       beats theme variation. */
+    padding: 0 6px;
+}
+.legend-action {
+    margin-left: 4px;
+}
+.legend-swatch {
+    width: 0.9em;
+    height: 0.9em;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+    flex: 0 0 auto;
 }
 
 /* ---------- Board (entity cards + casters card side-by-side) ----------- */
@@ -149,17 +172,18 @@ body {
 }
 
 .add-card {
-    border: 2px dashed var(--line);
+    border: 1px dashed var(--line-hover);
     background: transparent;
     color: var(--text-muted);
-    border-radius: 8px;
+    border-radius: 6px;
     padding: 16px;
     min-height: 120px;
     cursor: pointer;
     font-size: var(--font-sm);
 }
 .add-card:hover {
-    border-color: var(--line-hover);
+    border-color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
     color: var(--text);
 }
 
@@ -175,7 +199,7 @@ body {
 
 .layout-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
     gap: 16px;
     align-items: start;
 }
@@ -186,35 +210,25 @@ body {
     min-width: 0;
 }
 
-/* ---------- Set Info card (inline label/control rows) ------------------ */
+/* ---------- Set Info ---------------------------------------------------- */
 
 .set-info-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 10px 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 18px;
 }
-.set-info-grid > label {
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-}
-.set-info-grid > label > span {
-    flex: 0 0 auto;
-    min-width: 90px;
-}
-.set-info-grid > label > input,
-.set-info-grid > label > .segmented {
-    flex: 1 1 auto;
-    min-width: 0;
+@media (max-width: 520px) {
+    .set-info-grid { grid-template-columns: 1fr; }
 }
 .set-info-grid > label + label { margin-top: 0; }
 
 label {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    font-size: var(--font-md);
-    color: var(--text-muted);
+    gap: 4px;
+    font-size: var(--font-sm);
+    color: var(--text-soft);
+    font-weight: 400;
 }
 label + label { margin-top: 12px; }
 
@@ -237,9 +251,10 @@ input, select {
 .segmented {
     display: flex;
     border: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
     min-height: 2.2em;
+    background: var(--bg-sunken);
 }
 .segmented-btn {
     flex: 1;
@@ -265,10 +280,9 @@ input, select {
 }
 
 /* ---------- Entity card ------------------------------------------------- */
-
-.entity-card {
-    border-left: 4px solid var(--port-color, var(--line));
-}
+/* Port color is shown as a swatch in the legend (see .legend-swatch) and
+   on the score pips, not as a chrome border — keeping the fieldset's UA
+   border consistent on all four sides. */
 
 .pips {
     display: flex;
@@ -293,17 +307,26 @@ input, select {
     border-color: var(--port-color, var(--accent));
 }
 
-.color-input {
+.color-swatches {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-height: 2.2em;
 }
-.color-input .swatch {
+.color-swatch {
     width: 22px;
     height: 22px;
-    border-radius: 4px;
-    border: 1px solid var(--line);
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    padding: 0;
+    cursor: pointer;
     flex: 0 0 auto;
+    transition: border-color 80ms ease, transform 80ms ease;
+}
+.color-swatch:hover { border-color: var(--line-hover); }
+.color-swatch[aria-checked="true"] {
+    border-color: var(--text);
+    transform: scale(1.1);
 }
 
 /* ---------- Players (inside an entity card) ---------------------------- */
@@ -335,28 +358,40 @@ input, select {
 .add-row {
     align-self: flex-start;
     background: transparent;
-    border: 1px dashed var(--line);
+    border: 1px dashed var(--line-hover);
     color: var(--text-muted);
-    padding: 6px 12px;
+    padding: 4px 10px;
     font-size: var(--font-sm);
     margin-top: 4px;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 6px;
 }
-.add-row:hover { background: var(--line); color: var(--text); }
+.add-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--text-muted);
+    color: var(--text);
+}
 
-/* ---------- Casters card (single column inside a thin card) ------------ */
+/* ---------- Casters ----------------------------------------------------- */
+/* Each .caster is a plain div separated by a top border — same lightweight
+   pattern as .player rows in the entity editor. Avoids the double UA-fieldset
+   border + double padding that ate the column's horizontal budget. */
 
 .casters {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    margin-bottom: 10px;
 }
 .caster {
-    background: var(--bg-sunken);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+}
+.caster:first-child {
+    border-top: none;
+    padding-top: 0;
 }
 .caster-head {
     display: flex;
@@ -364,7 +399,7 @@ input, select {
     align-items: center;
     margin-bottom: 8px;
 }
-.caster-head input { flex: 1; }
+.caster-head input { flex: 1; min-width: 0; }
 
 .socials {
     display: flex;
@@ -376,25 +411,61 @@ input, select {
     gap: 6px;
     align-items: center;
 }
-.social select { flex: 0 0 110px; }
-.social input { flex: 1; }
+.social input { flex: 1; min-width: 0; }
+
+.social-pick {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 0 0 auto;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px;
+    background: var(--bg-sunken);
+}
+.social-pick-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8em;
+    height: 1.8em;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: var(--font-md);
+    transition: background 80ms ease, color 80ms ease;
+}
+.social-pick-btn:hover { color: var(--text); }
+.social-pick-btn[aria-checked="true"] {
+    background: var(--accent);
+    color: white;
+}
 
 /* ---------- Settings dialog -------------------------------------------- */
 
 .settings-dialog {
-    border: 0;
-    padding: 0;
-    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    background: var(--bg-page);
     color: inherit;
     max-width: 640px;
     width: 90vw;
     margin: auto;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 .settings-dialog::backdrop {
     background: rgba(0, 0, 0, 0.55);
 }
-.settings-dialog .card {
-    margin: 0;
+
+.dialog-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-bottom: 12px;
 }
 
 .checkboxes {

@@ -74,11 +74,9 @@ function App() {
                     OBS source: <code>{overlayUrl}</code>
                 </div>
                 <button className="settings-btn" onClick={openSettings}>Settings</button>
-                <div className="update-area">
-                    <button className="update-btn" onClick={onUpdate}>Update</button>
-                    <div className="status">{status}</div>
-                </div>
+                <button className="update-btn" onClick={onUpdate}>Update</button>
             </header>
+            <div className="status-bar" aria-live="polite">{status}</div>
 
             <main className="content">
                 <div className="layout-grid">

@@ -18,8 +18,8 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:  "StreamAssist",
-		Width:  1400,
-		Height: 900,
+		Width:  1500,
+		Height: 920,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

@@ -10,13 +10,17 @@ type Props = {
     bestOf: number;
 };
 
+// Muted port palette — Melee P1/P2/P3/P4 ordering, desaturated to sit
+// next to the Adwaita-neutral chrome without screaming.
+const PORT_COLORS = ['#c96a6a', '#5f8fc4', '#cdb466', '#7ab07a'] as const;
+
 const blankPlayer = (): Player => ({
     name: '', character: '', characterColor: '',
 });
 const blankEntity = (): ScoreEntity => ({
     players: [blankPlayer()],
     currentScore: 0,
-    portColor: 'white',
+    portColor: PORT_COLORS[0],
 });
 
 function entityTitle(format: string, i: number): string {
@@ -24,8 +28,6 @@ function entityTitle(format: string, i: number): string {
     if (format === '1v1') return `Player ${i + 1}`;
     return `Entity ${i + 1}`;
 }
-
-const PORT_COLORS = ['red', 'blue', 'green', 'yellow'] as const;
 
 export default function ScoreEntitiesEditor({
     value, onChange, canResize, format, bestOf,
@@ -57,22 +59,26 @@ export default function ScoreEntitiesEditor({
     return (
         <>
             {value.map((e, i) => (
-                <section
+                <fieldset
                     key={i}
-                    className="card entity-card"
-                    style={{ '--port-color': e.portColor || '#2a3a52' } as CSSProperties}
+                    className="entity-card"
+                    style={{ '--port-color': e.portColor || 'transparent' } as CSSProperties}
                 >
-                    <header className="card-head">
-                        <h2>{entityTitle(format, i)}</h2>
+                    <legend>
+                        <span
+                            className="legend-swatch"
+                            style={{ background: e.portColor || 'transparent' }}
+                        />
+                        {entityTitle(format, i)}
                         {canResize && (
                             <button
-                                className="icon-btn"
+                                className="icon-btn legend-action"
                                 onClick={() => removeEntity(i)}
                                 disabled={value.length <= 2}
                                 aria-label="Remove entity"
                             >×</button>
                         )}
-                    </header>
+                    </legend>
 
                     <label>
                         Score ({e.currentScore} / {pipCount})
@@ -92,18 +98,19 @@ export default function ScoreEntitiesEditor({
 
                     <label>
                         Port / Team Color
-                        <div className="color-input">
-                            <span className="swatch" style={{ background: e.portColor || 'transparent' }} />
-                            <select
-                                value={e.portColor}
-                                onChange={ev => setEntity(i, { portColor: ev.target.value })}
-                            >
-                                {PORT_COLORS.map(c => (
-                                    <option key={c} value={c}>
-                                        {c[0].toUpperCase() + c.slice(1)}
-                                    </option>
-                                ))}
-                            </select>
+                        <div className="color-swatches" role="radiogroup" aria-label="Port / Team Color">
+                            {PORT_COLORS.map(c => (
+                                <button
+                                    key={c}
+                                    type="button"
+                                    className="color-swatch"
+                                    role="radio"
+                                    aria-checked={e.portColor === c}
+                                    aria-label={c}
+                                    style={{ background: c }}
+                                    onClick={() => setEntity(i, { portColor: c })}
+                                />
+                            ))}
                         </div>
                     </label>
 
@@ -142,7 +149,7 @@ export default function ScoreEntitiesEditor({
                             <button className="add-row" onClick={() => addPlayer(i)}>+ Player</button>
                         )}
                     </div>
-                </section>
+                </fieldset>
             ))}
             {canResize && (
                 <button className="add-card" onClick={addEntity}>+ Entity</button>

@@ -21,27 +21,25 @@ const FORMAT_OPTIONS = [
 export default function SetInfoEditor({ value, onChange }: Props) {
     const set = (patch: Partial<SetInfo>) => onChange({ ...value, ...patch });
     return (
-        <section className="card set-info-card">
-            <header className="card-head">
-                <h2>Set Info</h2>
-            </header>
+        <fieldset>
+            <legend>Set Info</legend>
             <div className="set-info-grid">
                 <label>
-                    <span>Tournament</span>
+                    Tournament
                     <input
                         value={value.tournamentName}
                         onChange={e => set({ tournamentName: e.target.value })}
                     />
                 </label>
                 <label>
-                    <span>Round</span>
+                    Round
                     <input
                         value={value.roundLabel}
                         onChange={e => set({ roundLabel: e.target.value })}
                     />
                 </label>
                 <label>
-                    <span>Best Of</span>
+                    Best Of
                     <Segmented
                         value={value.bestOf}
                         options={BEST_OF_OPTIONS}
@@ -49,7 +47,7 @@ export default function SetInfoEditor({ value, onChange }: Props) {
                     />
                 </label>
                 <label>
-                    <span>Format</span>
+                    Format
                     <Segmented
                         value={value.format}
                         options={FORMAT_OPTIONS}
@@ -57,6 +55,6 @@ export default function SetInfoEditor({ value, onChange }: Props) {
                     />
                 </label>
             </div>
-        </section>
+        </fieldset>
     );
 }

@@ -10,16 +10,14 @@ type Props = {
 export default function ConfigEditor({ value, onChange, onSave, onClose }: Props) {
     const set = (patch: Partial<OutputConfig>) => onChange({ ...value, ...patch });
     return (
-        <section className="card">
-            <header className="card-head">
-                <h2>Output Config</h2>
-                <div className="card-head-actions">
-                    <button onClick={onSave}>Save Config</button>
-                    {onClose && (
-                        <button className="icon-btn" onClick={onClose} aria-label="Close">×</button>
-                    )}
-                </div>
-            </header>
+        <fieldset className="config-editor">
+            <legend>Output Config</legend>
+            <div className="dialog-actions">
+                <button onClick={onSave}>Save Config</button>
+                {onClose && (
+                    <button className="icon-btn" onClick={onClose} aria-label="Close">×</button>
+                )}
+            </div>
             <div className="grid">
                 <label>
                     Output Directory
@@ -70,6 +68,6 @@ export default function ConfigEditor({ value, onChange, onSave, onClose }: Props
                     Run overlay HTTP server
                 </label>
             </div>
-        </section>
+        </fieldset>
     );
 }
