@@ -1,15 +1,14 @@
 import type { Player, ScoreEntity } from './types';
-
-const DEFAULT_COLORS = ['red', 'blue', 'green', 'yellow'];
+import { PORT_COLORS } from './portColors';
 
 const blankPlayer = (): Player => ({
-    name: '', character: '', characterColor: '',
+    name: '', character: '', costume: 0,
 });
 
 const blankEntity = (i: number): ScoreEntity => ({
     players: [blankPlayer()],
     currentScore: 0,
-    portColor: DEFAULT_COLORS[i] ?? 'white',
+    portColor: PORT_COLORS[i] ?? PORT_COLORS[0],
 });
 
 // fixedShape coerces entities to exactly entityCount entries with exactly
@@ -29,7 +28,7 @@ function fixedShape(
         out.push({
             players,
             currentScore: existing?.currentScore ?? 0,
-            portColor: existing?.portColor ?? DEFAULT_COLORS[i] ?? 'white',
+            portColor: existing?.portColor ?? PORT_COLORS[i] ?? PORT_COLORS[0],
         });
     }
     return out;
