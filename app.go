@@ -348,6 +348,29 @@ func (a *App) FetchStartggSets(rawURL string) (StartggSetsResult, error) {
 	return newStartggClient(token).FetchTournamentSets(ctx, slug, 64)
 }
 
+// FetchStartggTournament pulls just the tournament's name + slug. Wired
+// to the URL-blur auto-populate in the Tournament card so we don't pay
+// the full FetchStartggSets cost just to fill in the name field.
+func (a *App) FetchStartggTournament(rawURL string) (StartggTournament, error) {
+	a.mu.RLock()
+	token := a.secrets.StartggToken
+	a.mu.RUnlock()
+	if token == "" {
+		return StartggTournament{}, errors.New("no start.gg token configured (Settings → StartGG token)")
+	}
+	slug, err := ParseTournamentSlug(rawURL)
+	if err != nil {
+		return StartggTournament{}, err
+	}
+	parent := a.ctx
+	if parent == nil {
+		parent = context.Background()
+	}
+	ctx, cancel := context.WithTimeout(parent, 10*time.Second)
+	defer cancel()
+	return newStartggClient(token).FetchTournament(ctx, slug)
+}
+
 // DeleteCasterPreset removes by ID. Missing IDs are a no-op.
 func (a *App) DeleteCasterPreset(id string) error {
 	list := loadCasterPresets()

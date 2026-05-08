@@ -49,9 +49,11 @@ function playerFromStartgg(p: StartggPlayer, presets: PlayerPreset[]): Player {
 
 // applyStartggSet returns the next StreamState after pulling a set
 // from start.gg. SetInfo gets tournament name (caller passes), round
-// label, format. BestOf is preserved — start.gg doesn't expose it
-// reliably. Each ScoreEntity is rebuilt from the entrant; we keep the
-// previous entity's portColor when no preset color overrides it.
+// label, format. BestOf is taken from `set.totalGames` only when it's a
+// recognized 3/5/7 — start.gg only populates it when the tournament
+// configured per-round bestOf, otherwise we preserve prev. Each
+// ScoreEntity is rebuilt from the entrant; we keep the previous entity's
+// portColor when no preset color overrides it.
 export function applyStartggSet(
     prev: StreamState,
     tournamentName: string,
@@ -59,6 +61,9 @@ export function applyStartggSet(
     presets: PlayerPreset[],
 ): StreamState {
     const format = inferFormat(set.entrants);
+    const bestOf = [3, 5, 7].includes(set.totalGames)
+        ? set.totalGames
+        : prev.setInfo.bestOf;
     const entities: ScoreEntity[] = set.entrants.map((entrant, i) => {
         const players = entrant.players.length > 0
             ? entrant.players.map(p => playerFromStartgg(p, presets))
@@ -78,7 +83,7 @@ export function applyStartggSet(
     });
 
     const reshaped = reshapeForFormat(entities, format);
-    const clamped = clampScores(reshaped, prev.setInfo.bestOf);
+    const clamped = clampScores(reshaped, bestOf);
 
     return {
         ...prev,
@@ -87,6 +92,7 @@ export function applyStartggSet(
             tournamentName,
             roundLabel: set.fullRoundText || prev.setInfo.roundLabel,
             format,
+            bestOf,
         },
         scoreEntities: clamped,
     };

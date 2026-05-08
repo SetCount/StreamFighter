@@ -38,11 +38,15 @@ type StartggEntrant struct {
 // StartggSet is one match. EventName is flattened from the parent
 // event so the picker UI can render "Singles · WR2 — A vs B" inline.
 // State follows start.gg's set state: 1=created, 2=ongoing, 3=completed.
+// TotalGames is start.gg's `totalGames` — when the tournament configures
+// per-round bestOf in start.gg, this is the set length (3/5/7); 0 when
+// the tournament didn't configure it. Frontend only trusts a 3/5/7 value.
 type StartggSet struct {
 	ID            string           `json:"id"`
 	FullRoundText string           `json:"fullRoundText"`
 	EventName     string           `json:"eventName"`
 	State         int              `json:"state"`
+	TotalGames    int              `json:"totalGames"`
 	Entrants      []StartggEntrant `json:"entrants"`
 }
 
@@ -92,6 +96,31 @@ func newStartggClient(token string) *startggClient {
 	}
 }
 
+// post sends a GraphQL request and decodes the response into out. Both
+// fetch methods funnel through this so request boilerplate (auth, JSON
+// headers, status check) lives in one place.
+func (c *startggClient) post(ctx context.Context, query string, vars map[string]any, out any) error {
+	buf, err := json.Marshal(map[string]any{"query": query, "variables": vars})
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequestWithContext(ctx, "POST", startggEndpoint, bytes.NewReader(buf))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("startgg http %d", resp.StatusCode)
+	}
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
 // startgg's GraphQL response shape — separate from the public types so
 // we can mold it into something flatter for the frontend.
 type sggResp struct {
@@ -106,6 +135,7 @@ type sggResp struct {
 						ID            json.Number `json:"id"`
 						FullRoundText string      `json:"fullRoundText"`
 						State         int         `json:"state"`
+						TotalGames    int         `json:"totalGames"`
 						Slots         []struct {
 							Entrant *struct {
 								Name         string `json:"name"`
@@ -135,7 +165,7 @@ query TournamentSets($slug: String!, $perPage: Int!) {
       name
       sets(perPage: $perPage, page: 1, sortType: RECENT) {
         nodes {
-          id fullRoundText state
+          id fullRoundText state totalGames
           slots {
             entrant {
               name
@@ -154,33 +184,9 @@ query TournamentSets($slug: String!, $perPage: Int!) {
 func (c *startggClient) FetchTournamentSets(
 	ctx context.Context, slug string, perPage int,
 ) (StartggSetsResult, error) {
-	body := map[string]any{
-		"query":     sggSetsQuery,
-		"variables": map[string]any{"slug": slug, "perPage": perPage},
-	}
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return StartggSetsResult{}, err
-	}
-	req, err := http.NewRequestWithContext(ctx, "POST", startggEndpoint, bytes.NewReader(buf))
-	if err != nil {
-		return StartggSetsResult{}, err
-	}
-	req.Header.Set("Authorization", "Bearer "+c.token)
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return StartggSetsResult{}, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return StartggSetsResult{}, fmt.Errorf("startgg http %d", resp.StatusCode)
-	}
-
 	var parsed sggResp
-	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
-		return StartggSetsResult{}, fmt.Errorf("decode startgg: %w", err)
+	if err := c.post(ctx, sggSetsQuery, map[string]any{"slug": slug, "perPage": perPage}, &parsed); err != nil {
+		return StartggSetsResult{}, err
 	}
 	if len(parsed.Errors) > 0 {
 		return StartggSetsResult{}, fmt.Errorf("startgg: %s", parsed.Errors[0].Message)
@@ -224,9 +230,42 @@ func (c *startggClient) FetchTournamentSets(
 				FullRoundText: n.FullRoundText,
 				EventName:     ev.Name,
 				State:         n.State,
+				TotalGames:    n.TotalGames,
 				Entrants:      entrants,
 			})
 		}
 	}
 	return out, nil
+}
+
+const sggTournamentQuery = `
+query TournamentInfo($slug: String!) {
+  tournament(slug: $slug) { name slug }
+}`
+
+// FetchTournament returns just the tournament identity. Used by the
+// URL-blur auto-populate so we don't pull every event's sets just to
+// fill in the tournament name field.
+func (c *startggClient) FetchTournament(ctx context.Context, slug string) (StartggTournament, error) {
+	var parsed struct {
+		Data struct {
+			Tournament *struct {
+				Name string `json:"name"`
+				Slug string `json:"slug"`
+			} `json:"tournament"`
+		} `json:"data"`
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if err := c.post(ctx, sggTournamentQuery, map[string]any{"slug": slug}, &parsed); err != nil {
+		return StartggTournament{}, err
+	}
+	if len(parsed.Errors) > 0 {
+		return StartggTournament{}, fmt.Errorf("startgg: %s", parsed.Errors[0].Message)
+	}
+	if parsed.Data.Tournament == nil {
+		return StartggTournament{}, fmt.Errorf("tournament %q not found", slug)
+	}
+	return StartggTournament{Name: parsed.Data.Tournament.Name, Slug: parsed.Data.Tournament.Slug}, nil
 }
