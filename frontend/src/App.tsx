@@ -79,9 +79,11 @@ function App() {
     return (
         <div className="app">
             <header className="topbar">
-                <h1>StreamAssist</h1>
-                <div className="overlay-url">
-                    OBS source: <code>{overlayUrl}</code>
+                <div style={{ "display": "flex", "flexDirection": "column", "flexGrow": "1" }}>
+                    <h1>StreamAssist</h1>
+                    <div className="overlay-url">
+                        OBS source: <code>{overlayUrl}</code>
+                    </div>
                 </div>
                 <select
                     className="game-select"

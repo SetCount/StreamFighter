@@ -36,19 +36,19 @@ export default function SetInfoEditor({ value, onChange, matchCols }: Props) {
                         onChange={e => set({ tournamentName: e.target.value })}
                     />
                 </label>
-                <label className="round">
-                    Round
-                    <input
-                        value={value.roundLabel}
-                        onChange={e => set({ roundLabel: e.target.value })}
-                    />
-                </label>
                 <label className="shrink">
                     Best Of
                     <Segmented
                         value={value.bestOf}
                         options={BEST_OF_OPTIONS}
                         onChange={n => set({ bestOf: n })}
+                    />
+                </label>
+                <label className="grow">
+                    Round
+                    <input
+                        value={value.roundLabel}
+                        onChange={e => set({ roundLabel: e.target.value })}
                     />
                 </label>
                 <label className="shrink">
