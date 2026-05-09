@@ -9,6 +9,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // configPath is the cwd-relative file we persist OutputConfig to so
@@ -446,6 +448,12 @@ var portColors = [4]string{
 	"#5f8fc4", // P2 blue
 	"#cdb466", // P3 yellow
 	"#7ab07a", // P4 green
+}
+
+// ResizeWindow sets the native window dimensions. Called from the frontend
+// when the match format changes (1v1 → 600 tall, 2v2 → 1100 tall).
+func (a *App) ResizeWindow(width, height int) {
+	wailsruntime.WindowSetSize(a.ctx, width, height)
 }
 
 func defaultState() StreamState {

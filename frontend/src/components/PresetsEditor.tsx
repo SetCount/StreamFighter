@@ -102,6 +102,22 @@ export default function PresetsEditor({
                                             onChange={ev => setPlayer(i, { name: ev.target.value })}
                                         />
                                     </label>
+                                    <label className="shrink">
+                                        Pronouns
+                                        <input
+                                            placeholder="they/them"
+                                            value={p.pronouns ?? ''}
+                                            onChange={ev => setPlayer(i, { pronouns: ev.target.value || undefined })}
+                                        />
+                                    </label>
+                                    <label className="shrink">
+                                        Team
+                                        <input
+                                            placeholder="Team name"
+                                            value={p.team ?? ''}
+                                            onChange={ev => setPlayer(i, { team: ev.target.value || undefined })}
+                                        />
+                                    </label>
                                     <label className="grow">
                                         Aliases (comma-separated)
                                         <input

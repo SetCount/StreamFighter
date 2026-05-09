@@ -41,6 +41,8 @@ func flattenFields(s StreamState, gameID string, packs []GamePack) map[string]st
 		for j, p := range e.Players {
 			pp := fmt.Sprintf("%s_player_%d", prefix, j+1)
 			out[pp+"_name.txt"] = p.Name
+			out[pp+"_pronouns.txt"] = p.Pronouns
+			out[pp+"_team.txt"] = p.Team
 			out[pp+"_character.txt"] = characterDisplayName(pack, p.Character)
 			out[pp+"_costume.txt"] = strconv.Itoa(p.Costume)
 		}

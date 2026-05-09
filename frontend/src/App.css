@@ -178,11 +178,8 @@ legend {
 /* ---------- Board (entity cards + casters card side-by-side) ----------- */
 
 .board {
-    display: flex;
-    /* Cards sized to ~match the portrait width (188px native) — fixed so
-       cards don't balloon when there's only two entities on a wide
-       screen. */
-    grid-template-columns: repeat(auto-fit, 220px);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 14px;
     align-items: start;
 }
@@ -218,7 +215,8 @@ legend {
 
 .layout-grid {
     display: grid;
-    grid-template-columns: 1fr minmax(360px, 460px);
+    /* grid-template-columns: 1fr minmax(360px, 460px); */
+    grid-template-columns: 2fr 3fr;
     gap: 16px;
     align-items: start;
 }
@@ -241,6 +239,7 @@ legend {
     flex-wrap: wrap;
     align-items: end;
     gap: 10px 14px;
+    margin-bottom: 5px;
 }
 .set-info-row > label { flex: 0 1 auto; margin-top: 0; }
 .set-info-row > label.grow { flex: 1 1 220px; min-width: 160px; }
@@ -394,6 +393,16 @@ input, select {
     align-items: center;
 }
 .player-row .name { flex: 1; }
+.player-extras {
+    display: flex;
+    gap: 6px;
+}
+.player-extras input {
+    flex: 1;
+    font-size: var(--font-sm);
+    min-height: 1.8em;
+    padding: 0.25em 0.5em;
+}
 
 .add-row {
     align-self: flex-start;
@@ -688,10 +697,9 @@ input, select {
 /* ---------- Pick Set button + StartGG row ------------------------------ */
 
 .startgg-details {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--line);
+    margin-bottom: 5px;
 }
+
 .startgg-details summary {
     cursor: pointer;
     font-size: var(--font-sm);
@@ -701,12 +709,7 @@ input, select {
 .startgg-details[open] summary {
     margin-bottom: 6px;
 }
-.startgg-details label {
-    display: block;
-}
-.startgg-details input {
-    width: 100%;
-}
+
 .pick-set-btn {
     padding: 6px 14px;
     font-size: var(--font-sm);

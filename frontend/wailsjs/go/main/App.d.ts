@@ -28,6 +28,8 @@ export function OverlayURL():Promise<string>;
 
 export function ReloadGames():Promise<Array<main.GamePack>>;
 
+export function ResizeWindow(arg1:number,arg2:number):Promise<void>;
+
 export function SaveCasterPreset(arg1:main.CasterPreset):Promise<main.CasterPreset>;
 
 export function SavePlayerPreset(arg1:main.PlayerPreset):Promise<main.PlayerPreset>;

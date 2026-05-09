@@ -96,6 +96,8 @@ export default function ScoreEntitiesEditor({
       const cur = value[ei].players[pi];
       const playerPatch: Partial<Player> = {
         name: match.name,
+        pronouns: match.pronouns,
+        team: match.team,
         character: match.character ?? cur.character,
         costume: match.costume ?? cur.costume,
         startggPlayerId: match.startggPlayerId,
@@ -125,7 +127,7 @@ export default function ScoreEntitiesEditor({
   };
 
   return (
-    <>
+    <div className="board">
       <datalist id="player-preset-names">
         {presets.map((p) => (
           <option key={p.id} value={p.name} />
@@ -224,6 +226,26 @@ export default function ScoreEntitiesEditor({
                       </button>
                     )}
                   </div>
+                  <div className="player-extras">
+                    <input
+                      className="pronouns"
+                      placeholder="Pronouns"
+                      value={p.pronouns ?? ""}
+                      onChange={(ev) =>
+                        setPlayer(i, pi, {
+                          pronouns: ev.target.value || undefined,
+                        })
+                      }
+                    />
+                    <input
+                      className="team"
+                      placeholder="Team"
+                      value={p.team ?? ""}
+                      onChange={(ev) =>
+                        setPlayer(i, pi, { team: ev.target.value || undefined })
+                      }
+                    />
+                  </div>
                   <button
                     type="button"
                     className="player-portrait"
@@ -302,6 +324,6 @@ export default function ScoreEntitiesEditor({
         pack={pack}
         assetsBase={assetsBase}
       />
-    </>
+    </div>
   );
 }

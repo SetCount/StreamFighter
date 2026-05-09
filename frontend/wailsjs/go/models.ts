@@ -199,6 +199,8 @@ export namespace main {
 	}
 	export class Player {
 	    name: string;
+	    pronouns?: string;
+	    team?: string;
 	    character: string;
 	    costume: number;
 	    startggPlayerId?: number;
@@ -210,6 +212,8 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
+	        this.pronouns = source["pronouns"];
+	        this.team = source["team"];
 	        this.character = source["character"];
 	        this.costume = source["costume"];
 	        this.startggPlayerId = source["startggPlayerId"];
@@ -218,6 +222,8 @@ export namespace main {
 	export class PlayerPreset {
 	    id: string;
 	    name: string;
+	    pronouns?: string;
+	    team?: string;
 	    aliases?: string[];
 	    startggPlayerId?: number;
 	    character?: string;
@@ -232,6 +238,8 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.name = source["name"];
+	        this.pronouns = source["pronouns"];
+	        this.team = source["team"];
 	        this.aliases = source["aliases"];
 	        this.startggPlayerId = source["startggPlayerId"];
 	        this.character = source["character"];

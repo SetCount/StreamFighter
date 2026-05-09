@@ -19,7 +19,7 @@ func main() {
 	err := wails.Run(&options.App{
 		Title:  "StreamFighter",
 		Width:  1000,
-		Height: 700,
+		Height: 600,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

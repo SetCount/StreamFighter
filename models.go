@@ -51,6 +51,8 @@ type Caster struct {
 // reapply the same preset even if the gamer tag changes.
 type Player struct {
 	Name            string `json:"name"`
+	Pronouns        string `json:"pronouns,omitempty"`
+	Team            string `json:"team,omitempty"`
 	Character       string `json:"character"`
 	Costume         int    `json:"costume"`
 	StartggPlayerID int64  `json:"startggPlayerId,omitempty"`
@@ -102,6 +104,8 @@ type OutputConfig struct {
 type PlayerPreset struct {
 	ID              string   `json:"id"`
 	Name            string   `json:"name"`
+	Pronouns        string   `json:"pronouns,omitempty"`
+	Team            string   `json:"team,omitempty"`
 	Aliases         []string `json:"aliases,omitempty"`
 	StartggPlayerID int64    `json:"startggPlayerId,omitempty"`
 	Character       string   `json:"character,omitempty"`

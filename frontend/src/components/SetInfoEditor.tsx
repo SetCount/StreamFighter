@@ -35,15 +35,6 @@ export default function SetInfoEditor({
     <div className="set-info-bar">
       <fieldset className="set-info-card">
         <legend>Tournament</legend>
-        <div className="set-info-row">
-          <label className="grow">
-            Name
-            <input
-              value={value.tournamentName}
-              onChange={(e) => set({ tournamentName: e.target.value })}
-            />
-          </label>
-        </div>
 
         <details className="startgg-details">
           <summary>StartGG URL</summary>
@@ -57,18 +48,28 @@ export default function SetInfoEditor({
             />
           </label>
         </details>
-      </fieldset>
 
-      <fieldset className="set-info-card">
-        <legend>Set Info</legend>
-        <div>
+        <div className="set-info-row">
           <label className="grow">
-            Round
+            Name
             <input
-              value={value.roundLabel}
-              onChange={(e) => set({ roundLabel: e.target.value })}
+              value={value.tournamentName}
+              onChange={(e) => set({ tournamentName: e.target.value })}
             />
           </label>
+        </div>
+
+        <div>
+          <div className="set-info-row">
+            <label className="grow">
+              Round
+              <input
+                value={value.roundLabel}
+                onChange={(e) => set({ roundLabel: e.target.value })}
+              />
+            </label>
+          </div>
+
           <div className="set-info-row">
             <label className="shrink">
               <button

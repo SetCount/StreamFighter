@@ -54,6 +54,10 @@ export function ReloadGames() {
   return window['go']['main']['App']['ReloadGames']();
 }
 
+export function ResizeWindow(arg1, arg2) {
+  return window['go']['main']['App']['ResizeWindow'](arg1, arg2);
+}
+
 export function SaveCasterPreset(arg1) {
   return window['go']['main']['App']['SaveCasterPreset'](arg1);
 }

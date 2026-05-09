@@ -18,6 +18,7 @@ import {
   DeleteCasterPreset,
   FetchStartggSets,
   FetchStartggTournament,
+  ResizeWindow,
 } from "../wailsjs/go/main/App";
 import type {
   StreamState,
@@ -39,6 +40,12 @@ import ConfigEditor from "./components/ConfigEditor";
 import PresetsEditor from "./components/PresetsEditor";
 import SetPicker from "./components/SetPicker";
 import "./App.css";
+
+function heightForFormat(format: string): number {
+  if (format === "2v2") return 1150;
+  if (format === "1v1") return 650;
+  return 700;
+}
 
 function App() {
   const [state, setSt] = useState<StreamState | null>(null);
@@ -71,7 +78,8 @@ function App() {
       ListCasterPresets(),
     ])
       .then(([s, c, u, a, g, sec, pp, cp]) => {
-        setSt(s as unknown as StreamState);
+        const st = s as unknown as StreamState;
+        setSt(st);
         setCfg(c as unknown as OutputConfig);
         setOverlayUrl(u);
         setAssetsBase(a);
@@ -79,6 +87,7 @@ function App() {
         setToken((sec as any)?.startggToken ?? "");
         setPlayerPresets((pp ?? []) as unknown as PlayerPreset[]);
         setCasterPresets((cp ?? []) as unknown as CasterPreset[]);
+        ResizeWindow(1000, heightForFormat(st.setInfo.format));
       })
       .catch((e) => setStatus("Failed to load: " + e));
   }, []);
@@ -112,6 +121,21 @@ function App() {
     const next = { ...config, game: id };
     setCfg(next);
     SetConfig(next as any).catch((e) => setStatus("Error saving game: " + e));
+    setSt((prev) =>
+      prev
+        ? {
+            ...prev,
+            scoreEntities: prev.scoreEntities.map((e) => ({
+              ...e,
+              players: e.players.map((p) => ({
+                ...p,
+                character: "",
+                costume: 0,
+              })),
+            })),
+          }
+        : prev,
+    );
   };
 
   const portPalette = portPaletteFor(findPack(games, config.game));
@@ -120,6 +144,7 @@ function App() {
     let entities = state.scoreEntities;
     if (si.format !== state.setInfo.format) {
       entities = reshapeForFormat(entities, si.format, portPalette);
+      ResizeWindow(1000, heightForFormat(si.format));
     }
     if (si.bestOf !== state.setInfo.bestOf) {
       entities = clampScores(entities, si.bestOf);
@@ -270,37 +295,43 @@ function App() {
           Update
         </button>
       </header>
-      <div className="status-bar" aria-live="polite">
-        {status}
-      </div>
+
+      {status ? (
+        <div className="status-bar" aria-live="polite">
+          {status}
+        </div>
+      ) : (
+        <></>
+      )}
 
       <main className="content">
-        <SetInfoEditor
-          value={state.setInfo}
-          onChange={onSetInfoChange}
-          tournamentUrl={config.startggTournamentUrl ?? ""}
-          onTournamentUrlChange={onTournamentUrlChange}
-          onTournamentUrlBlur={onTournamentUrlBlur}
-          onPickSet={onPickSet}
-        />
         <div className="layout-grid">
-          <div className="board">
-            <ScoreEntitiesEditor
-              value={state.scoreEntities}
-              onChange={(se) => setSt({ ...state, scoreEntities: se })}
-              canResize={canResize(state.setInfo.format)}
-              format={state.setInfo.format}
-              bestOf={state.setInfo.bestOf}
-              games={games}
-              gameId={config.game}
-              assetsBase={assetsBase}
-              presets={playerPresets}
+          <div>
+            <SetInfoEditor
+              value={state.setInfo}
+              onChange={onSetInfoChange}
+              tournamentUrl={config.startggTournamentUrl ?? ""}
+              onTournamentUrlChange={onTournamentUrlChange}
+              onTournamentUrlBlur={onTournamentUrlBlur}
+              onPickSet={onPickSet}
+            />
+            <CastersEditor
+              value={state.casters}
+              onChange={(c) => setSt({ ...state, casters: c })}
+              presets={casterPresets}
             />
           </div>
-          <CastersEditor
-            value={state.casters}
-            onChange={(c) => setSt({ ...state, casters: c })}
-            presets={casterPresets}
+
+          <ScoreEntitiesEditor
+            value={state.scoreEntities}
+            onChange={(se) => setSt({ ...state, scoreEntities: se })}
+            canResize={canResize(state.setInfo.format)}
+            format={state.setInfo.format}
+            bestOf={state.setInfo.bestOf}
+            games={games}
+            gameId={config.game}
+            assetsBase={assetsBase}
+            presets={playerPresets}
           />
         </div>
       </main>

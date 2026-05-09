@@ -11,6 +11,8 @@ export type SetInfo = {
 
 export type Player = {
     name: string;
+    pronouns?: string;
+    team?: string;
     character: string;
     costume: number;
     startggPlayerId?: number;
@@ -57,6 +59,8 @@ export type Secrets = {
 export type PlayerPreset = {
     id: string;
     name: string;
+    pronouns?: string;
+    team?: string;
     aliases?: string[];
     startggPlayerId?: number;
     character?: string;
