@@ -26,6 +26,14 @@ type GamePack struct {
 	// an alphabetical auto-grid. Characters present on disk but missing
 	// from the layout are appended as a trailing row.
 	CharacterLayout [][]string `json:"characterLayout,omitempty"`
+	// PortColors are the per-player slot colors offered in 1v1 and FFA
+	// formats (the entity legend swatches). Optional; when empty the
+	// frontend falls back to the legacy 4-color palette.
+	PortColors []string `json:"portColors,omitempty"`
+	// TeamColors are the per-team slot colors offered in 2v2 format.
+	// Optional; when empty the frontend falls back to PortColors (or
+	// the legacy palette when neither is configured).
+	TeamColors []string `json:"teamColors,omitempty"`
 }
 
 // Character is one playable fighter within a GamePack.
@@ -47,6 +55,8 @@ type gameManifest struct {
 	ShortName       string            `json:"shortName"`
 	CharacterNames  map[string]string `json:"characterNames"`
 	CharacterLayout [][]string        `json:"characterLayout"`
+	PortColors      []string          `json:"portColors"`
+	TeamColors      []string          `json:"teamColors"`
 }
 
 // portraitRE matches per-costume portrait files in a character dir.
@@ -95,6 +105,8 @@ func loadGamePack(dir, id string) (GamePack, error) {
 		Name:            coalesce(m.Name, humanizeID(id)),
 		ShortName:       coalesce(m.ShortName, m.Name, humanizeID(id)),
 		CharacterLayout: m.CharacterLayout,
+		PortColors:      m.PortColors,
+		TeamColors:      m.TeamColors,
 	}
 
 	charsDir := filepath.Join(dir, "characters")

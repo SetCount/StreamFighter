@@ -5,11 +5,8 @@ const blankPlayer = (): Player => ({
     name: '', character: '', costume: 0,
 });
 
-const blankEntity = (i: number): ScoreEntity => ({
-    players: [blankPlayer()],
-    currentScore: 0,
-    portColor: PORT_COLORS[i] ?? PORT_COLORS[0],
-});
+const colorAt = (palette: readonly string[], i: number): string =>
+    palette[i] ?? palette[0] ?? PORT_COLORS[0];
 
 // fixedShape coerces entities to exactly entityCount entries with exactly
 // playerCount players each, preserving any existing values where it can.
@@ -17,6 +14,7 @@ function fixedShape(
     current: ScoreEntity[],
     entityCount: number,
     playerCount: number,
+    palette: readonly string[],
 ): ScoreEntity[] {
     const out: ScoreEntity[] = [];
     for (let i = 0; i < entityCount; i++) {
@@ -28,7 +26,7 @@ function fixedShape(
         out.push({
             players,
             currentScore: existing?.currentScore ?? 0,
-            portColor: existing?.portColor ?? PORT_COLORS[i] ?? PORT_COLORS[0],
+            portColor: existing?.portColor ?? colorAt(palette, i),
         });
     }
     return out;
@@ -37,19 +35,22 @@ function fixedShape(
 // reshapeForFormat returns entities resized to match the given format.
 // 1v1 -> 2 entities x 1 player. 2v2 -> 2 entities x 2 players.
 // FFA is free-form; we only ensure at least 2 entities of 1 player each.
+// `palette` seeds portColor on newly-created entities; existing colors
+// are always preserved.
 export function reshapeForFormat(
     current: ScoreEntity[],
     format: string,
+    palette: readonly string[] = PORT_COLORS,
 ): ScoreEntity[] {
     switch (format) {
         case '1v1':
-            return fixedShape(current, 2, 1);
+            return fixedShape(current, 2, 1, palette);
         case '2v2':
-            return fixedShape(current, 2, 2);
+            return fixedShape(current, 2, 2, palette);
         case 'FFA':
         default:
             if (current.length >= 2) return current;
-            return fixedShape(current, 2, 1);
+            return fixedShape(current, 2, 1, palette);
     }
 }
 

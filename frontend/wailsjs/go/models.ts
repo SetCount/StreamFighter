@@ -133,6 +133,8 @@ export namespace main {
 	    shortName: string;
 	    characters: Character[];
 	    characterLayout?: string[][];
+	    portColors?: string[];
+	    teamColors?: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new GamePack(source);
@@ -145,6 +147,8 @@ export namespace main {
 	        this.shortName = source["shortName"];
 	        this.characters = this.convertValues(source["characters"], Character);
 	        this.characterLayout = source["characterLayout"];
+	        this.portColors = source["portColors"];
+	        this.teamColors = source["teamColors"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

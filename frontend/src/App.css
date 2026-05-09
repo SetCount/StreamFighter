@@ -178,7 +178,7 @@ legend {
 /* ---------- Board (entity cards + casters card side-by-side) ----------- */
 
 .board {
-    display: grid;
+    display: flex;
     /* Cards sized to ~match the portrait width (188px native) — fixed so
        cards don't balloon when there's only two entities on a wide
        screen. */
@@ -687,10 +687,25 @@ input, select {
 
 /* ---------- Pick Set button + StartGG row ------------------------------ */
 
-.set-info-row.startgg-row {
+.startgg-details {
     margin-top: 10px;
     padding-top: 10px;
     border-top: 1px solid var(--line);
+}
+.startgg-details summary {
+    cursor: pointer;
+    font-size: var(--font-sm);
+    color: var(--text-muted);
+    user-select: none;
+}
+.startgg-details[open] summary {
+    margin-bottom: 6px;
+}
+.startgg-details label {
+    display: block;
+}
+.startgg-details input {
+    width: 100%;
 }
 .pick-set-btn {
     padding: 6px 14px;

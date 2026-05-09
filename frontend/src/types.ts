@@ -117,4 +117,6 @@ export type GamePack = {
     shortName: string;
     characters: Character[];
     characterLayout?: string[][];
+    portColors?: string[];
+    teamColors?: string[];
 };

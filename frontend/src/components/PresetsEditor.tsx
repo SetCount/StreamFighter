@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { PlayerPreset, CasterPreset, GamePack } from '../types';
 import { findPack, findCharacter, portraitURL, stockURL } from '../assets';
-import { PORT_COLORS } from '../portColors';
+import { portPaletteFor } from '../portColors';
 import CharacterPicker from './CharacterPicker';
 import SocialsEditor from './SocialsEditor';
 
@@ -33,6 +33,7 @@ export default function PresetsEditor({
     onSaveCaster, onDeleteCaster, onAddCaster, onChangeCasters,
 }: Props) {
     const pack = findPack(games, gameId);
+    const portPalette = portPaletteFor(pack);
     const [pickerFor, setPickerFor] = useState<number | null>(null);
 
     const setPlayer = (i: number, patch: Partial<PlayerPreset>) => {
@@ -169,7 +170,7 @@ export default function PresetsEditor({
                                 </div>
                                 <div className="preset-color-row">
                                     <span className="preset-color-label">Color</span>
-                                    <div className="color-swatches" role="radiogroup" aria-label="Port / Team Color">
+                                    <div className="color-swatches" role="radiogroup" aria-label="Port Color">
                                         <button
                                             type="button"
                                             className="color-swatch clear-swatch"
@@ -179,7 +180,7 @@ export default function PresetsEditor({
                                             title="No preference"
                                             onClick={() => setPlayer(i, { portColor: undefined })}
                                         />
-                                        {PORT_COLORS.map(c => (
+                                        {portPalette.map(c => (
                                             <button
                                                 key={c}
                                                 type="button"

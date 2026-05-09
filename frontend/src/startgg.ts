@@ -53,12 +53,15 @@ function playerFromStartgg(p: StartggPlayer, presets: PlayerPreset[]): Player {
 // recognized 3/5/7 — start.gg only populates it when the tournament
 // configured per-round bestOf, otherwise we preserve prev. Each
 // ScoreEntity is rebuilt from the entrant; we keep the previous entity's
-// portColor when no preset color overrides it.
+// portColor when no preset color overrides it. `portPalette` is the
+// pack's port colors (or PORT_COLORS fallback) — team colors never
+// appear here, since they're a manual pick on the entity.
 export function applyStartggSet(
     prev: StreamState,
     tournamentName: string,
     set: StartggSet,
     presets: PlayerPreset[],
+    portPalette: readonly string[] = PORT_COLORS,
 ): StreamState {
     const format = inferFormat(set.entrants);
     const bestOf = [3, 5, 7].includes(set.totalGames)
@@ -70,7 +73,7 @@ export function applyStartggSet(
             : [{ name: entrant.name, character: '', costume: 0 }];
         // Prefer a preset-defined color (first player's preset wins),
         // then the previous entity's color at this index, then a sane
-        // default from the palette.
+        // default from the port palette.
         const firstPresetColor = entrant.players
             .map(p => matchPreset(p, presets)?.portColor)
             .find(c => !!c);
@@ -78,11 +81,11 @@ export function applyStartggSet(
         return {
             players,
             currentScore: 0,
-            portColor: firstPresetColor ?? prevColor ?? PORT_COLORS[i] ?? PORT_COLORS[0],
+            portColor: firstPresetColor ?? prevColor ?? portPalette[i] ?? portPalette[0] ?? PORT_COLORS[0],
         };
     });
 
-    const reshaped = reshapeForFormat(entities, format);
+    const reshaped = reshapeForFormat(entities, format, portPalette);
     const clamped = clampScores(reshaped, bestOf);
 
     return {
