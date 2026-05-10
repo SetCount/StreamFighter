@@ -430,6 +430,7 @@ input, select {
 
 .player-portrait {
     width: 100%;
+    max-height: 150px;
     aspect-ratio: 4 / 3;
     border: 1px dashed var(--line-hover);
     background: var(--bg-sunken);
@@ -816,52 +817,148 @@ input, select {
 .set-state.state-2 { color: #80c080; border-color: #80c08055; }
 .set-state.state-3 { color: var(--text-muted); }
 
-/* ---------- Presets editor (inside Settings dialog) -------------------- */
+/* ---------- Presets dialog --------------------------------------------- */
 
+.presets-dialog {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    background: var(--bg-page);
+    color: inherit;
+    max-width: 900px;
+    width: 90vw;
+    /* No overflow on the dialog — each column scrolls independently */
+    margin: auto;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.presets-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+}
+.presets-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+.presets-dialog-header > span {
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--text-soft);
+}
+
+/* ---------- Presets editor --------------------------------------------- */
+
+/* Two-column layout: Player Presets left, Caster Presets right */
+.presets-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
 .presets-section {
-    margin-top: 16px;
+    /* no margin-top — grid gap + dialog header margin-bottom handle spacing */
 }
 .preset-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 10px;
+    gap: 6px;
+    margin-top: 8px;
+    max-height: calc(85vh - 130px);
+    overflow-y: auto;
+    padding-bottom: 4px;
 }
+
+/* Accordion rows */
 .preset-row {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 10px 12px;
     border: 1px solid var(--line);
     border-radius: 6px;
     background: var(--bg-sunken);
+    overflow: hidden;
 }
-.preset-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: end;
-}
-.preset-grid > label.grow { flex: 1 1 160px; min-width: 120px; }
-.preset-grid > label.shrink { flex: 0 0 9em; }
-.preset-art {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-width: 220px;
-}
-.preset-portrait {
-    aspect-ratio: 4 / 3;
-}
-.preset-color-row {
+.preset-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    padding: 7px 10px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 80ms ease;
 }
-.preset-color-label {
+.preset-header:hover { background: rgba(255, 255, 255, 0.04); }
+.preset-thumb {
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+    background: var(--bg-page);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.preset-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+.preset-thumb-empty { width: 100%; height: 100%; }
+.preset-name-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.preset-name {
     font-size: var(--font-sm);
-    color: var(--text-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
+.preset-name.empty { color: var(--text-muted); font-style: italic; }
+.preset-meta {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.color-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    flex: 0 0 11px;
+}
+.expand-toggle {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    flex: 0 0 auto;
+}
+
+/* Expanded body — entity-card-style layout */
+.preset-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 10px 10px;
+    border-top: 1px solid var(--line);
+}
+
+/* Secondary fields (aliases, startgg ID) collapsed under a <details> */
+.preset-secondary > summary {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: var(--font-sm);
+    user-select: none;
+    padding: 2px 0;
+    list-style: none;
+}
+.preset-secondary > summary::before { content: '▸ '; font-size: var(--font-xs); }
+.preset-secondary[open] > summary::before { content: '▾ '; }
+
 .color-swatch.clear-swatch {
     background:
         linear-gradient(45deg, transparent 45%, var(--text-muted) 45%, var(--text-muted) 55%, transparent 55%),
@@ -871,4 +968,16 @@ input, select {
     display: flex;
     gap: 8px;
     justify-content: flex-end;
+}
+
+/* Save-as-preset button inside entity player rows */
+.preset-save-btn {
+    opacity: 0.4;
+    transition: opacity 80ms ease;
+    font-size: var(--font-sm);
+}
+.player-row:hover .preset-save-btn,
+.preset-save-btn:hover,
+.preset-save-btn:focus {
+    opacity: 1;
 }

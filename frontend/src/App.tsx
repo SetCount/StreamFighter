@@ -25,6 +25,7 @@ import type {
   OutputConfig,
   SetInfo,
   GamePack,
+  Player,
   PlayerPreset,
   CasterPreset,
   StartggSet,
@@ -65,6 +66,7 @@ function App() {
   const [pickerTournament, setPickerTournament] = useState("");
 
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const presetsDialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     Promise.all([
@@ -261,8 +263,29 @@ function App() {
     }
   };
 
+  const onSavePlayerAsPreset = (player: Player, portColor: string) => {
+    if (!player.name) return;
+    const existing = playerPresets.find(p =>
+      (player.startggPlayerId && p.startggPlayerId === player.startggPlayerId) ||
+      p.name.toLowerCase() === player.name.toLowerCase()
+    );
+    void onSavePlayerPresetRow({
+      id: existing?.id ?? '',
+      name: player.name,
+      pronouns: player.pronouns,
+      team: player.team,
+      aliases: existing?.aliases ?? [],
+      character: player.character || undefined,
+      costume: player.costume > 0 ? player.costume : undefined,
+      startggPlayerId: player.startggPlayerId,
+      portColor: portColor || undefined,
+    });
+  };
+
   const openSettings = () => dialogRef.current?.showModal();
   const closeSettings = () => dialogRef.current?.close();
+  const openPresets = () => presetsDialogRef.current?.showModal();
+  const closePresets = () => presetsDialogRef.current?.close();
 
   return (
     <div className="app">
@@ -288,6 +311,9 @@ function App() {
             </option>
           ))}
         </select>
+        <button className="settings-btn" onClick={openPresets}>
+          Presets
+        </button>
         <button className="settings-btn" onClick={openSettings}>
           Settings
         </button>
@@ -332,6 +358,7 @@ function App() {
             gameId={config.game}
             assetsBase={assetsBase}
             presets={playerPresets}
+            onSavePlayerAsPreset={onSavePlayerAsPreset}
           />
         </div>
       </main>
@@ -346,6 +373,13 @@ function App() {
           onTokenChange={onTokenChange}
           onTokenBlur={onTokenBlur}
         />
+      </dialog>
+
+      <dialog ref={presetsDialogRef} className="presets-dialog">
+        <div className="presets-dialog-header">
+          <span>Presets</span>
+          <button className="icon-btn" onClick={closePresets} aria-label="Close">×</button>
+        </div>
         <PresetsEditor
           players={playerPresets}
           casters={casterPresets}

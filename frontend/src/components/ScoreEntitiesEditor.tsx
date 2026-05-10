@@ -15,6 +15,7 @@ type Props = {
   gameId: string;
   assetsBase: string;
   presets?: PlayerPreset[];
+  onSavePlayerAsPreset?: (player: Player, portColor: string) => void;
 };
 
 const blankPlayer = (): Player => ({
@@ -39,6 +40,7 @@ export default function ScoreEntitiesEditor({
   gameId,
   assetsBase,
   presets = [],
+  onSavePlayerAsPreset,
 }: Props) {
   const pipCount = winCount(bestOf);
   const pack = findPack(games, gameId);
@@ -215,6 +217,15 @@ export default function ScoreEntitiesEditor({
                       list="player-preset-names"
                       onChange={(ev) => onNameChange(i, pi, ev.target.value)}
                     />
+                    {onSavePlayerAsPreset && p.name && (
+                      <button
+                        type="button"
+                        className="icon-btn preset-save-btn"
+                        title="Save as preset"
+                        aria-label="Save as preset"
+                        onClick={() => onSavePlayerAsPreset(p, e.portColor)}
+                      >⊕</button>
+                    )}
                     {canResize && (
                       <button
                         className="icon-btn"
