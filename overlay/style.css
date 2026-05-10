@@ -1,42 +1,348 @@
-body {
+* {
+  box-sizing: border-box;
   margin: 0;
-  font-family: system-ui, sans-serif;
+  padding: 0;
+}
+
+/* ── Design tokens — all overridable via JS (localStorage settings) ── */
+:root {
+  --accent: #e8711a;
+  --sidebar-bg: #18100a;
+  --sidebar-bg-deep: #0e0906;
+  --sidebar-width: 240px;
+  --cam-height: 300px;
+  --name-font: "Arial Black", Impact, "Arial Narrow", sans-serif;
+  --name-size: 30px;
+  --round-size: 30px;
+  --pip-empty-bg: #2e2014;
+  --pip-empty-border: #3a2a18;
+}
+
+body {
+  font-family: var(--name-font);
   color: #fff;
   background: transparent;
 }
 
-.scoreboard {
+.app {
+  width: 1920px;
+  height: 1080px;
   display: flex;
-  gap: 16px;
-  padding: 16px;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.6);
+  align-items: stretch;
+  overflow: hidden;
 }
 
-.entity {
+/* ── Sidebars ── */
+
+.sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
   display: flex;
   flex-direction: column;
-  min-width: 180px;
 }
 
-.entity .players {
+.game-area {
+  flex: 1;
+  /* transparent — game capture shows through */
+}
+
+/* ── Player panel (cam + name + score) ── */
+
+.player-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.cam-area {
+  width: var(--sidebar-width);
+  height: var(--cam-height);
+  background: var(--sidebar-bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 2px solid color-mix(in srgb, var(--sidebar-bg) 60%, #fff 0%);
+  overflow: hidden;
+}
+
+.cam-label {
   font-size: 18px;
-}
-
-.entity .score {
-  font-size: 36px;
   font-weight: 700;
+  color: color-mix(in srgb, var(--sidebar-bg) 40%, #fff 10%);
+  letter-spacing: 0.15em;
+  pointer-events: none;
+  user-select: none;
 }
 
-.meta {
-  margin-left: auto;
-  text-align: right;
-  font-size: 14px;
-  opacity: 0.8;
+.name-strip {
+  background: var(--sidebar-bg);
+  border-top: 3px solid var(--accent);
+  padding: 10px 8px 8px;
+  text-align: center;
 }
 
-.casters {
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.4);
-  font-size: 14px;
+.player-name {
+  font-family: var(--name-font);
+  font-size: var(--name-size);
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 }
+
+.score-strip {
+  padding: 8px 12px 10px;
+  display: flex;
+  justify-content: center;
+  background: var(--sidebar-bg);
+}
+
+/* ── Win pips ── */
+
+.win-pips {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.win-pip {
+  width: 18px;
+  height: 18px;
+  background: var(--pip-empty-bg);
+  border: 2px solid var(--pip-empty-border);
+  border-radius: 2px;
+}
+
+.win-pip.filled {
+  background: var(--pip-color, var(--accent));
+  border-color: var(--pip-color, var(--accent));
+  box-shadow: 0 0 6px var(--pip-color, var(--accent));
+}
+
+/* ── Bottom areas ── */
+
+.sidebar-spacer {
+  flex: 1;
+}
+
+.sidebar-bottom {
+  padding: 20px 16px;
+}
+
+/* ── Set info (bottom-left) ── */
+
+.set-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.round-label {
+  font-family: var(--name-font);
+  font-size: var(--round-size);
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.best-of {
+  font-family: var(--name-font);
+  font-size: calc(var(--round-size) * 0.65);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+/* ── Brand logo (bottom-right) ── */
+
+.brand-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.brand-logo svg {
+  width: 100px;
+  height: 100px;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 50%, transparent));
+}
+
+.brand-logo img {
+  max-width: calc(var(--sidebar-width) - 32px);
+  max-height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 40%, transparent));
+}
+
+/* ── Between-games scene (between.html) ───────────────────────────────────── */
+
+.bg-app {
+  width: 1920px;
+  height: 1080px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top info bar */
+
+.bg-topbar {
+  flex-shrink: 0;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 32px;
+  background: rgba(18, 10, 4, 0.88);
+  border-bottom: 3px solid var(--accent);
+}
+
+.bg-tournament {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  min-width: 0;
+}
+
+.bg-tournament-name {
+  font-family: var(--name-font);
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bg-round {
+  font-family: var(--name-font);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+}
+
+.bg-matchup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.bg-player-name {
+  font-family: var(--name-font);
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+
+.bg-vs {
+  font-family: var(--name-font);
+  font-size: 13px;
+  font-weight: 700;
+  color: #666;
+  letter-spacing: 0.12em;
+}
+
+.bg-pips {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.bg-pip {
+  width: 13px;
+  height: 13px;
+  background: #2e2014;
+  border: 2px solid #3a2a18;
+  border-radius: 2px;
+}
+
+.bg-pip.filled {
+  background: var(--pip-color, var(--accent));
+  border-color: var(--pip-color, var(--accent));
+  box-shadow: 0 0 5px var(--pip-color, var(--accent));
+}
+
+/* Cam area — transparent, cam source sits behind this in OBS */
+
+.bg-cam-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bg-cam-label {
+  font-size: 22px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.05);
+  letter-spacing: 0.2em;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Caster banners — left-aligned row at the bottom */
+
+.bg-caster-row {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+}
+
+.bg-caster-banner {
+  padding: 10px 28px 14px;
+  background: rgba(18, 10, 4, 0.88);
+  border-top: 3px solid var(--accent);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 260px;
+}
+
+.bg-caster-name {
+  font-family: var(--name-font);
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
+}
+
+.bg-caster-socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 5px;
+}
+
+.bg-caster-social {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.bg-social-platform {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  font-family: system-ui, sans-serif;
+}
+
+.bg-social-handle {
+  font-size: 13px;
+  color: #bbb;
+  font-family: system-ui, sans-serif;
+}
+
