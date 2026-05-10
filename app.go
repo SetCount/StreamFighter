@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	_ "embed"
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -22,12 +23,12 @@ const configPath = "streamfighter.config.json"
 // included in build artifacts or commits.
 const secretsPath = "streamfighter.secrets.json"
 
-// defaultOverlayHTML is written to OverlayPath on first run if no file
-// exists there. The server always reads from disk afterwards so user
-// edits are picked up on the next browser-source refresh.
+// defaultOverlayFS is seeded to the overlay directory on first run. The
+// server always reads from disk afterwards so user edits are picked up on
+// the next browser-source refresh.
 //
-//go:embed overlay.html
-var defaultOverlayHTML []byte
+//go:embed all:overlay
+var defaultOverlayFS embed.FS
 
 // App struct
 type App struct {
@@ -121,25 +122,47 @@ func saveSecrets(s Secrets) {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	if err := ensureOverlayFile(a.config.OverlayPath); err != nil {
-		fmt.Println("seed overlay file:", err)
+	if err := ensureOverlayDir(a.config.OverlayPath); err != nil {
+		fmt.Println("seed overlay dir:", err)
 	}
 	a.games = loadGames(a.config.GamesDir)
 	a.startServer()
 }
 
-// ensureOverlayFile writes the bundled default overlay to path if nothing
-// exists there yet. Existing files are never touched.
-func ensureOverlayFile(path string) error {
-	if path == "" {
+// ensureOverlayDir seeds the bundled overlay files into the directory
+// containing htmlPath. Each file is written only if it doesn't already
+// exist, so user edits to any individual file are never clobbered.
+func ensureOverlayDir(htmlPath string) error {
+	if htmlPath == "" {
 		return nil
 	}
-	if _, err := os.Stat(path); err == nil {
-		return nil
-	} else if !os.IsNotExist(err) {
+	dir := filepath.Dir(htmlPath)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	return os.WriteFile(path, defaultOverlayHTML, 0o644)
+	entries, err := defaultOverlayFS.ReadDir("overlay")
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		dst := filepath.Join(dir, entry.Name())
+		if _, err := os.Stat(dst); err == nil {
+			continue
+		} else if !os.IsNotExist(err) {
+			return err
+		}
+		data, err := defaultOverlayFS.ReadFile("overlay/" + entry.Name())
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(dst, data, 0o644); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // shutdown gracefully tears down the overlay HTTP server.
@@ -473,7 +496,7 @@ func defaultState() StreamState {
 func defaultConfig() OutputConfig {
 	return OutputConfig{
 		OutputDir:       "obs-output",
-		OverlayPath:     "overlay.html",
+		OverlayPath:     "overlay/index.html",
 		GamesDir:        "games",
 		HTTPPort:        35920,
 		WriteFieldFiles: true,

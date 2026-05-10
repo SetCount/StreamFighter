@@ -1,0 +1,42 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: #fff;
+  background: transparent;
+}
+
+.scoreboard {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.entity {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+}
+
+.entity .players {
+  font-size: 18px;
+}
+
+.entity .score {
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.meta {
+  margin-left: auto;
+  text-align: right;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.casters {
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.4);
+  font-size: 14px;
+}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -67,6 +68,7 @@ func newOverlayServer(port int, getOverlayPath, getGamesDir func() string, getSt
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/overlay", o.handleOverlay)
+	mux.Handle("/overlay/", o.handleOverlayAssets())
 	mux.HandleFunc("/state.json", o.handleState)
 	mux.HandleFunc("/events", o.handleEvents)
 	mux.Handle("/games/", http.StripPrefix("/games/", o.handleGameAsset()))
@@ -100,6 +102,20 @@ func (o *overlayServer) handleOverlay(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	_, _ = w.Write(body)
+}
+
+// handleOverlayAssets serves the CSS, JS, and any other files in the
+// same directory as OverlayPath so relative imports from index.html work.
+func (o *overlayServer) handleOverlayAssets() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := o.getOverlayPath()
+		if path == "" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Cache-Control", "no-store")
+		http.StripPrefix("/overlay/", http.FileServer(http.Dir(filepath.Dir(path)))).ServeHTTP(w, r)
+	})
 }
 
 func (o *overlayServer) handleState(w http.ResponseWriter, _ *http.Request) {

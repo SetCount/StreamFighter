@@ -2,7 +2,7 @@
   "outputDir": "obs-output",
   "overlayPath": "overlay.html",
   "gamesDir": "games",
-  "game": "pplus",
+  "game": "melee",
   "httpPort": 35920,
   "writeFieldFiles": true,
   "writeJson": true,
