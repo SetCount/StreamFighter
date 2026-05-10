@@ -686,6 +686,36 @@ input, select {
 }
 .checkbox-row input { width: auto; min-height: 0; }
 
+/* ── OverlayEditor ── */
+.overlay-editor { margin-top: 16px; }
+
+.color-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+.color-row input[type="color"] {
+    width: 36px;
+    height: 32px;
+    padding: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.color-row .color-text {
+    width: 80px;
+    font-family: monospace;
+    font-size: var(--font-sm);
+    min-height: 0;
+    padding: 4px 6px;
+}
+
+.overlay-editor input[type="range"] {
+    width: 100%;
+    margin-top: 4px;
+    accent-color: var(--accent);
+}
+
 .empty {
     color: var(--text-muted);
     font-size: var(--font-md);

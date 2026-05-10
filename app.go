@@ -205,6 +205,12 @@ func (a *App) SetConfig(c OutputConfig) {
 	a.config = c
 	a.mu.Unlock()
 	saveConfig(c)
+	// Push appearance changes to connected overlays immediately.
+	if c.EnableServer && a.server != nil {
+		if msg, err := marshalJSON(OverlayMessage{State: a.GetState(), Appearance: c.Appearance}); err == nil {
+			a.server.hub.broadcast(msg)
+		}
+	}
 }
 
 // OverlayURL is the address an OBS browser source should point at.
@@ -439,7 +445,7 @@ func (a *App) Update() error {
 		}
 	}
 	if cfg.EnableServer && a.server != nil {
-		if msg, err := marshalJSON(state); err == nil {
+		if msg, err := marshalJSON(OverlayMessage{State: state, Appearance: cfg.Appearance}); err == nil {
 			a.server.hub.broadcast(msg)
 		}
 	}
@@ -460,7 +466,12 @@ func (a *App) startServer() {
 		defer a.mu.RUnlock()
 		return a.config.GamesDir
 	}
-	a.server = newOverlayServer(a.config.HTTPPort, getOverlayPath, getGamesDir, a.GetState)
+	getAppearance := func() OverlayAppearance {
+		a.mu.RLock()
+		defer a.mu.RUnlock()
+		return a.config.Appearance
+	}
+	a.server = newOverlayServer(a.config.HTTPPort, getOverlayPath, getGamesDir, a.GetState, getAppearance)
 	a.server.start()
 }
 
@@ -502,6 +513,17 @@ func defaultConfig() OutputConfig {
 		WriteFieldFiles: true,
 		WriteJSON:       true,
 		EnableServer:    true,
+		Appearance: OverlayAppearance{
+			Accent:        "#e8711a",
+			SidebarBg:     "#18100a",
+			SidebarWidth:  240,
+			CamHeight:     300,
+			NameFont:      `"Arial Black", Impact, "Arial Narrow", sans-serif`,
+			NameFontSize:  30,
+			RoundFontSize: 30,
+			ShowSetInfo:   true,
+			ShowLogo:      true,
+		},
 	}
 }
 

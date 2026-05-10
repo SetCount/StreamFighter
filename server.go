@@ -52,24 +52,32 @@ func (h *sseHub) broadcast(msg []byte) {
 // overlayServer wraps the SSE hub with the HTTP routes the OBS browser
 // source connects to.
 type overlayServer struct {
-	hub            *sseHub
-	srv            *http.Server
-	getState       func() StreamState
-	getOverlayPath func() string
-	getGamesDir    func() string
+	hub              *sseHub
+	srv              *http.Server
+	getState         func() StreamState
+	getOverlayPath   func() string
+	getGamesDir      func() string
+	getAppearance    func() OverlayAppearance
 }
 
-func newOverlayServer(port int, getOverlayPath, getGamesDir func() string, getState func() StreamState) *overlayServer {
+func newOverlayServer(
+	port int,
+	getOverlayPath, getGamesDir func() string,
+	getState func() StreamState,
+	getAppearance func() OverlayAppearance,
+) *overlayServer {
 	o := &overlayServer{
 		hub:            newSSEHub(),
 		getState:       getState,
 		getOverlayPath: getOverlayPath,
 		getGamesDir:    getGamesDir,
+		getAppearance:  getAppearance,
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/overlay", o.handleOverlay)
 	mux.Handle("/overlay/", o.handleOverlayAssets())
 	mux.HandleFunc("/state.json", o.handleState)
+	mux.HandleFunc("/overlay/appearance.json", o.handleAppearance)
 	mux.HandleFunc("/events", o.handleEvents)
 	mux.Handle("/games/", http.StripPrefix("/games/", o.handleGameAsset()))
 	o.srv = &http.Server{
@@ -127,6 +135,16 @@ func (o *overlayServer) handleState(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
+func (o *overlayServer) handleAppearance(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	a := o.getAppearance()
+	if err := writeJSON(w, a); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 // handleGameAsset serves files under the configured games directory so
 // both the Wails frontend and the OBS browser source can <img>-load
 // character art without going through the bindings.
@@ -155,9 +173,9 @@ func (o *overlayServer) handleEvents(w http.ResponseWriter, r *http.Request) {
 	ch := o.hub.add()
 	defer o.hub.remove(ch)
 
-	// Send the current state immediately so a freshly-connected overlay
-	// renders without waiting for the next Update.
-	if msg, err := marshalJSON(o.getState()); err == nil {
+	// Send the current state and appearance immediately so a freshly-connected
+	// overlay renders without waiting for the next Update.
+	if msg, err := marshalJSON(OverlayMessage{State: o.getState(), Appearance: o.getAppearance()}); err == nil {
 		fmt.Fprintf(w, "data: %s\n\n", msg)
 		flusher.Flush()
 	}

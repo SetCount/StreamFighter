@@ -169,6 +169,36 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class OverlayAppearance {
+	    accent: string;
+	    sidebarBg: string;
+	    sidebarWidth: number;
+	    camHeight: number;
+	    nameFont: string;
+	    nameFontSize: number;
+	    roundFontSize: number;
+	    logoUrl?: string;
+	    showSetInfo: boolean;
+	    showLogo: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new OverlayAppearance(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accent = source["accent"];
+	        this.sidebarBg = source["sidebarBg"];
+	        this.sidebarWidth = source["sidebarWidth"];
+	        this.camHeight = source["camHeight"];
+	        this.nameFont = source["nameFont"];
+	        this.nameFontSize = source["nameFontSize"];
+	        this.roundFontSize = source["roundFontSize"];
+	        this.logoUrl = source["logoUrl"];
+	        this.showSetInfo = source["showSetInfo"];
+	        this.showLogo = source["showLogo"];
+	    }
+	}
 	export class OutputConfig {
 	    outputDir: string;
 	    overlayPath: string;
@@ -179,6 +209,7 @@ export namespace main {
 	    writeJson: boolean;
 	    enableServer: boolean;
 	    startggTournamentUrl?: string;
+	    overlayAppearance: OverlayAppearance;
 	
 	    static createFrom(source: any = {}) {
 	        return new OutputConfig(source);
@@ -195,8 +226,28 @@ export namespace main {
 	        this.writeJson = source["writeJson"];
 	        this.enableServer = source["enableServer"];
 	        this.startggTournamentUrl = source["startggTournamentUrl"];
+	        this.overlayAppearance = this.convertValues(source["overlayAppearance"], OverlayAppearance);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
+	
 	export class Player {
 	    name: string;
 	    pronouns?: string;

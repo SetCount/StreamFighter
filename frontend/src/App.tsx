@@ -38,6 +38,7 @@ import SetInfoEditor from "./components/SetInfoEditor";
 import ScoreEntitiesEditor from "./components/ScoreEntitiesEditor";
 import CastersEditor from "./components/CastersEditor";
 import ConfigEditor from "./components/ConfigEditor";
+import OverlayEditor from "./components/OverlayEditor";
 import PresetsEditor from "./components/PresetsEditor";
 import SetPicker from "./components/SetPicker";
 import "./App.css";
@@ -372,6 +373,10 @@ function App() {
           startggToken={token}
           onTokenChange={onTokenChange}
           onTokenBlur={onTokenBlur}
+        />
+        <OverlayEditor
+          value={config.overlayAppearance}
+          onChange={a => setCfg({ ...config, overlayAppearance: a })}
         />
       </dialog>
 

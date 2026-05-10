@@ -40,6 +40,32 @@ export type StreamState = {
     scoreEntities: ScoreEntity[];
 };
 
+export type OverlayAppearance = {
+    accent: string;
+    sidebarBg: string;
+    sidebarWidth: number;
+    camHeight: number;
+    nameFont: string;
+    nameFontSize: number;
+    roundFontSize: number;
+    logoUrl?: string;
+    showSetInfo: boolean;
+    showLogo: boolean;
+};
+
+export const DEFAULT_APPEARANCE: OverlayAppearance = {
+    accent: '#e8711a',
+    sidebarBg: '#18100a',
+    sidebarWidth: 240,
+    camHeight: 300,
+    nameFont: '"Arial Black", Impact, "Arial Narrow", sans-serif',
+    nameFontSize: 30,
+    roundFontSize: 30,
+    logoUrl: '',
+    showSetInfo: true,
+    showLogo: true,
+};
+
 export type OutputConfig = {
     outputDir: string;
     overlayPath: string;
@@ -50,6 +76,7 @@ export type OutputConfig = {
     writeJson: boolean;
     enableServer: boolean;
     startggTournamentUrl?: string;
+    overlayAppearance: OverlayAppearance;
 };
 
 export type Secrets = {
