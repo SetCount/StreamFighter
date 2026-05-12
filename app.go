@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sync"
@@ -132,6 +133,7 @@ func (a *App) startup(ctx context.Context) {
 // ensureOverlayDir seeds the bundled overlay files into the directory
 // containing htmlPath. Each file is written only if it doesn't already
 // exist, so user edits to any individual file are never clobbered.
+// Subdirectories (e.g. components/) are created and seeded recursively.
 func ensureOverlayDir(htmlPath string) error {
 	if htmlPath == "" {
 		return nil
@@ -140,29 +142,26 @@ func ensureOverlayDir(htmlPath string) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	entries, err := defaultOverlayFS.ReadDir("overlay")
-	if err != nil {
-		return err
-	}
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		dst := filepath.Join(dir, entry.Name())
-		if _, err := os.Stat(dst); err == nil {
-			continue
-		} else if !os.IsNotExist(err) {
-			return err
-		}
-		data, err := defaultOverlayFS.ReadFile("overlay/" + entry.Name())
+	return fs.WalkDir(defaultOverlayFS, "overlay", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if err := os.WriteFile(dst, data, 0o644); err != nil {
+		rel, _ := filepath.Rel("overlay", path)
+		dst := filepath.Join(dir, rel)
+		if d.IsDir() {
+			return os.MkdirAll(dst, 0o755)
+		}
+		if _, statErr := os.Stat(dst); statErr == nil {
+			return nil
+		} else if !os.IsNotExist(statErr) {
+			return statErr
+		}
+		data, err := defaultOverlayFS.ReadFile(path)
+		if err != nil {
 			return err
 		}
-	}
-	return nil
+		return os.WriteFile(dst, data, 0o644)
+	})
 }
 
 // shutdown gracefully tears down the overlay HTTP server.
@@ -466,12 +465,17 @@ func (a *App) startServer() {
 		defer a.mu.RUnlock()
 		return a.config.GamesDir
 	}
+	getSponsorsDir := func() string {
+		a.mu.RLock()
+		defer a.mu.RUnlock()
+		return a.config.SponsorsDir
+	}
 	getAppearance := func() OverlayAppearance {
 		a.mu.RLock()
 		defer a.mu.RUnlock()
 		return a.config.Appearance
 	}
-	a.server = newOverlayServer(a.config.HTTPPort, getOverlayPath, getGamesDir, a.GetState, getAppearance)
+	a.server = newOverlayServer(a.config.HTTPPort, getOverlayPath, getGamesDir, getSponsorsDir, a.GetState, getAppearance)
 	a.server.start()
 }
 
@@ -509,20 +513,26 @@ func defaultConfig() OutputConfig {
 		OutputDir:       "obs-output",
 		OverlayPath:     "overlay/index.html",
 		GamesDir:        "games",
+		SponsorsDir:     "sponsors",
 		HTTPPort:        35920,
 		WriteFieldFiles: true,
 		WriteJSON:       true,
 		EnableServer:    true,
 		Appearance: OverlayAppearance{
-			Accent:        "#e8711a",
-			SidebarBg:     "#18100a",
-			SidebarWidth:  240,
-			CamHeight:     300,
-			NameFont:      `"Arial Black", Impact, "Arial Narrow", sans-serif`,
-			NameFontSize:  30,
-			RoundFontSize: 30,
-			ShowSetInfo:   true,
-			ShowLogo:      true,
+			Accent:          "#e8711a",
+			SidebarBg:       "#18100a",
+			SidebarWidth:    240,
+			CamHeight:       300,
+			NameFont:        `"Arial Black", Impact, "Arial Narrow", sans-serif`,
+			NameFontSize:    30,
+			RoundFontSize:   30,
+			ShowSetInfo:     true,
+			ShowLogo:        true,
+			SponsorInterval: 5,
+			SponsorWidth:    200,
+			SponsorHeight:   0,
+			SponsorCorner:   "bottom-right",
+			SponsorPadding:  16,
 		},
 	}
 }

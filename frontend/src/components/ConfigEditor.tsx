@@ -15,6 +15,8 @@ export default function ConfigEditor({
     startggToken, onTokenChange, onTokenBlur,
 }: Props) {
     const set = (patch: Partial<OutputConfig>) => onChange({ ...value, ...patch });
+    const setAppearance = (patch: Partial<OutputConfig['overlayAppearance']>) =>
+        onChange({ ...value, overlayAppearance: { ...value.overlayAppearance, ...patch } });
     return (
         <fieldset className="config-editor">
             <legend>Output Config</legend>
@@ -58,6 +60,13 @@ export default function ConfigEditor({
                     />
                 </label>
                 <label>
+                    Sponsors Directory
+                    <input
+                        value={value.sponsorsDir ?? ''}
+                        onChange={e => set({ sponsorsDir: e.target.value })}
+                    />
+                </label>
+                <label>
                     HTTP Port
                     <input
                         type="number"
@@ -66,6 +75,59 @@ export default function ConfigEditor({
                     />
                 </label>
             </div>
+            <fieldset>
+                <legend>Sponsor Rotator</legend>
+                <div className="grid">
+                    <label>
+                        Corner
+                        <select
+                            value={value.overlayAppearance.sponsorCorner ?? 'bottom-right'}
+                            onChange={e => setAppearance({ sponsorCorner: e.target.value })}
+                        >
+                            <option value="top-left">Top Left</option>
+                            <option value="top-right">Top Right</option>
+                            <option value="bottom-left">Bottom Left</option>
+                            <option value="bottom-right">Bottom Right</option>
+                        </select>
+                    </label>
+                    <label>
+                        Interval (seconds)
+                        <input
+                            type="number"
+                            min={1}
+                            value={value.overlayAppearance.sponsorInterval ?? 5}
+                            onChange={e => setAppearance({ sponsorInterval: Number(e.target.value) })}
+                        />
+                    </label>
+                    <label>
+                        Width (px)
+                        <input
+                            type="number"
+                            min={0}
+                            value={value.overlayAppearance.sponsorWidth ?? 200}
+                            onChange={e => setAppearance({ sponsorWidth: Number(e.target.value) })}
+                        />
+                    </label>
+                    <label>
+                        Height (px, 0 = auto)
+                        <input
+                            type="number"
+                            min={0}
+                            value={value.overlayAppearance.sponsorHeight ?? 0}
+                            onChange={e => setAppearance({ sponsorHeight: Number(e.target.value) })}
+                        />
+                    </label>
+                    <label>
+                        Padding (px)
+                        <input
+                            type="number"
+                            min={0}
+                            value={value.overlayAppearance.sponsorPadding ?? 16}
+                            onChange={e => setAppearance({ sponsorPadding: Number(e.target.value) })}
+                        />
+                    </label>
+                </div>
+            </fieldset>
             <div className="checkboxes">
                 <label className="checkbox-row">
                     <input

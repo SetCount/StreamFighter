@@ -52,18 +52,19 @@
 import { h, render } from "https://esm.sh/preact@10";
 import { useState, useEffect } from "https://esm.sh/preact@10/hooks";
 import htm from "https://esm.sh/htm@3";
+import { SponsorRotator } from "./components/sponsor-rotator.js";
 
 const html = htm.bind(h);
 
 function applyAppearance(a) {
   const r = document.documentElement.style;
-  if (a.accent)        r.setProperty("--accent",        a.accent);
-  if (a.sidebarBg)     r.setProperty("--sidebar-bg",    a.sidebarBg);
-  if (a.sidebarWidth)  r.setProperty("--sidebar-width", a.sidebarWidth + "px");
-  if (a.camHeight)     r.setProperty("--cam-height",    a.camHeight + "px");
-  if (a.nameFont)      r.setProperty("--name-font",     a.nameFont);
-  if (a.nameFontSize)  r.setProperty("--name-size",     a.nameFontSize + "px");
-  if (a.roundFontSize) r.setProperty("--round-size",    a.roundFontSize + "px");
+  if (a.accent) r.setProperty("--accent", a.accent);
+  if (a.sidebarBg) r.setProperty("--sidebar-bg", a.sidebarBg);
+  if (a.sidebarWidth) r.setProperty("--sidebar-width", a.sidebarWidth + "px");
+  if (a.camHeight) r.setProperty("--cam-height", a.camHeight + "px");
+  if (a.nameFont) r.setProperty("--name-font", a.nameFont);
+  if (a.nameFontSize) r.setProperty("--name-size", a.nameFontSize + "px");
+  if (a.roundFontSize) r.setProperty("--round-size", a.roundFontSize + "px");
 }
 
 // ── Overlay components ────────────────────────────────────────────────────────
@@ -185,6 +186,7 @@ function App() {
         <${PlayerPanel} entity=${right} bestOf=${bestOf} />
         <div class="sidebar-spacer"></div>
         <div class="sidebar-bottom">
+          <${SponsorRotator} appearance=${appearance} />
           ${appearance.showLogo !== false && html`<${BrandLogo} logoUrl=${appearance.logoUrl || ""} />`}
         </div>
       </div>

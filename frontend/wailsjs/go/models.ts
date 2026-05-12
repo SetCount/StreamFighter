@@ -180,6 +180,11 @@ export namespace main {
 	    logoUrl?: string;
 	    showSetInfo: boolean;
 	    showLogo: boolean;
+	    sponsorInterval: number;
+	    sponsorWidth: number;
+	    sponsorHeight: number;
+	    sponsorCorner: string;
+	    sponsorPadding: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new OverlayAppearance(source);
@@ -197,12 +202,18 @@ export namespace main {
 	        this.logoUrl = source["logoUrl"];
 	        this.showSetInfo = source["showSetInfo"];
 	        this.showLogo = source["showLogo"];
+	        this.sponsorInterval = source["sponsorInterval"];
+	        this.sponsorWidth = source["sponsorWidth"];
+	        this.sponsorHeight = source["sponsorHeight"];
+	        this.sponsorCorner = source["sponsorCorner"];
+	        this.sponsorPadding = source["sponsorPadding"];
 	    }
 	}
 	export class OutputConfig {
 	    outputDir: string;
 	    overlayPath: string;
 	    gamesDir: string;
+	    sponsorsDir?: string;
 	    game: string;
 	    httpPort: number;
 	    writeFieldFiles: boolean;
@@ -220,6 +231,7 @@ export namespace main {
 	        this.outputDir = source["outputDir"];
 	        this.overlayPath = source["overlayPath"];
 	        this.gamesDir = source["gamesDir"];
+	        this.sponsorsDir = source["sponsorsDir"];
 	        this.game = source["game"];
 	        this.httpPort = source["httpPort"];
 	        this.writeFieldFiles = source["writeFieldFiles"];

@@ -86,15 +86,16 @@ type StreamState struct {
 // is the ID of a pack discovered under GamesDir; an empty string means
 // no pack is selected yet.
 type OutputConfig struct {
-	OutputDir            string           `json:"outputDir"`
-	OverlayPath          string           `json:"overlayPath"`
-	GamesDir             string           `json:"gamesDir"`
-	Game                 string           `json:"game"`
-	HTTPPort             int              `json:"httpPort"`
-	WriteFieldFiles      bool             `json:"writeFieldFiles"`
-	WriteJSON            bool             `json:"writeJson"`
-	EnableServer         bool             `json:"enableServer"`
-	StartggTournamentURL string           `json:"startggTournamentUrl,omitempty"`
+	OutputDir            string            `json:"outputDir"`
+	OverlayPath          string            `json:"overlayPath"`
+	GamesDir             string            `json:"gamesDir"`
+	SponsorsDir          string            `json:"sponsorsDir,omitempty"`
+	Game                 string            `json:"game"`
+	HTTPPort             int               `json:"httpPort"`
+	WriteFieldFiles      bool              `json:"writeFieldFiles"`
+	WriteJSON            bool              `json:"writeJson"`
+	EnableServer         bool              `json:"enableServer"`
+	StartggTournamentURL string            `json:"startggTournamentUrl,omitempty"`
 	Appearance           OverlayAppearance `json:"overlayAppearance"`
 }
 
@@ -110,16 +111,21 @@ type OverlayMessage struct {
 // Served at /overlay/appearance.json so overlay JS can read it without
 // any Wails dependency.
 type OverlayAppearance struct {
-	Accent        string `json:"accent"`
-	SidebarBg     string `json:"sidebarBg"`
-	SidebarWidth  int    `json:"sidebarWidth"`
-	CamHeight     int    `json:"camHeight"`
-	NameFont      string `json:"nameFont"`
-	NameFontSize  int    `json:"nameFontSize"`
-	RoundFontSize int    `json:"roundFontSize"`
-	LogoURL       string `json:"logoUrl,omitempty"`
-	ShowSetInfo   bool   `json:"showSetInfo"`
-	ShowLogo      bool   `json:"showLogo"`
+	Accent          string `json:"accent"`
+	SidebarBg       string `json:"sidebarBg"`
+	SidebarWidth    int    `json:"sidebarWidth"`
+	CamHeight       int    `json:"camHeight"`
+	NameFont        string `json:"nameFont"`
+	NameFontSize    int    `json:"nameFontSize"`
+	RoundFontSize   int    `json:"roundFontSize"`
+	LogoURL         string `json:"logoUrl,omitempty"`
+	ShowSetInfo     bool   `json:"showSetInfo"`
+	ShowLogo        bool   `json:"showLogo"`
+	SponsorInterval int    `json:"sponsorInterval"`
+	SponsorWidth    int    `json:"sponsorWidth"`
+	SponsorHeight   int    `json:"sponsorHeight"`
+	SponsorCorner   string `json:"sponsorCorner"`
+	SponsorPadding  int    `json:"sponsorPadding"`
 }
 
 // PlayerPreset is a reusable, hand-editable record for a competitor.

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -52,17 +53,18 @@ func (h *sseHub) broadcast(msg []byte) {
 // overlayServer wraps the SSE hub with the HTTP routes the OBS browser
 // source connects to.
 type overlayServer struct {
-	hub              *sseHub
-	srv              *http.Server
-	getState         func() StreamState
-	getOverlayPath   func() string
-	getGamesDir      func() string
-	getAppearance    func() OverlayAppearance
+	hub             *sseHub
+	srv             *http.Server
+	getState        func() StreamState
+	getOverlayPath  func() string
+	getGamesDir     func() string
+	getSponsorsDir  func() string
+	getAppearance   func() OverlayAppearance
 }
 
 func newOverlayServer(
 	port int,
-	getOverlayPath, getGamesDir func() string,
+	getOverlayPath, getGamesDir, getSponsorsDir func() string,
 	getState func() StreamState,
 	getAppearance func() OverlayAppearance,
 ) *overlayServer {
@@ -71,6 +73,7 @@ func newOverlayServer(
 		getState:       getState,
 		getOverlayPath: getOverlayPath,
 		getGamesDir:    getGamesDir,
+		getSponsorsDir: getSponsorsDir,
 		getAppearance:  getAppearance,
 	}
 	mux := http.NewServeMux()
@@ -80,6 +83,8 @@ func newOverlayServer(
 	mux.HandleFunc("/overlay/appearance.json", o.handleAppearance)
 	mux.HandleFunc("/events", o.handleEvents)
 	mux.Handle("/games/", http.StripPrefix("/games/", o.handleGameAsset()))
+	mux.HandleFunc("/sponsors.json", o.handleSponsorsList)
+	mux.Handle("/sponsors/", http.StripPrefix("/sponsors/", o.handleSponsorAsset()))
 	o.srv = &http.Server{
 		Addr:              fmt.Sprintf(":%d", port),
 		Handler:           mux,
@@ -151,6 +156,49 @@ func (o *overlayServer) handleAppearance(w http.ResponseWriter, _ *http.Request)
 func (o *overlayServer) handleGameAsset() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		dir := o.getGamesDir()
+		if dir == "" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		http.FileServer(http.Dir(dir)).ServeHTTP(w, r)
+	})
+}
+
+// handleSponsorsList returns a JSON array of image filenames in SponsorsDir.
+// Re-reads the directory on every request so adding/removing files takes
+// effect on the next rotation cycle without a restart.
+func (o *overlayServer) handleSponsorsList(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	dir := o.getSponsorsDir()
+	if dir == "" {
+		_ = writeJSON(w, []string{})
+		return
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		_ = writeJSON(w, []string{})
+		return
+	}
+	files := []string{}
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		switch strings.ToLower(filepath.Ext(e.Name())) {
+		case ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg":
+			files = append(files, e.Name())
+		}
+	}
+	_ = writeJSON(w, files)
+}
+
+// handleSponsorAsset serves image files from SponsorsDir.
+func (o *overlayServer) handleSponsorAsset() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		dir := o.getSponsorsDir()
 		if dir == "" {
 			http.NotFound(w, r)
 			return

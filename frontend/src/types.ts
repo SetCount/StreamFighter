@@ -51,6 +51,11 @@ export type OverlayAppearance = {
     logoUrl?: string;
     showSetInfo: boolean;
     showLogo: boolean;
+    sponsorInterval: number;
+    sponsorWidth: number;
+    sponsorHeight: number;
+    sponsorCorner: string;
+    sponsorPadding: number;
 };
 
 export const DEFAULT_APPEARANCE: OverlayAppearance = {
@@ -64,12 +69,18 @@ export const DEFAULT_APPEARANCE: OverlayAppearance = {
     logoUrl: '',
     showSetInfo: true,
     showLogo: true,
+    sponsorInterval: 5,
+    sponsorWidth: 200,
+    sponsorHeight: 0,
+    sponsorCorner: 'bottom-right',
+    sponsorPadding: 16,
 };
 
 export type OutputConfig = {
     outputDir: string;
     overlayPath: string;
     gamesDir: string;
+    sponsorsDir?: string;
     game: string;
     httpPort: number;
     writeFieldFiles: boolean;

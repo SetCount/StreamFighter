@@ -1,14 +1,15 @@
 import { h, render } from "https://esm.sh/preact@10";
 import { useState, useEffect } from "https://esm.sh/preact@10/hooks";
 import htm from "https://esm.sh/htm@3";
+import { SponsorRotator } from "./components/sponsor-rotator.js";
 
 const html = htm.bind(h);
 
 function applyAppearance(a) {
   const r = document.documentElement.style;
-  if (a.accent)        r.setProperty("--accent",     a.accent);
-  if (a.nameFont)      r.setProperty("--name-font",  a.nameFont);
-  if (a.nameFontSize)  r.setProperty("--name-size",  a.nameFontSize + "px");
+  if (a.accent) r.setProperty("--accent", a.accent);
+  if (a.nameFont) r.setProperty("--name-font", a.nameFont);
+  if (a.nameFontSize) r.setProperty("--name-size", a.nameFontSize + "px");
   if (a.roundFontSize) r.setProperty("--round-size", a.roundFontSize + "px");
 }
 
@@ -82,21 +83,23 @@ function CasterBanner({ caster }) {
 
 function App() {
   const [state, setState] = useState(null);
+  const [appearance, setAppearance] = useState({});
 
   useEffect(() => {
     fetch("/overlay/appearance.json")
       .then((r) => r.json())
-      .then(applyAppearance)
-      .catch(() => {});
+      .then((a) => { applyAppearance(a); setAppearance(a); })
+      .catch(() => { });
 
-    fetch("/state.json").then((r) => r.json()).then(setState).catch(() => {});
+    fetch("/state.json").then((r) => r.json()).then(setState).catch(() => { });
     const es = new EventSource("/events");
     es.onmessage = (ev) => {
       try {
         const { state, appearance } = JSON.parse(ev.data);
         setState(state);
         applyAppearance(appearance);
-      } catch {}
+        setAppearance(appearance);
+      } catch { }
     };
     return () => es.close();
   }, []);
@@ -113,6 +116,7 @@ function App() {
       <div class="bg-caster-row">
         ${casters.map((c, i) => html`<${CasterBanner} key=${i} caster=${c} />`)}
       </div>
+      <${SponsorRotator} appearance=${appearance} />
     </div>
   `;
 }

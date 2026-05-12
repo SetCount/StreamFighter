@@ -1,11 +1,28 @@
 {
   "outputDir": "obs-output",
-  "overlayPath": "overlay.html",
+  "overlayPath": "overlay/index.html",
   "gamesDir": "games",
+  "sponsorsDir": "sponsors",
   "game": "melee",
   "httpPort": 35920,
   "writeFieldFiles": true,
   "writeJson": true,
   "enableServer": true,
-  "startggTournamentUrl": "https://www.start.gg/tournament/the-atwood-classic-38"
+  "startggTournamentUrl": "https://www.start.gg/tournament/melee-mondays-the-guild-10",
+  "overlayAppearance": {
+    "accent": "#9141ac",
+    "sidebarBg": "#18100a",
+    "sidebarWidth": 240,
+    "camHeight": 300,
+    "nameFont": "\"Arial Black\", Impact, \"Arial Narrow\", sans-serif",
+    "nameFontSize": 30,
+    "roundFontSize": 30,
+    "showSetInfo": true,
+    "showLogo": true,
+    "sponsorInterval": 5,
+    "sponsorWidth": 200,
+    "sponsorHeight": 0,
+    "sponsorCorner": "bottom-right",
+    "sponsorPadding": 16
+  }
 }
