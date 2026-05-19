@@ -12,7 +12,7 @@ export type SetInfo = {
 export type Player = {
     name: string;
     pronouns?: string;
-    team?: string;
+    prefix?: string;
     character: string;
     costume: number;
     startggPlayerId?: number;
@@ -41,6 +41,8 @@ export type StreamState = {
 };
 
 export type OverlayAppearance = {
+    layout: string;
+    gameAspect: string;
     accent: string;
     sidebarBg: string;
     sidebarWidth: number;
@@ -59,6 +61,8 @@ export type OverlayAppearance = {
 };
 
 export const DEFAULT_APPEARANCE: OverlayAppearance = {
+    layout: 'dual',
+    gameAspect: '4:3',
     accent: '#e8711a',
     sidebarBg: '#18100a',
     sidebarWidth: 240,
@@ -98,7 +102,7 @@ export type PlayerPreset = {
     id: string;
     name: string;
     pronouns?: string;
-    team?: string;
+    prefix?: string;
     aliases?: string[];
     startggPlayerId?: number;
     character?: string;

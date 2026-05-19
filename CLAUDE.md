@@ -145,10 +145,18 @@ games/<gameId>/
 ### Frontend (React + TypeScript, `frontend/src/`)
 - `App.tsx` — state coordination, dialog refs, top-level layout. Owns
   the picker dialog state and preset lists (loaded once on startup,
-  refreshed by row save/delete). Page layout is a flex column inside
-  `.content`: the `<SetInfoEditor>` sits at the top as a full-width
-  bar, then `.layout-grid` (2-col grid: entities left `1fr`, casters
-  right `minmax(360px, 460px)`) holds the rest.
+  refreshed by row save/delete). Navigation is a three-tab strip below
+  the topbar: **Player Info** / **Presets** / **Settings**, driven by
+  `activeTab` state. The Player Info tab is the default: a flex column
+  inside `.content` with `<SetInfoEditor>` as a full-width bar over
+  `.layout-grid` (2-col grid: entities left `1fr`, casters right
+  `minmax(360px, 460px)`). The Presets tab renders `<PresetsEditor>`
+  directly in `.content` (no dialog). The Settings tab renders
+  `<ConfigEditor>` + `<OverlayEditor>` directly in `.content`.
+  `commitConfig(next)` is the shared auto-save path: it `setCfg`s and
+  calls `SetConfig`, surfacing a "port/server changes need restart"
+  notice in the status bar when those specific fields change. The Game
+  select in the topbar uses the same path.
 - `types.ts` — **plain interfaces** mirroring the Wails-generated
   classes. Components use these everywhere. The generated
   `main.StreamState` etc. are classes with a `convertValues` method that
@@ -218,18 +226,34 @@ games/<gameId>/
     `SOCIAL_PLATFORMS` (Twitter/Bluesky/Twitch/Discord glyph paths).
     Used by both `CastersEditor` and the caster preset rows in
     `PresetsEditor`.
-  - `ConfigEditor` — `<fieldset>` inside the Settings `<dialog>`. Save
-    Config + optional × close live in a `.dialog-actions` row above the
-    fields. Holds the StartGG token (password input, persisted on blur
-    via `SetSecrets` to `streamfighter.secrets.json`), paths, port, and
-    server toggles only — Game selection is in the topbar (auto-saves
-    via `SetConfig` on change so it persists without opening Settings).
-  - `PresetsEditor` — sibling of `ConfigEditor` inside the Settings
-    `<dialog>`. Two `<fieldset>` sections (Player Presets, Caster
-    Presets) with explicit Save buttons per row — auto-save would race
-    with hand-edits to the JSON files. Player rows have name + aliases
-    + StartGG ID + character (via `CharacterPicker`) + color swatches
-    (with a "no preference" clear option).
+  - `ConfigEditor` — `<fieldset>` rendered directly in `.content` on
+    the Settings tab. Holds the StartGG token (password input,
+    persisted on blur via `SetSecrets` to
+    `streamfighter.secrets.json`), paths, port, and server toggles
+    only — Game selection is in the topbar (also auto-saves). Takes
+    `value` + `onChange` (local-only) + `onCommit` (writes to disk
+    via App's `commitConfig`). Text/number inputs wire `onChange` to
+    `set(...)` and `onBlur` to `commit()`; checkboxes/selects wire
+    `onChange` to `commit({...})` directly so they persist on first
+    click. There is no Save button — stream state auto-pushes to OBS
+    on every change (debounced 300ms), never config. Per-field width
+    hints (`.fw-num`, `.fw-mid`, `.fw-path`, `.fw-long`, `.fw-slider`,
+    `.fw-color`, `.span-full`) let each label size to its content
+    rather than getting stretched into a uniform track; the
+    `.config-editor .grid` / `.overlay-editor .grid` overrides in
+    `App.css` swap the base grid for a flex-wrap row to honor them.
+  - `OverlayEditor` — sibling of `ConfigEditor` on the Settings tab.
+    Same `value`/`onChange`/`onCommit` contract, scoped to
+    `OverlayAppearance`. Sliders also call `commit()` on
+    `onMouseUp`/`onTouchEnd`/`onKeyUp` so a drag persists when the
+    pointer releases without needing to tab away.
+  - `PresetsEditor` — rendered directly in `.content` on the Presets
+    tab (no longer a `<dialog>`). Two `<fieldset>` sections (Player
+    Presets, Caster Presets) with explicit Save buttons per row —
+    auto-save would race with hand-edits to the JSON files. Player
+    rows have name + aliases + StartGG ID + character (via
+    `CharacterPicker`) + color swatches (with a "no preference" clear
+    option).
   - `SetPicker` — modal `<dialog class="set-picker">` opened from
     SetInfoEditor's Pick Set button. Substring filter across event,
     round, and entrant tags, plus a "Hide completed" checkbox (default
@@ -296,13 +320,20 @@ Defaults: HTTP port `35920` → overlay URL
   (the +/× controls hide when `canResize` is false). `FFA` is the only
   structurally-flexible format. Switching format runs `reshapeForFormat`;
   switching Best Of runs `clampScores`.
-- **Settings** lives in a native `<dialog>`, opened from the topbar.
-- **Topbar** carries (in order): title, OBS source URL,
-  `<select class="game-select">` for the active game pack, Settings
-  button, Update button. The Game select auto-saves: changing it calls
-  `SetConfig` immediately, which persists to
-  `streamfighter.config.json`. So if a user only ever streams P+, they
-  pick once and never see it again.
+- **Navigation** is a tab strip (`<nav class="tabs">`) directly under
+  the topbar with three tabs: Player Info, Presets, Settings. Active
+  state is the `--accent` underline on `aria-selected="true"`. Config
+  saves itself on blur/change — there is no Save Config button.
+- **Topbar** carries (in order): title, OBS source URL, and the
+  `<select class="game-select">` for the active game pack. No action
+  buttons live here; the Game select auto-saves through `commitConfig`,
+  same path as every Settings field. So if a user only ever streams P+,
+  they pick once and never see it again.
+- **Auto-update**: every change to `StreamState` (typing a name,
+  picking a character, clicking a pip, changing format/bestOf, picking
+  a set) auto-pushes to OBS after a 300ms debounce. There is no
+  manual Update button — the `useEffect` watching `state` handles it
+  silently, skipping only the initial load.
 
 ## Presets & StartGG integration
 
@@ -312,9 +343,9 @@ Defaults: HTTP port `35920` → overlay URL
 - **`players.json` / `casters.json`** are flat JSON arrays of presets,
   cwd-relative, hand-editable. The `List*` Wails methods reload from
   disk on every call, so a hand-edit shows up on the next refresh
-  (close & reopen Settings, or pick a set). IDs are app-assigned the
-  first time `Save*Preset` is called for a row; copying a row in your
-  text editor is fine as long as you blank or change the ID.
+  (switch tabs away and back, or pick a set). IDs are app-assigned
+  the first time `Save*Preset` is called for a row; copying a row in
+  your text editor is fine as long as you blank or change the ID.
 - **Player matching** when applying a preset to a typed name (in
   `ScoreEntitiesEditor`) or to a player pulled from start.gg (in
   `applyStartggSet`): startgg ID exact match wins; falls back to name

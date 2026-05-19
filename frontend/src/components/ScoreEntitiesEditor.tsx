@@ -99,7 +99,7 @@ export default function ScoreEntitiesEditor({
       const playerPatch: Partial<Player> = {
         name: match.name,
         pronouns: match.pronouns,
-        team: match.team,
+        prefix: match.prefix,
         character: match.character ?? cur.character,
         costume: match.costume ?? cur.costume,
         startggPlayerId: match.startggPlayerId,
@@ -249,11 +249,11 @@ export default function ScoreEntitiesEditor({
                       }
                     />
                     <input
-                      className="team"
-                      placeholder="Team"
-                      value={p.team ?? ""}
+                      className="prefix"
+                      placeholder="Prefix"
+                      value={p.prefix ?? ""}
                       onChange={(ev) =>
-                        setPlayer(i, pi, { team: ev.target.value || undefined })
+                        setPlayer(i, pi, { prefix: ev.target.value || undefined })
                       }
                     />
                   </div>

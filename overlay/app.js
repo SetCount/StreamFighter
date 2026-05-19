@@ -28,7 +28,7 @@
  *       players: Array<{          // length 1 for 1v1/FFA, 2 for 2v2
  *         name:      string,
  *         pronouns:  string,      // omitted when blank
- *         team:      string,      // omitted when blank
+ *         prefix:    string,      // omitted when blank
  *         character: string,      // game-pack ID, e.g. "captain_falcon"
  *                                 // NOT the display name — that's only in .txt files
  *         costume:   number,      // 1-based; 0 = unset
@@ -50,7 +50,7 @@
  */
 
 import { h, render } from "https://esm.sh/preact@10";
-import { useState, useEffect } from "https://esm.sh/preact@10/hooks";
+import { useState, useEffect, useRef, useLayoutEffect } from "https://esm.sh/preact@10/hooks";
 import htm from "https://esm.sh/htm@3";
 import { SponsorRotator } from "./components/sponsor-rotator.js";
 
@@ -65,7 +65,18 @@ function applyAppearance(a) {
   if (a.nameFont) r.setProperty("--name-font", a.nameFont);
   if (a.nameFontSize) r.setProperty("--name-size", a.nameFontSize + "px");
   if (a.roundFontSize) r.setProperty("--round-size", a.roundFontSize + "px");
+  if (a.gameAspect) {
+    const m = /^\s*(\d+(?:\.\d+)?)\s*[:/]\s*(\d+(?:\.\d+)?)\s*$/.exec(a.gameAspect);
+    if (m) r.setProperty("--game-aspect", `${m[1]} / ${m[2]}`);
+  }
+  document.body.dataset.layout = a.layout === "single" ? "single" : "dual";
 }
+
+const PLATFORM_LABEL = {
+  twitter: "𝕏",
+  bluesky: "Bsky",
+  twitch: "Twitch",
+};
 
 // ── Overlay components ────────────────────────────────────────────────────────
 
@@ -83,9 +94,29 @@ function WinPips({ score, bestOf, color }) {
   `;
 }
 
+// Auto-shrinks text to fit its container, falling back to ellipsis at 50% of base size.
+function FitText(props) {
+  const ref = useRef(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.fontSize = '';
+    const max = parseFloat(getComputedStyle(el).fontSize);
+    if (!max || max < 1) return;
+    let size = max;
+    while (el.scrollWidth > el.clientWidth && size > max * 0.5) {
+      size -= 0.5;
+      el.style.fontSize = size + 'px';
+    }
+  });
+  return html`<div ref=${ref} class=${props.class}>${props.text}</div>`;
+}
+
 function PlayerPanel({ entity, bestOf }) {
   const player = entity?.players?.[0];
   const name = (player?.name || "???").toUpperCase();
+  const prefix = player?.prefix || "";
+  const pronouns = player?.pronouns || "";
   const score = entity?.currentScore ?? 0;
   const color = entity?.portColor ?? "var(--accent)";
 
@@ -95,7 +126,9 @@ function PlayerPanel({ entity, bestOf }) {
         <div class="cam-label">CAM</div>
       </div>
       <div class="name-strip">
-        <span class="player-name">${name}</span>
+        ${prefix && html`<div class="player-prefix">${prefix.toUpperCase()}</div>`}
+        <${FitText} text=${name} class="player-name" />
+        ${pronouns && html`<div class="player-pronouns">${pronouns}</div>`}
       </div>
       <div class="score-strip">
         <${WinPips} score=${score} bestOf=${bestOf} color=${color} />
@@ -111,6 +144,51 @@ function SetInfo({ setInfo }) {
     <div class="set-info">
       ${round && html`<div class="round-label">${round}</div>`}
       <div class="best-of">BEST OF ${bestOf}</div>
+    </div>
+  `;
+}
+
+function CasterList({ casters }) {
+  if (!casters || casters.length === 0) return null;
+  return html`
+    <div class="caster-list">
+      ${casters.map((c, i) => {
+        const socials = (c.socials || []).filter((s) => s.handle);
+        return html`
+          <div class="caster-row" key=${i}>
+            <span class="caster-name">${c.name}</span>
+            ${socials.length > 0 && html`
+              <span class="caster-socials">
+                ${socials.map((s) => html`
+                  <span class="caster-social">
+                    <span class="caster-social-platform">${PLATFORM_LABEL[s.icon] || s.icon}</span>
+                    <span class="caster-social-handle">${s.handle}</span>
+                  </span>
+                `)}
+              </span>
+            `}
+          </div>
+        `;
+      })}
+    </div>
+  `;
+}
+
+function ScoreRow({ entity, bestOf }) {
+  const player = entity?.players?.[0];
+  const name = (player?.name || "???").toUpperCase();
+  const prefix = player?.prefix || "";
+  const pronouns = player?.pronouns || "";
+  const score = entity?.currentScore ?? 0;
+  const color = entity?.portColor ?? "var(--accent)";
+  return html`
+    <div class="score-row" style=${{ "--row-color": color }}>
+      <div class="score-row-text">
+        ${prefix && html`<span class="score-row-prefix">${prefix.toUpperCase()}</span>`}
+        <${FitText} text=${name} class="score-row-name" />
+        ${pronouns && html`<span class="score-row-pronouns">${pronouns}</span>`}
+      </div>
+      <${WinPips} score=${score} bestOf=${bestOf} color=${color} />
     </div>
   `;
 }
@@ -166,9 +244,39 @@ function App() {
   }, []);
 
   if (!state || !appearance) return null;
-  const { scoreEntities = [], setInfo = {} } = state;
+  const { scoreEntities = [], setInfo = {}, casters = [] } = state;
   const bestOf = setInfo?.bestOf ?? 3;
   const [left, right] = scoreEntities;
+
+  if (appearance.layout === "single") {
+    return html`
+      <div class="app app-single">
+        <div class="panel panel-left">
+          <div class="panel-cam">
+            <div class="cam-label">CAM</div>
+          </div>
+          <div class="panel-scoreboard">
+            ${appearance.showSetInfo !== false && html`
+              <div class="panel-set-info">
+                ${(setInfo?.roundLabel || "") && html`
+                  <span class="round-label">${(setInfo.roundLabel || "").toUpperCase()}</span>
+                `}
+                <span class="best-of">BEST OF ${bestOf}</span>
+              </div>
+            `}
+            ${scoreEntities.map((e, i) => html`<${ScoreRow} key=${i} entity=${e} bestOf=${bestOf} />`)}
+          </div>
+          <${CasterList} casters=${casters} />
+          <div class="panel-spacer"></div>
+          <div class="panel-bottom">
+            <${SponsorRotator} appearance=${appearance} inline=${true} />
+            ${appearance.showLogo !== false && html`<${BrandLogo} logoUrl=${appearance.logoUrl || ""} />`}
+          </div>
+        </div>
+        <div class="game-area"></div>
+      </div>
+    `;
+  }
 
   return html`
     <div class="app">

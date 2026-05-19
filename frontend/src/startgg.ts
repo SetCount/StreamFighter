@@ -35,7 +35,7 @@ function playerFromStartgg(p: StartggPlayer, presets: PlayerPreset[]): Player {
         return {
             name: preset.name,
             pronouns: preset.pronouns,
-            team: preset.team,
+            prefix: preset.prefix,
             character: preset.character ?? '',
             costume: preset.costume ?? 0,
             startggPlayerId: p.id || preset.startggPlayerId,

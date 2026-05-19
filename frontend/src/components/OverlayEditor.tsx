@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import type { OverlayAppearance } from '../types';
 import { DEFAULT_APPEARANCE } from '../types';
+import Segmented from './Segmented';
 
 const FONT_SUGGESTIONS = [
     '"Arial Black", Impact, "Arial Narrow", sans-serif',
@@ -12,25 +13,48 @@ const FONT_SUGGESTIONS = [
 type Props = {
     value: OverlayAppearance;
     onChange: (v: OverlayAppearance) => void;
+    onCommit: (v: OverlayAppearance) => void;
 };
 
-export default function OverlayEditor({ value, onChange }: Props) {
+export default function OverlayEditor({ value, onChange, onCommit }: Props) {
     const id = useId();
     const set = (patch: Partial<OverlayAppearance>) => onChange({ ...value, ...patch });
+    const commit = (patch?: Partial<OverlayAppearance>) => {
+        const next = patch ? { ...value, ...patch } : value;
+        if (patch) onChange(next);
+        onCommit(next);
+    };
     const fontListId = `${id}-fonts`;
 
     return (
         <fieldset className="overlay-editor">
             <legend>Overlay Appearance</legend>
 
+            <label className="overlay-layout-row">
+                Layout
+                <Segmented<string>
+                    value={value.layout || 'dual'}
+                    options={[
+                        { value: 'dual', label: 'Dual sidebar' },
+                        { value: 'single', label: 'Single left panel' },
+                    ]}
+                    onChange={v => commit({ layout: v })}
+                />
+                <small className="hint">
+                    Dual: cam + panel on each side of the game. Single: one wide left
+                    panel with both cams, score, casters, sponsors.
+                </small>
+            </label>
+
             <div className="grid">
-                <label>
+                <label className="fw-color">
                     Accent color
                     <div className="color-row">
                         <input
                             type="color"
                             value={value.accent}
                             onInput={e => set({ accent: (e.target as HTMLInputElement).value })}
+                            onBlur={() => commit()}
                         />
                         <input
                             type="text"
@@ -41,16 +65,18 @@ export default function OverlayEditor({ value, onChange }: Props) {
                                 const v = e.target.value;
                                 if (/^#[0-9a-fA-F]{6}$/.test(v)) set({ accent: v });
                             }}
+                            onBlur={() => commit()}
                         />
                     </div>
                 </label>
-                <label>
+                <label className="fw-color">
                     Sidebar background
                     <div className="color-row">
                         <input
                             type="color"
                             value={value.sidebarBg}
                             onInput={e => set({ sidebarBg: (e.target as HTMLInputElement).value })}
+                            onBlur={() => commit()}
                         />
                         <input
                             type="text"
@@ -61,73 +87,77 @@ export default function OverlayEditor({ value, onChange }: Props) {
                                 const v = e.target.value;
                                 if (/^#[0-9a-fA-F]{6}$/.test(v)) set({ sidebarBg: v });
                             }}
+                            onBlur={() => commit()}
                         />
                     </div>
                 </label>
-            </div>
-
-            <div className="grid" style={{ marginTop: 14 }}>
-                <label>
-                    Sidebar width — {value.sidebarWidth}px
-                    <input
-                        type="range" min={160} max={400}
-                        value={value.sidebarWidth}
-                        onChange={e => set({ sidebarWidth: Number(e.target.value) })}
-                    />
-                </label>
-                <label>
+                <label className="fw-slider">
                     Cam area height — {value.camHeight}px
                     <input
                         type="range" min={150} max={540}
                         value={value.camHeight}
                         onChange={e => set({ camHeight: Number(e.target.value) })}
+                        onBlur={() => commit()}
+                        onMouseUp={() => commit()}
+                        onTouchEnd={() => commit()}
+                        onKeyUp={() => commit()}
                     />
                 </label>
-                <label>
+                <label className="fw-slider">
                     Player name size — {value.nameFontSize}px
                     <input
                         type="range" min={16} max={64}
                         value={value.nameFontSize}
                         onChange={e => set({ nameFontSize: Number(e.target.value) })}
+                        onBlur={() => commit()}
+                        onMouseUp={() => commit()}
+                        onTouchEnd={() => commit()}
+                        onKeyUp={() => commit()}
                     />
                 </label>
-                <label>
+                <label className="fw-slider">
                     Round label size — {value.roundFontSize}px
                     <input
                         type="range" min={16} max={64}
                         value={value.roundFontSize}
                         onChange={e => set({ roundFontSize: Number(e.target.value) })}
+                        onBlur={() => commit()}
+                        onMouseUp={() => commit()}
+                        onTouchEnd={() => commit()}
+                        onKeyUp={() => commit()}
                     />
                 </label>
-                <label style={{ gridColumn: '1 / -1' }}>
+                <label className="span-full">
                     Player name font
                     <input
                         list={fontListId}
                         value={value.nameFont}
                         onChange={e => set({ nameFont: e.target.value })}
+                        onBlur={() => commit()}
                         placeholder='"Arial Black", Impact, sans-serif'
                     />
                     <datalist id={fontListId}>
                         {FONT_SUGGESTIONS.map(f => <option key={f} value={f} />)}
                     </datalist>
                 </label>
-                <label style={{ gridColumn: '1 / -1' }}>
+                <label className="span-full">
                     Logo image URL
                     <input
                         type="text"
                         value={value.logoUrl ?? ''}
                         onChange={e => set({ logoUrl: e.target.value })}
+                        onBlur={() => commit()}
                         placeholder="https://… or /overlay/logo.png (blank = built-in mark)"
                     />
                 </label>
             </div>
 
-            <div className="checkboxes">
+            <div className="checkboxes overlay-checkboxes">
                 <label className="checkbox-row">
                     <input
                         type="checkbox"
                         checked={value.showSetInfo}
-                        onChange={e => set({ showSetInfo: e.target.checked })}
+                        onChange={e => commit({ showSetInfo: e.target.checked })}
                     />
                     Show set info (bottom-left of game overlay)
                 </label>
@@ -135,16 +165,18 @@ export default function OverlayEditor({ value, onChange }: Props) {
                     <input
                         type="checkbox"
                         checked={value.showLogo}
-                        onChange={e => set({ showLogo: e.target.checked })}
+                        onChange={e => commit({ showLogo: e.target.checked })}
                     />
                     Show logo (bottom-right of game overlay)
                 </label>
-            </div>
-
-            <div style={{ marginTop: 14, display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                     type="button"
-                    onClick={() => onChange({ ...DEFAULT_APPEARANCE })}
+                    className="reset-btn"
+                    onClick={() => {
+                        const next = { ...DEFAULT_APPEARANCE };
+                        onChange(next);
+                        onCommit(next);
+                    }}
                 >
                     Reset to defaults
                 </button>

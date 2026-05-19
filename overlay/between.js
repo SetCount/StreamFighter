@@ -40,6 +40,8 @@ function TopBar({ setInfo, scoreEntities }) {
 
   const leftName = left?.players?.[0]?.name || "???";
   const rightName = right?.players?.[0]?.name || "???";
+  const leftPrefix = left?.players?.[0]?.prefix || "";
+  const rightPrefix = right?.players?.[0]?.prefix || "";
   const leftScore = left?.currentScore ?? 0;
   const rightScore = right?.currentScore ?? 0;
   const leftColor = left?.portColor || "var(--accent)";
@@ -52,11 +54,17 @@ function TopBar({ setInfo, scoreEntities }) {
         ${roundLabel && html`<span class="bg-round">${roundLabel.toUpperCase()}</span>`}
       </div>
       <div class="bg-matchup">
-        <span class="bg-player-name">${leftName}</span>
+        <div class="bg-player">
+          ${leftPrefix && html`<span class="bg-player-prefix">${leftPrefix}</span>`}
+          <span class="bg-player-name">${leftName}</span>
+        </div>
         <${ScorePips} score=${leftScore} bestOf=${bestOf} color=${leftColor} />
         <span class="bg-vs">VS</span>
         <${ScorePips} score=${rightScore} bestOf=${bestOf} color=${rightColor} />
-        <span class="bg-player-name">${rightName}</span>
+        <div class="bg-player">
+          ${rightPrefix && html`<span class="bg-player-prefix">${rightPrefix}</span>`}
+          <span class="bg-player-name">${rightName}</span>
+        </div>
       </div>
     </div>
   `;

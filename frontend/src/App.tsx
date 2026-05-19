@@ -59,15 +59,15 @@ function App() {
   const [token, setToken] = useState("");
   const [playerPresets, setPlayerPresets] = useState<PlayerPreset[]>([]);
   const [casterPresets, setCasterPresets] = useState<CasterPreset[]>([]);
+  const [activeTab, setActiveTab] = useState<"player" | "presets" | "settings">(
+    "player",
+  );
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerSets, setPickerSets] = useState<StartggSet[]>([]);
   const [pickerLoading, setPickerLoading] = useState(false);
   const [pickerError, setPickerError] = useState<string | null>(null);
   const [pickerTournament, setPickerTournament] = useState("");
-
-  const dialogRef = useRef<HTMLDialogElement>(null);
-  const presetsDialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     Promise.all([
@@ -95,35 +95,45 @@ function App() {
       .catch((e) => setStatus("Failed to load: " + e));
   }, []);
 
+  const loadedRef = useRef(false);
+  useEffect(() => {
+    if (!state) return;
+    if (!loadedRef.current) {
+      loadedRef.current = true;
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        await SetState(state as any);
+        await Update();
+      } catch (e: any) {
+        setStatus("Error: " + e);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [state]);
+
   if (!state || !config) {
     return <div className="loading">Loading…</div>;
   }
 
-  const onUpdate = async () => {
-    setStatus("Updating…");
-    try {
-      await SetState(state as any);
-      await Update();
-      setStatus("Updated " + new Date().toLocaleTimeString());
-    } catch (e: any) {
-      setStatus("Error: " + e);
-    }
-  };
-
-  const onSaveConfig = async () => {
-    setStatus("Saving config…");
-    try {
-      await SetConfig(config as any);
-      setStatus("Config saved (port/server changes need restart)");
-    } catch (e: any) {
-      setStatus("Error: " + e);
-    }
+  const commitConfig = (next: OutputConfig) => {
+    const portChanged = next.httpPort !== config.httpPort;
+    const serverChanged = next.enableServer !== config.enableServer;
+    setCfg(next);
+    SetConfig(next as any)
+      .then(() => {
+        if (portChanged || serverChanged) {
+          setStatus("Saved — port/server changes need restart");
+        } else {
+          setStatus("");
+        }
+      })
+      .catch((e) => setStatus("Error saving config: " + e));
   };
 
   const onPickGame = (id: string) => {
-    const next = { ...config, game: id };
-    setCfg(next);
-    SetConfig(next as any).catch((e) => setStatus("Error saving game: " + e));
+    commitConfig({ ...config, game: id });
     setSt((prev) =>
       prev
         ? {
@@ -159,7 +169,7 @@ function App() {
     setCfg({ ...config, startggTournamentUrl: v });
   };
   const onTournamentUrlBlur = async () => {
-    SetConfig(config as any).catch((e) => setStatus("Error saving URL: " + e));
+    commitConfig(config);
     const url = (config.startggTournamentUrl ?? "").trim();
     if (!url) return;
     try {
@@ -274,7 +284,7 @@ function App() {
       id: existing?.id ?? '',
       name: player.name,
       pronouns: player.pronouns,
-      team: player.team,
+      prefix: player.prefix,
       aliases: existing?.aliases ?? [],
       character: player.character || undefined,
       costume: player.costume > 0 ? player.costume : undefined,
@@ -283,10 +293,11 @@ function App() {
     });
   };
 
-  const openSettings = () => dialogRef.current?.showModal();
-  const closeSettings = () => dialogRef.current?.close();
-  const openPresets = () => presetsDialogRef.current?.showModal();
-  const closePresets = () => presetsDialogRef.current?.close();
+  const tabs: { id: typeof activeTab; label: string }[] = [
+    { id: "player", label: "Player Info" },
+    { id: "presets", label: "Presets" },
+    { id: "settings", label: "Settings" },
+  ];
 
   return (
     <div className="app">
@@ -312,16 +323,21 @@ function App() {
             </option>
           ))}
         </select>
-        <button className="settings-btn" onClick={openPresets}>
-          Presets
-        </button>
-        <button className="settings-btn" onClick={openSettings}>
-          Settings
-        </button>
-        <button className="update-btn" onClick={onUpdate}>
-          Update
-        </button>
       </header>
+
+      <nav className="tabs" role="tablist" aria-label="Section">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            role="tab"
+            className="tab"
+            aria-selected={activeTab === t.id}
+            onClick={() => setActiveTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
 
       {status ? (
         <div className="status-bar" aria-live="polite">
@@ -331,76 +347,80 @@ function App() {
         <></>
       )}
 
-      <main className="content">
-        <div className="layout-grid">
-          <div>
-            <SetInfoEditor
-              value={state.setInfo}
-              onChange={onSetInfoChange}
-              tournamentUrl={config.startggTournamentUrl ?? ""}
-              onTournamentUrlChange={onTournamentUrlChange}
-              onTournamentUrlBlur={onTournamentUrlBlur}
-              onPickSet={onPickSet}
-            />
-            <CastersEditor
-              value={state.casters}
-              onChange={(c) => setSt({ ...state, casters: c })}
-              presets={casterPresets}
+      {activeTab === "player" && (
+        <main className="content" role="tabpanel">
+          <div className="layout-grid">
+            <div>
+              <SetInfoEditor
+                value={state.setInfo}
+                onChange={onSetInfoChange}
+                tournamentUrl={config.startggTournamentUrl ?? ""}
+                onTournamentUrlChange={onTournamentUrlChange}
+                onTournamentUrlBlur={onTournamentUrlBlur}
+                onPickSet={onPickSet}
+              />
+              <CastersEditor
+                value={state.casters}
+                onChange={(c) => setSt({ ...state, casters: c })}
+                presets={casterPresets}
+              />
+            </div>
+
+            <ScoreEntitiesEditor
+              value={state.scoreEntities}
+              onChange={(se) => setSt({ ...state, scoreEntities: se })}
+              canResize={canResize(state.setInfo.format)}
+              format={state.setInfo.format}
+              bestOf={state.setInfo.bestOf}
+              games={games}
+              gameId={config.game}
+              assetsBase={assetsBase}
+              presets={playerPresets}
+              onSavePlayerAsPreset={onSavePlayerAsPreset}
             />
           </div>
+        </main>
+      )}
 
-          <ScoreEntitiesEditor
-            value={state.scoreEntities}
-            onChange={(se) => setSt({ ...state, scoreEntities: se })}
-            canResize={canResize(state.setInfo.format)}
-            format={state.setInfo.format}
-            bestOf={state.setInfo.bestOf}
+      {activeTab === "presets" && (
+        <main className="content" role="tabpanel">
+          <PresetsEditor
+            players={playerPresets}
+            casters={casterPresets}
             games={games}
             gameId={config.game}
             assetsBase={assetsBase}
-            presets={playerPresets}
-            onSavePlayerAsPreset={onSavePlayerAsPreset}
+            onSavePlayer={onSavePlayerPresetRow}
+            onDeletePlayer={onDeletePlayerPresetRow}
+            onAddPlayer={onAddPlayerPreset}
+            onChangePlayers={setPlayerPresets}
+            onSaveCaster={onSaveCasterPresetRow}
+            onDeleteCaster={onDeleteCasterPresetRow}
+            onAddCaster={onAddCasterPreset}
+            onChangeCasters={setCasterPresets}
           />
-        </div>
-      </main>
+        </main>
+      )}
 
-      <dialog ref={dialogRef} className="settings-dialog">
-        <ConfigEditor
-          value={config}
-          onChange={setCfg}
-          onSave={onSaveConfig}
-          onClose={closeSettings}
-          startggToken={token}
-          onTokenChange={onTokenChange}
-          onTokenBlur={onTokenBlur}
-        />
-        <OverlayEditor
-          value={config.overlayAppearance}
-          onChange={a => setCfg({ ...config, overlayAppearance: a })}
-        />
-      </dialog>
-
-      <dialog ref={presetsDialogRef} className="presets-dialog">
-        <div className="presets-dialog-header">
-          <span>Presets</span>
-          <button className="icon-btn" onClick={closePresets} aria-label="Close">×</button>
-        </div>
-        <PresetsEditor
-          players={playerPresets}
-          casters={casterPresets}
-          games={games}
-          gameId={config.game}
-          assetsBase={assetsBase}
-          onSavePlayer={onSavePlayerPresetRow}
-          onDeletePlayer={onDeletePlayerPresetRow}
-          onAddPlayer={onAddPlayerPreset}
-          onChangePlayers={setPlayerPresets}
-          onSaveCaster={onSaveCasterPresetRow}
-          onDeleteCaster={onDeleteCasterPresetRow}
-          onAddCaster={onAddCasterPreset}
-          onChangeCasters={setCasterPresets}
-        />
-      </dialog>
+      {activeTab === "settings" && (
+        <main className="content" role="tabpanel">
+          <ConfigEditor
+            value={config}
+            onChange={setCfg}
+            onCommit={commitConfig}
+            startggToken={token}
+            onTokenChange={onTokenChange}
+            onTokenBlur={onTokenBlur}
+          />
+          <OverlayEditor
+            value={config.overlayAppearance}
+            onChange={(a) => setCfg({ ...config, overlayAppearance: a })}
+            onCommit={(a) =>
+              commitConfig({ ...config, overlayAppearance: a })
+            }
+          />
+        </main>
+      )}
 
       <SetPicker
         open={pickerOpen}

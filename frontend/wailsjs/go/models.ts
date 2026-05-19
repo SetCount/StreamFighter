@@ -131,6 +131,7 @@ export namespace main {
 	    id: string;
 	    name: string;
 	    shortName: string;
+	    aspectRatio?: string;
 	    characters: Character[];
 	    characterLayout?: string[][];
 	    portColors?: string[];
@@ -145,6 +146,7 @@ export namespace main {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.shortName = source["shortName"];
+	        this.aspectRatio = source["aspectRatio"];
 	        this.characters = this.convertValues(source["characters"], Character);
 	        this.characterLayout = source["characterLayout"];
 	        this.portColors = source["portColors"];
@@ -170,6 +172,8 @@ export namespace main {
 		}
 	}
 	export class OverlayAppearance {
+	    layout: string;
+	    gameAspect: string;
 	    accent: string;
 	    sidebarBg: string;
 	    sidebarWidth: number;
@@ -192,6 +196,8 @@ export namespace main {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.layout = source["layout"];
+	        this.gameAspect = source["gameAspect"];
 	        this.accent = source["accent"];
 	        this.sidebarBg = source["sidebarBg"];
 	        this.sidebarWidth = source["sidebarWidth"];
@@ -263,7 +269,7 @@ export namespace main {
 	export class Player {
 	    name: string;
 	    pronouns?: string;
-	    team?: string;
+	    prefix?: string;
 	    character: string;
 	    costume: number;
 	    startggPlayerId?: number;
@@ -276,7 +282,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
 	        this.pronouns = source["pronouns"];
-	        this.team = source["team"];
+	        this.prefix = source["prefix"];
 	        this.character = source["character"];
 	        this.costume = source["costume"];
 	        this.startggPlayerId = source["startggPlayerId"];
@@ -286,7 +292,7 @@ export namespace main {
 	    id: string;
 	    name: string;
 	    pronouns?: string;
-	    team?: string;
+	    prefix?: string;
 	    aliases?: string[];
 	    startggPlayerId?: number;
 	    character?: string;
@@ -302,7 +308,7 @@ export namespace main {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.pronouns = source["pronouns"];
-	        this.team = source["team"];
+	        this.prefix = source["prefix"];
 	        this.aliases = source["aliases"];
 	        this.startggPlayerId = source["startggPlayerId"];
 	        this.character = source["character"];

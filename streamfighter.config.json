@@ -10,6 +10,8 @@
   "enableServer": true,
   "startggTournamentUrl": "https://www.start.gg/tournament/melee-mondays-the-guild-10",
   "overlayAppearance": {
+    "layout": "dual",
+    "gameAspect": "4:3",
     "accent": "#9141ac",
     "sidebarBg": "#18100a",
     "sidebarWidth": 240,

@@ -93,35 +93,40 @@ body {
     border-radius: 6px;
 }
 
-.settings-btn {
-    padding: 6px 14px;
-    font-size: var(--font-sm);
-    background: transparent;
-    color: var(--text-soft);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    cursor: pointer;
-    flex: 0 0 auto;
-}
-.settings-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--line-hover);
-    color: var(--text);
-}
+/* ---------- Tab strip --------------------------------------------------- */
+/* Lives below the topbar and switches the .content body between
+   Player Info / Presets / Settings. Underline-style active state so the
+   strip reads as navigation, not as a toolbar of buttons. */
 
-.update-btn {
-    padding: 6px 20px;
-    font-weight: 600;
-    font-size: var(--font-base);
-    background: var(--accent);
-    color: white;
-    border: 1px solid var(--accent);
-    border-radius: 6px;
-    cursor: pointer;
+.tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 16px;
+    background: var(--bg-bar);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
     flex: 0 0 auto;
 }
-.update-btn:hover { filter: brightness(1.1); }
-.update-btn:active { filter: brightness(0.95); }
+.tab {
+    padding: 8px 16px;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: var(--font-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 80ms ease, border-color 80ms ease, background 80ms ease;
+}
+.tab:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.03);
+}
+.tab[aria-selected="true"] {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+}
 
 .status-bar {
     flex: 0 0 auto;
@@ -644,36 +649,60 @@ input, select {
     color: white;
 }
 
-/* ---------- Settings dialog -------------------------------------------- */
+/* ---------- Settings tab content --------------------------------------- */
+/* The Settings tab puts ConfigEditor + OverlayEditor directly in .content,
+   which is already a scrolling flex column. Below: tweaks so its fields
+   can size to their content via .fw-* hints rather than getting forced
+   into uniform grid tracks. */
 
-.settings-dialog {
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 16px;
-    background: var(--bg-page);
-    color: inherit;
-    max-width: 640px;
-    width: 90vw;
-    margin: auto;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-}
-.settings-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.55);
-}
-
-.dialog-actions {
+.config-editor .grid,
+.overlay-editor .grid {
     display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    align-items: flex-start;
 }
+.config-editor .grid > label,
+.overlay-editor .grid > label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    /* The flex container's own `gap` handles vertical spacing between
+       wrapped rows — neutralize the global `label + label` margin so
+       the first label in a row doesn't sit higher than its siblings. */
+    margin-top: 0;
+}
+.config-editor .grid > label > input,
+.config-editor .grid > label > select,
+.overlay-editor .grid > label > input,
+.overlay-editor .grid > label > select {
+    width: 100%;
+}
+.config-editor fieldset,
+.overlay-editor fieldset {
+    margin: 0;
+}
+.config-editor .span-full,
+.overlay-editor .span-full {
+    flex: 1 0 100%;
+}
+
+/* Field-width hints. Numbers reflect the expected content width. */
+.fw-num    { flex: 0 0 90px; }      /* small int: port, interval, padding */
+.fw-num-md { flex: 0 0 130px; }     /* small int with longer label hint */
+.fw-mid    { flex: 0 0 150px; }     /* select / short string */
+.fw-path   { flex: 1 1 220px; max-width: 320px; } /* file paths */
+.fw-long   { flex: 1 1 280px; max-width: 420px; } /* token, font, url */
+.fw-slider { flex: 1 1 220px; max-width: 280px; } /* range slider */
+.fw-color  { flex: 0 0 auto; }      /* color row sizes itself */
 
 .checkboxes {
     display: flex;
     flex-wrap: wrap;
     gap: 18px;
-    margin-top: 16px;
-    padding-top: 14px;
+    margin-top: 14px;
+    padding-top: 12px;
     border-top: 1px solid var(--line);
 }
 .checkbox-row {
@@ -687,7 +716,27 @@ input, select {
 .checkbox-row input { width: auto; min-height: 0; }
 
 /* ── OverlayEditor ── */
-.overlay-editor { margin-top: 16px; }
+.overlay-editor { margin: 0; }
+.overlay-layout-row {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 12px;
+    row-gap: 4px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.overlay-layout-row .hint {
+    grid-column: 2;
+    color: var(--text-muted);
+    font-size: var(--font-sm);
+    line-height: 1.35;
+}
+.overlay-checkboxes {
+    align-items: center;
+}
+.overlay-checkboxes .reset-btn {
+    margin-left: auto;
+}
 
 .color-row {
     display: flex;
@@ -847,53 +896,24 @@ input, select {
 .set-state.state-2 { color: #80c080; border-color: #80c08055; }
 .set-state.state-3 { color: var(--text-muted); }
 
-/* ---------- Presets dialog --------------------------------------------- */
-
-.presets-dialog {
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 16px;
-    background: var(--bg-page);
-    color: inherit;
-    max-width: 900px;
-    width: 90vw;
-    /* No overflow on the dialog — each column scrolls independently */
-    margin: auto;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-}
-.presets-dialog::backdrop {
-    background: rgba(0, 0, 0, 0.55);
-}
-.presets-dialog-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-}
-.presets-dialog-header > span {
-    font-size: var(--font-md);
-    font-weight: 600;
-    color: var(--text-soft);
-}
-
 /* ---------- Presets editor --------------------------------------------- */
 
-/* Two-column layout: Player Presets left, Caster Presets right */
+/* Two-column layout: Player Presets left, Caster Presets right.
+   Lives directly inside .content on the Presets tab. */
 .presets-columns {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     align-items: start;
 }
-.presets-section {
-    /* no margin-top — grid gap + dialog header margin-bottom handle spacing */
-}
 .preset-list {
     display: flex;
     flex-direction: column;
     gap: 6px;
     margin-top: 8px;
-    max-height: calc(85vh - 130px);
+    /* Each section scrolls independently inside the tab so the column
+       headers stay put while the list grows long. */
+    max-height: calc(100vh - 260px);
     overflow-y: auto;
     padding-bottom: 4px;
 }

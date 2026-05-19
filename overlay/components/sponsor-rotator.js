@@ -4,7 +4,7 @@ import htm from "https://esm.sh/htm@3";
 
 const html = htm.bind(h);
 
-export function SponsorRotator({ appearance }) {
+export function SponsorRotator({ appearance, inline = false }) {
   const intervalMs = (appearance?.sponsorInterval ?? 5) * 1000;
   const width      = appearance?.sponsorWidth  ?? 200;
   const height     = appearance?.sponsorHeight ?? 0;
@@ -36,20 +36,22 @@ export function SponsorRotator({ appearance }) {
 
   if (images.length === 0) return null;
 
-  const vPos  = corner.includes("top")  ? { top: padding + "px" }    : { bottom: padding + "px" };
-  const hPos  = corner.includes("left") ? { left: padding + "px" }   : { right: padding + "px" };
-
-  const style = {
-    position: "fixed",
-    ...vPos,
-    ...hPos,
-    width:        width  ? width  + "px" : "auto",
-    height:       height ? height + "px" : "auto",
-    opacity:      faded ? 0 : 1,
-    transition:   "opacity 0.4s ease",
+  const baseStyle = {
+    width:         width  ? width  + "px" : "auto",
+    height:        height ? height + "px" : "auto",
+    opacity:       faded ? 0 : 1,
+    transition:    "opacity 0.4s ease",
     pointerEvents: "none",
-    objectFit:    "contain",
+    objectFit:     "contain",
   };
+
+  const style = inline
+    ? { ...baseStyle, display: "block", margin: "0 auto" }
+    : (() => {
+        const vPos = corner.includes("top")  ? { top: padding + "px" }  : { bottom: padding + "px" };
+        const hPos = corner.includes("left") ? { left: padding + "px" } : { right: padding + "px" };
+        return { ...baseStyle, position: "fixed", ...vPos, ...hPos };
+      })();
 
   return html`<img src=${"/sponsors/" + images[index]} style=${style} alt="" />`;
 }

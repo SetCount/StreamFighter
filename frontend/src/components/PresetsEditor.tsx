@@ -137,7 +137,7 @@ export default function PresetsEditor({
                   ? stockURL(assetsBase, gameId, p.character, p.costume)
                   : selectURL(assetsBase, gameId, p.character)
                 : null;
-              const meta = [p.pronouns, p.team].filter(Boolean).join(" · ");
+              const meta = [p.pronouns, p.prefix].filter(Boolean).join(" · ");
               return (
                 <div
                   key={k}
@@ -217,11 +217,11 @@ export default function PresetsEditor({
                           }
                         />
                         <input
-                          className="team"
-                          placeholder="Team"
-                          value={p.team ?? ""}
+                          className="prefix"
+                          placeholder="Prefix"
+                          value={p.prefix ?? ""}
                           onChange={(ev) =>
-                            setPlayer(i, { team: ev.target.value || undefined })
+                            setPlayer(i, { prefix: ev.target.value || undefined })
                           }
                         />
                       </div>

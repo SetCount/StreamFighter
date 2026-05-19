@@ -52,7 +52,7 @@ type Caster struct {
 type Player struct {
 	Name            string `json:"name"`
 	Pronouns        string `json:"pronouns,omitempty"`
-	Team            string `json:"team,omitempty"`
+	Prefix          string `json:"prefix,omitempty"`
 	Character       string `json:"character"`
 	Costume         int    `json:"costume"`
 	StartggPlayerID int64  `json:"startggPlayerId,omitempty"`
@@ -111,6 +111,8 @@ type OverlayMessage struct {
 // Served at /overlay/appearance.json so overlay JS can read it without
 // any Wails dependency.
 type OverlayAppearance struct {
+	Layout          string `json:"layout"`
+	GameAspect      string `json:"gameAspect"`
 	Accent          string `json:"accent"`
 	SidebarBg       string `json:"sidebarBg"`
 	SidebarWidth    int    `json:"sidebarWidth"`
@@ -136,7 +138,7 @@ type PlayerPreset struct {
 	ID              string   `json:"id"`
 	Name            string   `json:"name"`
 	Pronouns        string   `json:"pronouns,omitempty"`
-	Team            string   `json:"team,omitempty"`
+	Prefix          string   `json:"prefix,omitempty"`
 	Aliases         []string `json:"aliases,omitempty"`
 	StartggPlayerID int64    `json:"startggPlayerId,omitempty"`
 	Character       string   `json:"character,omitempty"`

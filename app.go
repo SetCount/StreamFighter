@@ -206,10 +206,24 @@ func (a *App) SetConfig(c OutputConfig) {
 	saveConfig(c)
 	// Push appearance changes to connected overlays immediately.
 	if c.EnableServer && a.server != nil {
-		if msg, err := marshalJSON(OverlayMessage{State: a.GetState(), Appearance: c.Appearance}); err == nil {
+		if msg, err := marshalJSON(OverlayMessage{State: a.GetState(), Appearance: a.effectiveAppearance()}); err == nil {
 			a.server.hub.broadcast(msg)
 		}
 	}
+}
+
+// effectiveAppearance returns the persisted appearance with GameAspect
+// overridden by the active game pack's aspect when the pack declares
+// one. Always source the game-area aspect from the pack so changing
+// games re-shapes the overlay without manual config.
+func (a *App) effectiveAppearance() OverlayAppearance {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	app := a.config.Appearance
+	if pack := findGamePack(a.games, a.config.Game); pack != nil && pack.AspectRatio != "" {
+		app.GameAspect = pack.AspectRatio
+	}
+	return app
 }
 
 // OverlayURL is the address an OBS browser source should point at.
@@ -444,7 +458,7 @@ func (a *App) Update() error {
 		}
 	}
 	if cfg.EnableServer && a.server != nil {
-		if msg, err := marshalJSON(OverlayMessage{State: state, Appearance: cfg.Appearance}); err == nil {
+		if msg, err := marshalJSON(OverlayMessage{State: state, Appearance: a.effectiveAppearance()}); err == nil {
 			a.server.hub.broadcast(msg)
 		}
 	}
@@ -471,9 +485,7 @@ func (a *App) startServer() {
 		return a.config.SponsorsDir
 	}
 	getAppearance := func() OverlayAppearance {
-		a.mu.RLock()
-		defer a.mu.RUnlock()
-		return a.config.Appearance
+		return a.effectiveAppearance()
 	}
 	a.server = newOverlayServer(a.config.HTTPPort, getOverlayPath, getGamesDir, getSponsorsDir, a.GetState, getAppearance)
 	a.server.start()
@@ -519,6 +531,8 @@ func defaultConfig() OutputConfig {
 		WriteJSON:       true,
 		EnableServer:    true,
 		Appearance: OverlayAppearance{
+			Layout:          "dual",
+			GameAspect:      "4:3",
 			Accent:          "#e8711a",
 			SidebarBg:       "#18100a",
 			SidebarWidth:    240,
