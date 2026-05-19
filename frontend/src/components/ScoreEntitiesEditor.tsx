@@ -128,6 +128,12 @@ export default function ScoreEntitiesEditor({
     setPickerFor(null);
   };
 
+  const swapEntities = (a: number, b: number) => {
+    const next = [...value];
+    [next[a], next[b]] = [next[b], next[a]];
+    onChange(next);
+  };
+
   return (
     <div className="board">
       <datalist id="player-preset-names">
@@ -135,9 +141,22 @@ export default function ScoreEntitiesEditor({
           <option key={p.id} value={p.name} />
         ))}
       </datalist>
-      {value.map((e, i) => (
+      {value.flatMap((e, i) => {
+        const nodes: React.ReactNode[] = [];
+        if (i > 0) {
+          nodes.push(
+            <button
+              key={`swap-${i}`}
+              type="button"
+              className="swap-btn"
+              aria-label={`Swap ${entityTitle(format, i - 1)} and ${entityTitle(format, i)}`}
+              onClick={() => swapEntities(i - 1, i)}
+            >⇄</button>
+          );
+        }
+        nodes.push(
         <fieldset
-          key={i}
+          key={`entity-${i}`}
           className="entity-card"
           style={
             { "--port-color": e.portColor || "transparent" } as CSSProperties
@@ -322,7 +341,9 @@ export default function ScoreEntitiesEditor({
             )}
           </div>
         </fieldset>
-      ))}
+        );
+        return nodes;
+      })}
       {canResize && (
         <button className="add-card" onClick={addEntity}>
           + Entity

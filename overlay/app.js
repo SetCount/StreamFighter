@@ -153,8 +153,8 @@ function CasterList({ casters }) {
   return html`
     <div class="caster-list">
       ${casters.map((c, i) => {
-        const socials = (c.socials || []).filter((s) => s.handle);
-        return html`
+    const socials = (c.socials || []).filter((s) => s.handle);
+    return html`
           <div class="caster-row" key=${i}>
             <span class="caster-name">${c.name}</span>
             ${socials.length > 0 && html`
@@ -169,7 +169,7 @@ function CasterList({ casters }) {
             `}
           </div>
         `;
-      })}
+  })}
     </div>
   `;
 }
