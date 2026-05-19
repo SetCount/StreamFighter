@@ -172,6 +172,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  text-align: center;
 }
 
 .round-label {
@@ -334,10 +335,24 @@ body {
   margin-top: 2px;
 }
 
+.caster-header {
+  font-family: var(--name-font);
+  font-size: calc(var(--name-size) * 0.45);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 8px 16px 6px;
+  border-top: 3px solid var(--accent);
+  background: var(--sidebar-bg);
+}
+
 .caster-list {
   display: flex;
   flex-direction: column;
-  border-top: 3px solid var(--accent);
+  border-bottom: 3px solid var(--accent);
+  margin-bottom: 16px;
   background: var(--sidebar-bg);
 }
 
@@ -345,8 +360,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 10px 16px;
-  border-bottom: 1px solid color-mix(in srgb, var(--sidebar-bg) 70%, #fff 5%);
+  padding: 8px 16px;
+}
+
+.caster-row + .caster-row {
+  border-top: 1px solid color-mix(in srgb, var(--sidebar-bg) 60%, #fff 8%);
 }
 
 .caster-name {

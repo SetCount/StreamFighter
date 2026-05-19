@@ -55,27 +55,30 @@ function SocialIcon({ icon }) {
 export function CasterList({ casters }) {
   if (!casters || casters.length === 0) return null;
   return html`
-    <div class="caster-list">
-      ${casters.map((c, i) => {
+    <div>
+      <div class="caster-header">Casters</div>
+      <div class="caster-list">
+        ${casters.map((c, i) => {
     const socials = (c.socials || []).filter((s) => s.handle);
     const pronouns = c.pronouns || "";
     return html`
-          <div class="caster-row" key=${i}>
-            <span class="caster-name">${c.name}</span>
-            ${pronouns && html`<span class="caster-pronouns">${pronouns}</span>`}
-            ${socials.length > 0 && html`
-              <span class="caster-socials">
-                ${socials.map((s) => html`
-                  <span class="caster-social">
-                    <${SocialIcon} icon=${s.icon} />
-                    <span class="caster-social-handle">${s.handle}</span>
-                  </span>
-                `)}
-              </span>
-            `}
-          </div>
-        `;
+            <div class="caster-row" key=${i}>
+              <span class="caster-name">${c.name}</span>
+              ${pronouns && html`<span class="caster-pronouns">${pronouns}</span>`}
+              ${socials.length > 0 && html`
+                <span class="caster-socials">
+                  ${socials.map((s) => html`
+                    <span class="caster-social">
+                      <${SocialIcon} icon=${s.icon} />
+                      <span class="caster-social-handle">${s.handle}</span>
+                    </span>
+                  `)}
+                </span>
+              `}
+            </div>
+          `;
   })}
+      </div>
     </div>
   `;
 }
