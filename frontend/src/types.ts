@@ -31,6 +31,7 @@ export type Social = {
 
 export type Caster = {
     name: string;
+    pronouns?: string;
     socials: Social[];
 };
 
@@ -113,6 +114,7 @@ export type PlayerPreset = {
 export type CasterPreset = {
     id: string;
     name: string;
+    pronouns?: string;
     socials: Social[];
 };
 

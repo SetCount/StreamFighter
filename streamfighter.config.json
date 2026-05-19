@@ -12,7 +12,7 @@
   "overlayAppearance": {
     "layout": "dual",
     "gameAspect": "4:3",
-    "accent": "#9141ac",
+    "accent": "#e8711a",
     "sidebarBg": "#18100a",
     "sidebarWidth": 240,
     "camHeight": 300,
@@ -20,7 +20,7 @@
     "nameFontSize": 30,
     "roundFontSize": 30,
     "showSetInfo": true,
-    "showLogo": true,
+    "showLogo": false,
     "sponsorInterval": 5,
     "sponsorWidth": 200,
     "sponsorHeight": 0,

@@ -366,8 +366,8 @@ export default function PresetsEditor({
             {casters.map((c, i) => {
               const k = cKey(c, i);
               const isOpen = expandedC.has(k);
-              const handlesMeta = c.socials
-                .map((s) => s.handle)
+              const handlesMeta = [c.pronouns, ...c.socials
+                .map((s) => s.handle)]
                 .filter(Boolean)
                 .join(" · ");
               return (
@@ -416,6 +416,14 @@ export default function PresetsEditor({
                         value={c.name}
                         onChange={(ev) =>
                           setCaster(i, { name: ev.target.value })
+                        }
+                      />
+                      <input
+                        className="pronouns"
+                        placeholder="Pronouns"
+                        value={c.pronouns ?? ""}
+                        onChange={(ev) =>
+                          setCaster(i, { pronouns: ev.target.value || undefined })
                         }
                       />
                       <SocialsEditor

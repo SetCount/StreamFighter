@@ -1,6 +1,6 @@
 import { h } from "https://esm.sh/preact@10";
 import htm from "https://esm.sh/htm@3";
-import { WinPips, FitText, BrandLogo, PLATFORM_LABEL } from "./shared.js";
+import { WinPips, FitText, BrandLogo, CasterList } from "./shared.js";
 import { SponsorRotator } from "./sponsor-rotator.js";
 
 const html = htm.bind(h);
@@ -24,32 +24,6 @@ function ScoreRow({ entity, bestOf }) {
   `;
 }
 
-function CasterList({ casters }) {
-  if (!casters || casters.length === 0) return null;
-  return html`
-    <div class="caster-list">
-      ${casters.map((c, i) => {
-    const socials = (c.socials || []).filter((s) => s.handle);
-    return html`
-          <div class="caster-row" key=${i}>
-            <span class="caster-name">${c.name}</span>
-            ${socials.length > 0 && html`
-              <span class="caster-socials">
-                ${socials.map((s) => html`
-                  <span class="caster-social">
-                    <span class="caster-social-platform">${PLATFORM_LABEL[s.icon] || s.icon}</span>
-                    <span class="caster-social-handle">${s.handle}</span>
-                  </span>
-                `)}
-              </span>
-            `}
-          </div>
-        `;
-  })}
-    </div>
-  `;
-}
-
 export function SingleLayout({ scoreEntities, setInfo, casters, bestOf, appearance }) {
   return html`
     <div class="app app-single">
@@ -68,9 +42,9 @@ export function SingleLayout({ scoreEntities, setInfo, casters, bestOf, appearan
           `}
           ${scoreEntities.map((e, i) => html`<${ScoreRow} key=${i} entity=${e} bestOf=${bestOf} />`)}
         </div>
-        <${CasterList} casters=${casters} />
         <div class="panel-spacer"></div>
         <div class="panel-bottom">
+          <${CasterList} casters=${casters} />
           <${SponsorRotator} appearance=${appearance} inline=${true} />
           ${appearance.showLogo !== false && html`<${BrandLogo} logoUrl=${appearance.logoUrl || ""} />`}
         </div>

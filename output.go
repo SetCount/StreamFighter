@@ -28,6 +28,7 @@ func flattenFields(s StreamState, gameID string, packs []GamePack) map[string]st
 	for i, c := range s.Casters {
 		prefix := fmt.Sprintf("caster_%d", i+1)
 		out[prefix+"_name.txt"] = c.Name
+		out[prefix+"_pronouns.txt"] = c.Pronouns
 		for j, soc := range c.Socials {
 			sp := fmt.Sprintf("%s_social_%d", prefix, j+1)
 			out[sp+"_icon.txt"] = string(soc.Icon)

@@ -1,6 +1,6 @@
 import { h } from "https://esm.sh/preact@10";
 import htm from "https://esm.sh/htm@3";
-import { WinPips, FitText, BrandLogo } from "./shared.js";
+import { WinPips, FitText, BrandLogo, CasterList } from "./shared.js";
 import { SponsorRotator } from "./sponsor-rotator.js";
 
 const html = htm.bind(h);
@@ -41,7 +41,7 @@ function SetInfo({ setInfo }) {
   `;
 }
 
-export function DualLayout({ scoreEntities, setInfo, bestOf, appearance }) {
+export function DualLayout({ scoreEntities, setInfo, casters, bestOf, appearance }) {
   const [left, right] = scoreEntities;
 
   return html`
@@ -50,6 +50,7 @@ export function DualLayout({ scoreEntities, setInfo, bestOf, appearance }) {
         <${PlayerPanel} entity=${left} bestOf=${bestOf} />
         <div class="sidebar-spacer"></div>
         <div class="sidebar-bottom">
+          <${CasterList} casters=${casters} />
           ${appearance.showSetInfo !== false && html`<${SetInfo} setInfo=${setInfo} />`}
         </div>
       </div>
@@ -60,7 +61,7 @@ export function DualLayout({ scoreEntities, setInfo, bestOf, appearance }) {
         <${PlayerPanel} entity=${right} bestOf=${bestOf} />
         <div class="sidebar-spacer"></div>
         <div class="sidebar-bottom">
-          <${SponsorRotator} appearance=${appearance} />
+          <${SponsorRotator} appearance=${appearance} inline=${true} />
           ${appearance.showLogo !== false && html`<${BrandLogo} logoUrl=${appearance.logoUrl || ""} />`}
         </div>
       </div>

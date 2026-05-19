@@ -24,11 +24,8 @@ type SocialIcon string
 const (
 	SocialTwitter   SocialIcon = "twitter"
 	SocialBluesky   SocialIcon = "bluesky"
-	SocialYouTube   SocialIcon = "youtube"
-	SocialTwitch    SocialIcon = "twitch"
-	SocialDiscord   SocialIcon = "discord"
-	SocialInstagram SocialIcon = "instagram"
-	SocialTikTok    SocialIcon = "tiktok"
+	SocialTwitch  SocialIcon = "twitch"
+	SocialDiscord SocialIcon = "discord"
 )
 
 // Social is a single platform handle for a caster.
@@ -39,8 +36,9 @@ type Social struct {
 
 // Caster is a commentator on the broadcast.
 type Caster struct {
-	Name    string   `json:"name"`
-	Socials []Social `json:"socials"`
+	Name     string   `json:"name"`
+	Pronouns string   `json:"pronouns,omitempty"`
+	Socials  []Social `json:"socials"`
 }
 
 // Player is a single competitor. Character holds the character ID
@@ -149,9 +147,10 @@ type PlayerPreset struct {
 // CasterPreset is a reusable record for a commentator. Persisted to
 // casters.json.
 type CasterPreset struct {
-	ID      string   `json:"id"`
-	Name    string   `json:"name"`
-	Socials []Social `json:"socials"`
+	ID       string   `json:"id"`
+	Name     string   `json:"name"`
+	Pronouns string   `json:"pronouns,omitempty"`
+	Socials  []Social `json:"socials"`
 }
 
 // Secrets holds credentials we don't want to commit. Persisted to

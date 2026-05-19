@@ -13,12 +13,17 @@ function applyAppearance(a) {
   if (a.roundFontSize) r.setProperty("--round-size", a.roundFontSize + "px");
 }
 
-const PLATFORM_LABEL = {
-  twitter: "𝕏",
-  bluesky: "Bsky",
-  twitch: "Twitch",
-  discord: "Discord",
-};
+import { PLATFORM_ICONS } from "./components/shared.js";
+
+function BgSocialIcon({ icon }) {
+  const d = PLATFORM_ICONS[icon];
+  if (!d) return html`<span class="bg-social-platform">${icon}</span>`;
+  return html`
+    <svg class="bg-social-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d=${d} />
+    </svg>
+  `;
+}
 
 function ScorePips({ score, bestOf, color }) {
   const needed = Math.ceil(bestOf / 2);
@@ -72,14 +77,16 @@ function TopBar({ setInfo, scoreEntities }) {
 
 function CasterBanner({ caster }) {
   const socials = (caster.socials || []).filter((s) => s.handle);
+  const pronouns = caster.pronouns || "";
   return html`
     <div class="bg-caster-banner">
       <div class="bg-caster-name">${caster.name}</div>
+      ${pronouns && html`<div class="bg-caster-pronouns">${pronouns}</div>`}
       ${socials.length > 0 && html`
         <div class="bg-caster-socials">
           ${socials.map((s) => html`
             <span class="bg-caster-social">
-              <span class="bg-social-platform">${PLATFORM_LABEL[s.icon] || s.icon}</span>
+              <${BgSocialIcon} icon=${s.icon} />
               <span class="bg-social-handle">${s.handle}</span>
             </span>
           `)}

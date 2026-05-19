@@ -17,9 +17,10 @@
  *     },
  *
  *     casters: Array<{
- *       name:    string,
+ *       name:     string,
+ *       pronouns: string,      // omitted when blank
  *       socials: Array<{
- *         icon:   "twitter" | "bluesky" | "twitch",
+ *         icon:   "twitter" | "bluesky" | "twitch" | "discord",
  *         handle: string,
  *       }>,
  *     }>,
@@ -112,7 +113,7 @@ function App() {
   }
 
   return html`<${DualLayout}
-    scoreEntities=${scoreEntities} setInfo=${setInfo}
+    scoreEntities=${scoreEntities} setInfo=${setInfo} casters=${casters}
     bestOf=${bestOf} appearance=${appearance}
   />`;
 }

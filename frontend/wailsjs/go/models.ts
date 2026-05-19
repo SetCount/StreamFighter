@@ -16,6 +16,7 @@ export namespace main {
 	}
 	export class Caster {
 	    name: string;
+	    pronouns?: string;
 	    socials: Social[];
 	
 	    static createFrom(source: any = {}) {
@@ -25,6 +26,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
+	        this.pronouns = source["pronouns"];
 	        this.socials = this.convertValues(source["socials"], Social);
 	    }
 	
@@ -49,6 +51,7 @@ export namespace main {
 	export class CasterPreset {
 	    id: string;
 	    name: string;
+	    pronouns?: string;
 	    socials: Social[];
 	
 	    static createFrom(source: any = {}) {
@@ -59,6 +62,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.name = source["name"];
+	        this.pronouns = source["pronouns"];
 	        this.socials = this.convertValues(source["socials"], Social);
 	    }
 	

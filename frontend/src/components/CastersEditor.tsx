@@ -7,7 +7,7 @@ type Props = {
     presets?: CasterPreset[];
 };
 
-const blankCaster = (): Caster => ({ name: '', socials: [] });
+const blankCaster = (): Caster => ({ name: '', pronouns: '', socials: [] });
 
 export default function CastersEditor({ value, onChange, presets = [] }: Props) {
     const setCaster = (i: number, patch: Partial<Caster>) => {
@@ -27,7 +27,7 @@ export default function CastersEditor({ value, onChange, presets = [] }: Props) 
         const wasLc = value[i].name.toLowerCase();
         const match = presets.find(p => p.name.toLowerCase() === lc);
         if (match && wasLc !== lc) {
-            setCaster(i, { name: match.name, socials: match.socials ?? [] });
+            setCaster(i, { name: match.name, pronouns: match.pronouns ?? '', socials: match.socials ?? [] });
         } else {
             setCaster(i, { name: raw });
         }
@@ -49,6 +49,12 @@ export default function CastersEditor({ value, onChange, presets = [] }: Props) 
                                 value={c.name}
                                 list="caster-preset-names"
                                 onChange={ev => onNameChange(i, ev.target.value)}
+                            />
+                            <input
+                                className="pronouns"
+                                placeholder="Pronouns"
+                                value={c.pronouns ?? ''}
+                                onChange={ev => setCaster(i, { pronouns: ev.target.value })}
                             />
                             <button className="icon-btn" onClick={() => removeCaster(i)}>×</button>
                         </div>
