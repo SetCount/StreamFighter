@@ -1,0 +1,22 @@
+[
+  {
+    "id": "11b16e881793a0da",
+    "name": "jake",
+    "socials": [
+      {
+        "icon": "twitter",
+        "handle": "@n0b0dy_kn0ws"
+      }
+    ]
+  },
+  {
+    "id": "22626697a0c4b2be",
+    "name": "alex",
+    "socials": [
+      {
+        "icon": "bluesky",
+        "handle": "@iwilldropkicku.bsky.app"
+      }
+    ]
+  }
+]

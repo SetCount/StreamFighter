@@ -1,0 +1,20 @@
+[
+  {
+    "id": "fc553836daf3c1ad",
+    "name": "Dalton",
+    "pronouns": "he/they",
+    "prefix": "Hampter",
+    "character": "fox",
+    "costume": 2,
+    "portColor": "#c96a6a"
+  },
+  {
+    "id": "f1dc842eac5dffa8",
+    "name": "jopo",
+    "pronouns": "she/they",
+    "prefix": "Rubin Law",
+    "character": "luigi",
+    "costume": 1,
+    "portColor": "#5f8fc4"
+  }
+]
