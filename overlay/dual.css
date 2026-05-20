@@ -1,0 +1,105 @@
+/* ── Dual-sidebar layout ── */
+/* Two sidebars flanking a center game area. Each sidebar has a player
+   panel (cam + name + score) at the top and info at the bottom. */
+
+.sidebar {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Player panel (cam + name + score) ── */
+
+.player-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.cam-area {
+  width: 100%;
+  height: var(--cam-height);
+  background: var(--sidebar-bg-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 2px solid color-mix(in srgb, var(--sidebar-bg) 60%, #fff 0%);
+  overflow: hidden;
+}
+
+.cam-label {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+  pointer-events: none;
+  user-select: none;
+}
+
+.name-strip {
+  background: var(--sidebar-bg);
+  border-top: 3px solid var(--accent);
+  padding: 10px 12px 8px;
+  min-height: calc(var(--name-size) * 2.1 + 20px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.name-strip:has(.player-prefix) {
+  justify-content: flex-end;
+}
+
+.player-prefix {
+  font-family: var(--name-font);
+  font-size: calc(var(--name-size) * 0.5);
+  font-weight: 700;
+  color: color-mix(in srgb, var(--accent) 75%, #fff 25%);
+  letter-spacing: 0.12em;
+  line-height: 1;
+  margin-bottom: 4px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.player-name {
+  font-family: var(--name-font);
+  font-size: var(--name-size);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-pronouns {
+  font-family: var(--name-font);
+  font-size: calc(var(--name-size) * 0.4);
+  font-weight: 600;
+  color: #bbb;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  margin-top: 4px;
+}
+
+.score-strip {
+  padding: 8px 12px 10px;
+  display: flex;
+  justify-content: center;
+  background: var(--sidebar-bg);
+}
+
+/* ── Bottom areas ── */
+
+.sidebar-spacer {
+  flex: 1;
+}
+
+.sidebar-bottom {
+  padding: 20px 16px;
+}

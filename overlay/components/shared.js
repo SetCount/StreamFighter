@@ -101,6 +101,28 @@ export function Icon({ name, class: cls }) {
   `;
 }
 
+export function useEntity(entity) {
+  const player = entity?.players?.[0];
+  return {
+    name: (player?.name || "???").toUpperCase(),
+    prefix: player?.prefix || "",
+    pronouns: player?.pronouns || "",
+    score: entity?.currentScore ?? 0,
+    color: entity?.portColor ?? "var(--accent)",
+  };
+}
+
+export function SetInfo({ setInfo }) {
+  const round = (setInfo?.roundLabel || "").toUpperCase();
+  const bestOf = setInfo?.bestOf ?? 3;
+  return html`
+    <div class="set-info">
+      ${round && html`<div class="round-label">${round}</div>`}
+      <div class="best-of">BEST OF ${bestOf}</div>
+    </div>
+  `;
+}
+
 export function CasterList({ casters }) {
   if (!casters || casters.length === 0) return null;
   return html`
@@ -129,6 +151,13 @@ export function CasterList({ casters }) {
   })}
       </div>
     </div>
+  `;
+}
+
+export function TournamentName({ name }) {
+  if (!name) return null;
+  return html`
+    <div class="tournament-name">${name.toUpperCase()}</div>
   `;
 }
 

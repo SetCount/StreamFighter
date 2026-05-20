@@ -1,0 +1,209 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Design tokens — all overridable via JS (localStorage settings) ── */
+:root {
+  --accent: #e8711a;
+  --sidebar-bg: #18100a;
+  --sidebar-bg-deep: #0e0906;
+  --sidebar-width: 240px;
+  --cam-height: 300px;
+  --name-font: "Arial Black", Impact, "Arial Narrow", sans-serif;
+  --name-size: 30px;
+  --round-size: 30px;
+  --pip-empty-bg: #2e2014;
+  --pip-empty-border: #3a2a18;
+}
+
+body {
+  font-family: var(--name-font);
+  color: #fff;
+  background: transparent;
+}
+
+.app {
+  width: 1920px;
+  height: 1080px;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.game-area {
+  flex: 0 0 auto;
+  aspect-ratio: var(--game-aspect, 73 / 60);
+  height: 100%;
+  background-color: var(--accent);
+}
+
+/* ── Win pips (shared by all layouts) ── */
+
+.win-pips {
+  display: flex;
+  gap: var(--pip-gap, 8px);
+  align-items: center;
+}
+
+.win-pip {
+  width: var(--pip-size, 18px);
+  height: var(--pip-size, 18px);
+  background: var(--pip-empty-bg);
+  border: 2px solid var(--pip-empty-border);
+  border-radius: 2px;
+}
+
+.win-pip.filled {
+  background: var(--pip-color, var(--accent));
+  border-color: var(--pip-color, var(--accent));
+  box-shadow: 0 0 6px var(--pip-color, var(--accent));
+}
+
+/* ── Tournament name (shared by all layouts) ── */
+
+.tournament-name {
+  font-family: var(--name-font);
+  font-size: var(--round-size);
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+/* ── Set info (shared by all layouts) ── */
+
+.set-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: center;
+}
+
+.round-label {
+  font-family: var(--name-font);
+  font-size: var(--round-size);
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.best-of {
+  font-family: var(--name-font);
+  font-size: calc(var(--round-size) * 0.65);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+/* ── Brand logo (shared by all layouts) ── */
+
+.brand-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.brand-logo svg {
+  width: 100px;
+  height: 100px;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 50%, transparent));
+}
+
+.brand-logo img {
+  max-width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 40%, transparent));
+}
+
+/* ── Casters (shared by all layouts) ── */
+
+.caster-header {
+  font-family: var(--name-font);
+  font-size: calc(var(--name-size) * 0.45);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 8px 16px 6px;
+  border-top: 3px solid var(--accent);
+  background: var(--sidebar-bg);
+}
+
+.caster-list {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 3px solid var(--accent);
+  margin-bottom: 16px;
+  background: var(--sidebar-bg);
+}
+
+.caster-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 16px;
+}
+
+.caster-row + .caster-row {
+  border-top: 1px solid color-mix(in srgb, var(--sidebar-bg) 60%, #fff 8%);
+}
+
+.caster-name {
+  font-family: var(--name-font);
+  font-size: calc(var(--name-size) * 0.7);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+
+.caster-socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.caster-pronouns {
+  font-size: 11px;
+  color: #999;
+  font-family: system-ui, sans-serif;
+  font-style: italic;
+}
+
+.caster-social {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.caster-social-icon {
+  width: 12px;
+  height: 12px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.caster-social-platform {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  font-family: system-ui, sans-serif;
+}
+
+.caster-social-handle {
+  font-size: 13px;
+  color: #bbb;
+  font-family: system-ui, sans-serif;
+}

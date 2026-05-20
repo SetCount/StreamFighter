@@ -1,13 +1,8 @@
-import { html, WinPips, FitText, BrandLogo, CasterList } from "./shared.js";
+import { html, WinPips, FitText, BrandLogo, CasterList, TournamentName, SetInfo, useEntity } from "./shared.js";
 import { SponsorRotator } from "./sponsor-rotator.js";
 
 function ScoreRow({ entity, bestOf }) {
-  const player = entity?.players?.[0];
-  const name = (player?.name || "???").toUpperCase();
-  const prefix = player?.prefix || "";
-  const pronouns = player?.pronouns || "";
-  const score = entity?.currentScore ?? 0;
-  const color = entity?.portColor ?? "var(--accent)";
+  const { name, prefix, pronouns, score, color } = useEntity(entity);
   return html`
     <div class="score-row" style=${{ "--row-color": color }}>
       <div class="score-row-text">
@@ -29,6 +24,7 @@ export function SingleLayout({ scoreEntities, setInfo, casters, bestOf, appearan
         </div>
         <div class="panel-scoreboard">
           ${appearance.showSetInfo !== false && html`
+            <${TournamentName} name=${setInfo?.tournamentName} />
             <div class="panel-set-info">
               ${(setInfo?.roundLabel || "") && html`
                 <span class="round-label">${(setInfo.roundLabel || "").toUpperCase()}</span>
