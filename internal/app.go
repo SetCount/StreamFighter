@@ -224,7 +224,7 @@ func (a *App) SetConfig(c OutputConfig) {
 	saveConfig(c)
 	// Push appearance changes to connected overlays immediately.
 	if c.EnableServer && a.server != nil {
-		if msg, err := marshalJSON(OverlayMessage{State: a.GetState(), Appearance: a.effectiveAppearance()}); err == nil {
+		if msg, err := json.Marshal(OverlayMessage{State: a.GetState(), Appearance: a.effectiveAppearance()}); err == nil {
 			a.server.hub.broadcast(msg)
 		}
 	}
@@ -238,6 +238,7 @@ func (a *App) effectiveAppearance() OverlayAppearance {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	app := a.config.Appearance
+	app.GameID = a.config.Game
 	if pack := findGamePack(a.games, a.config.Game); pack != nil && pack.AspectRatio != "" {
 		app.GameAspect = pack.AspectRatio
 	}
@@ -483,7 +484,7 @@ func (a *App) Update() error {
 		}
 	}
 	if cfg.EnableServer && a.server != nil {
-		if msg, err := marshalJSON(OverlayMessage{State: state, Appearance: a.effectiveAppearance()}); err == nil {
+		if msg, err := json.Marshal(OverlayMessage{State: state, Appearance: a.effectiveAppearance()}); err == nil {
 			a.server.hub.broadcast(msg)
 		}
 	}

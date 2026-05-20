@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -106,8 +107,7 @@ func (o *overlayServer) shutdown(ctx context.Context) error {
 	return o.srv.Shutdown(ctx)
 }
 
-func (o *overlayServer) handleOverlay(w http.ResponseWriter, _ *http.Request) {
-	path := o.getOverlayPath()
+func serveHTMLFile(w http.ResponseWriter, path string) {
 	body, err := os.ReadFile(path)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("overlay file %q: %v", path, err), http.StatusInternalServerError)
@@ -118,21 +118,17 @@ func (o *overlayServer) handleOverlay(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(body)
 }
 
+func (o *overlayServer) handleOverlay(w http.ResponseWriter, _ *http.Request) {
+	serveHTMLFile(w, o.getOverlayPath())
+}
+
 func (o *overlayServer) handleBetween(w http.ResponseWriter, _ *http.Request) {
 	overlayPath := o.getOverlayPath()
 	if overlayPath == "" {
 		http.Error(w, "overlay path not configured", http.StatusInternalServerError)
 		return
 	}
-	path := filepath.Join(filepath.Dir(overlayPath), "between.html")
-	body, err := os.ReadFile(path)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("between overlay %q: %v", path, err), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-store")
-	_, _ = w.Write(body)
+	serveHTMLFile(w, filepath.Join(filepath.Dir(overlayPath), "between.html"))
 }
 
 // handleOverlayAssets serves the CSS, JS, and any other files in the
@@ -153,7 +149,7 @@ func (o *overlayServer) handleState(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
 	s := o.getState()
-	if err := writeJSON(w, s); err != nil {
+	if err := json.NewEncoder(w).Encode(s); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -163,7 +159,7 @@ func (o *overlayServer) handleAppearance(w http.ResponseWriter, _ *http.Request)
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	a := o.getAppearance()
-	if err := writeJSON(w, a); err != nil {
+	if err := json.NewEncoder(w).Encode(a); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -192,12 +188,12 @@ func (o *overlayServer) handleSponsorsList(w http.ResponseWriter, _ *http.Reques
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	dir := o.getSponsorsDir()
 	if dir == "" {
-		_ = writeJSON(w, []string{})
+		_ = json.NewEncoder(w).Encode([]string{})
 		return
 	}
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		_ = writeJSON(w, []string{})
+		_ = json.NewEncoder(w).Encode([]string{})
 		return
 	}
 	files := []string{}
@@ -210,7 +206,7 @@ func (o *overlayServer) handleSponsorsList(w http.ResponseWriter, _ *http.Reques
 			files = append(files, e.Name())
 		}
 	}
-	_ = writeJSON(w, files)
+	_ = json.NewEncoder(w).Encode(files)
 }
 
 // handleSponsorAsset serves image files from SponsorsDir.
@@ -241,7 +237,7 @@ func (o *overlayServer) handleEvents(w http.ResponseWriter, r *http.Request) {
 
 	// Send the current state and appearance immediately so a freshly-connected
 	// overlay renders without waiting for the next Update.
-	if msg, err := marshalJSON(OverlayMessage{State: o.getState(), Appearance: o.getAppearance()}); err == nil {
+	if msg, err := json.Marshal(OverlayMessage{State: o.getState(), Appearance: o.getAppearance()}); err == nil {
 		fmt.Fprintf(w, "data: %s\n\n", msg)
 		flusher.Flush()
 	}

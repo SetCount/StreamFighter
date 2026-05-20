@@ -177,6 +177,7 @@ export namespace internal {
 	}
 	export class OverlayAppearance {
 	    layout: string;
+	    gameId?: string;
 	    gameAspect: string;
 	    accent: string;
 	    sidebarBg: string;
@@ -201,6 +202,7 @@ export namespace internal {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.layout = source["layout"];
+	        this.gameId = source["gameId"];
 	        this.gameAspect = source["gameAspect"];
 	        this.accent = source["accent"];
 	        this.sidebarBg = source["sidebarBg"];

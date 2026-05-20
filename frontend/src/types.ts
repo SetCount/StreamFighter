@@ -43,6 +43,7 @@ export type StreamState = {
 
 export type OverlayAppearance = {
     layout: string;
+    gameId?: string;
     gameAspect: string;
     accent: string;
     sidebarBg: string;

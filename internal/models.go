@@ -22,8 +22,8 @@ const (
 type SocialIcon string
 
 const (
-	SocialTwitter   SocialIcon = "twitter"
-	SocialBluesky   SocialIcon = "bluesky"
+	SocialTwitter SocialIcon = "twitter"
+	SocialBluesky SocialIcon = "bluesky"
 	SocialTwitch  SocialIcon = "twitch"
 	SocialDiscord SocialIcon = "discord"
 )
@@ -110,6 +110,7 @@ type OverlayMessage struct {
 // any Wails dependency.
 type OverlayAppearance struct {
 	Layout          string `json:"layout"`
+	GameID          string `json:"gameId,omitempty"`
 	GameAspect      string `json:"gameAspect"`
 	Accent          string `json:"accent"`
 	SidebarBg       string `json:"sidebarBg"`
