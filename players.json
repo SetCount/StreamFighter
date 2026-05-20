@@ -16,5 +16,12 @@
     "character": "luigi",
     "costume": 1,
     "portColor": "#5f8fc4"
+  },
+  {
+    "id": "aeac00555d9af93d",
+    "name": "bing crossbery",
+    "pronouns": "bing/bam/boom",
+    "character": "dr_mario",
+    "costume": 3
   }
 ]

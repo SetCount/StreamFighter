@@ -18,5 +18,16 @@
         "handle": "@iwilldropkicku.bsky.app"
       }
     ]
+  },
+  {
+    "id": "cc3dd40edc19caa7",
+    "name": "dalton",
+    "pronouns": "he/them",
+    "socials": [
+      {
+        "icon": "bluesky",
+        "handle": "@dalton.dog"
+      }
+    ]
   }
 ]
