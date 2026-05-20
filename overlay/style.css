@@ -134,17 +134,17 @@ body {
   background: var(--sidebar-bg);
 }
 
-/* ── Win pips ── */
+/* ── Win pips (shared by all layouts) ── */
 
 .win-pips {
   display: flex;
-  gap: 8px;
+  gap: var(--pip-gap, 8px);
   align-items: center;
 }
 
 .win-pip {
-  width: 18px;
-  height: 18px;
+  width: var(--pip-size, 18px);
+  height: var(--pip-size, 18px);
   background: var(--pip-empty-bg);
   border: 2px solid var(--pip-empty-border);
   border-radius: 2px;
@@ -216,23 +216,7 @@ body {
   filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 40%, transparent));
 }
 
-/* ── Single-panel layout (data-layout="single") ───────────────────────────── */
-
-.app-single {
-  width: 1920px;
-  height: 1080px;
-  display: flex;
-  align-items: stretch;
-  overflow: hidden;
-}
-
-.panel {
-  flex: 1 1 0;
-  min-width: 0;
-  background: var(--sidebar-bg);
-  display: flex;
-  flex-direction: column;
-}
+/* ── Single-panel layout ── */
 
 .panel-cam {
   width: 100%;
@@ -260,23 +244,8 @@ body {
   border-bottom: 1px solid color-mix(in srgb, var(--sidebar-bg) 70%, #fff 5%);
 }
 
-.panel-set-info .round-label {
-  font-family: var(--name-font);
-  font-size: var(--round-size);
-  font-weight: 900;
-  color: var(--accent);
-  letter-spacing: 0.04em;
-  line-height: 1;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-}
-
 .panel-set-info .best-of {
-  font-family: var(--name-font);
   font-size: calc(var(--round-size) * 0.55);
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.05em;
-  line-height: 1;
 }
 
 .score-row {
@@ -334,6 +303,8 @@ body {
   line-height: 1;
   margin-top: 2px;
 }
+
+/* ── Casters (shared by all layouts) ── */
 
 .caster-header {
   font-family: var(--name-font);
@@ -417,10 +388,6 @@ body {
   font-family: system-ui, sans-serif;
 }
 
-.panel-spacer {
-  flex: 1;
-}
-
 .panel-bottom {
   padding: 16px;
   display: flex;
@@ -429,7 +396,7 @@ body {
   gap: 12px;
 }
 
-/* ── Between-games scene (between.html) ───────────────────────────────────── */
+/* ── Between-games scene (between.html) ── */
 
 .bg-app {
   width: 1920px;
@@ -438,9 +405,9 @@ body {
   flex-direction: column;
 }
 
-/* Top info bar */
-
 .bg-topbar {
+  --pip-size: 13px;
+  --pip-gap: 5px;
   flex-shrink: 0;
   height: 72px;
   display: flex;
@@ -520,28 +487,6 @@ body {
   letter-spacing: 0.12em;
 }
 
-.bg-pips {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-}
-
-.bg-pip {
-  width: 13px;
-  height: 13px;
-  background: #2e2014;
-  border: 2px solid #3a2a18;
-  border-radius: 2px;
-}
-
-.bg-pip.filled {
-  background: var(--pip-color, var(--accent));
-  border-color: var(--pip-color, var(--accent));
-  box-shadow: 0 0 5px var(--pip-color, var(--accent));
-}
-
-/* Cam area — transparent, cam source sits behind this in OBS */
-
 .bg-cam-area {
   flex: 1;
   display: flex;
@@ -558,8 +503,6 @@ body {
   user-select: none;
 }
 
-/* Caster banners — left-aligned row at the bottom */
-
 .bg-caster-row {
   flex-shrink: 0;
   display: flex;
@@ -575,54 +518,22 @@ body {
   min-width: 260px;
 }
 
-.bg-caster-name {
-  font-family: var(--name-font);
+.bg-caster-banner .caster-name {
   font-size: 28px;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: 0.04em;
-  line-height: 1;
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.9);
 }
 
-.bg-caster-socials {
-  display: flex;
-  flex-wrap: wrap;
+.bg-caster-banner .caster-pronouns {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.bg-caster-banner .caster-socials {
   gap: 12px;
   margin-top: 5px;
 }
 
-.bg-caster-pronouns {
-  font-size: 12px;
-  color: #999;
-  font-family: system-ui, sans-serif;
-  font-style: italic;
-  margin-top: 2px;
-}
-
-.bg-caster-social {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.bg-social-icon {
+.bg-caster-banner .caster-social-icon {
   width: 13px;
   height: 13px;
-  color: var(--accent);
-  flex-shrink: 0;
-}
-
-.bg-social-platform {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: 0.06em;
-  font-family: system-ui, sans-serif;
-}
-
-.bg-social-handle {
-  font-size: 13px;
-  color: #bbb;
-  font-family: system-ui, sans-serif;
 }

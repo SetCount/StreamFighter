@@ -5,3 +5,4 @@ frontend/dist
 /StreamFighter
 /games
 /streamfighter.secrets.json
+/streamfighter.state.json

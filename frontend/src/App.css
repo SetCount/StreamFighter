@@ -260,6 +260,17 @@ legend {
    The grid below splits remaining space: entities flex-fill the left, a
    capped casters column sits on the right. */
 
+.content-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 4px;
+}
+.clear-btn {
+    font-size: var(--font-xs);
+    padding: 0.3em 0.8em;
+    cursor: pointer;
+}
+
 .layout-grid {
     display: grid;
     /* grid-template-columns: 1fr minmax(360px, 460px); */

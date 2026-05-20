@@ -50,56 +50,13 @@
  * (e.g. const GAME = "melee") to compose asset URLs.
  */
 
-import { h, render } from "https://esm.sh/preact@10";
-import { useState, useEffect } from "https://esm.sh/preact@10/hooks";
-import htm from "https://esm.sh/htm@3";
+import { render } from "https://esm.sh/preact@10";
+import { html, useStreamState } from "./components/shared.js";
 import { SingleLayout } from "./components/single-layout.js";
 import { DualLayout } from "./components/dual-layout.js";
 
-const html = htm.bind(h);
-
-function applyAppearance(a) {
-  const r = document.documentElement.style;
-  if (a.accent) r.setProperty("--accent", a.accent);
-  if (a.sidebarBg) r.setProperty("--sidebar-bg", a.sidebarBg);
-  if (a.sidebarWidth) r.setProperty("--sidebar-width", a.sidebarWidth + "px");
-  if (a.camHeight) r.setProperty("--cam-height", a.camHeight + "px");
-  if (a.nameFont) r.setProperty("--name-font", a.nameFont);
-  if (a.nameFontSize) r.setProperty("--name-size", a.nameFontSize + "px");
-  if (a.roundFontSize) r.setProperty("--round-size", a.roundFontSize + "px");
-  if (a.gameAspect) {
-    const m = /^\s*(\d+(?:\.\d+)?)\s*[:/]\s*(\d+(?:\.\d+)?)\s*$/.exec(a.gameAspect);
-    if (m) r.setProperty("--game-aspect", `${m[1]} / ${m[2]}`);
-  }
-  document.body.dataset.layout = a.layout === "single" ? "single" : "dual";
-}
-
 function App() {
-  const [state, setState] = useState(null);
-  const [appearance, setAppearance] = useState(null);
-
-  useEffect(() => {
-    fetch("/overlay/appearance.json")
-      .then((r) => r.json())
-      .then((a) => { applyAppearance(a); setAppearance(a); })
-      .catch(() => { setAppearance({}); });
-
-    fetch("/state.json")
-      .then((r) => r.json())
-      .then(setState)
-      .catch(() => { });
-
-    const es = new EventSource("/events");
-    es.onmessage = (ev) => {
-      try {
-        const { state, appearance } = JSON.parse(ev.data);
-        setState(state);
-        applyAppearance(appearance);
-        setAppearance(appearance);
-      } catch { }
-    };
-    return () => es.close();
-  }, []);
+  const { state, appearance } = useStreamState();
 
   if (!state || !appearance) return null;
   const { scoreEntities = [], setInfo = {}, casters = [] } = state;

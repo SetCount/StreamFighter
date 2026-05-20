@@ -1,9 +1,5 @@
-import { h } from "https://esm.sh/preact@10";
-import htm from "https://esm.sh/htm@3";
-import { WinPips, FitText, BrandLogo, CasterList } from "./shared.js";
+import { html, WinPips, FitText, BrandLogo, CasterList } from "./shared.js";
 import { SponsorRotator } from "./sponsor-rotator.js";
-
-const html = htm.bind(h);
 
 function ScoreRow({ entity, bestOf }) {
   const player = entity?.players?.[0];
@@ -26,8 +22,8 @@ function ScoreRow({ entity, bestOf }) {
 
 export function SingleLayout({ scoreEntities, setInfo, casters, bestOf, appearance }) {
   return html`
-    <div class="app app-single">
-      <div class="panel panel-left">
+    <div class="app">
+      <div class="sidebar">
         <div class="panel-cam">
           <div class="cam-label">CAM</div>
         </div>
@@ -42,7 +38,7 @@ export function SingleLayout({ scoreEntities, setInfo, casters, bestOf, appearan
           `}
           ${scoreEntities.map((e, i) => html`<${ScoreRow} key=${i} entity=${e} bestOf=${bestOf} />`)}
         </div>
-        <div class="panel-spacer"></div>
+        <div class="sidebar-spacer"></div>
         <div class="panel-bottom">
           <${CasterList} casters=${casters} />
           <${SponsorRotator} appearance=${appearance} inline=${true} />

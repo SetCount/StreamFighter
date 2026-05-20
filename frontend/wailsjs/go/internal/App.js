@@ -10,6 +10,10 @@ export function BetweenOverlayURL() {
   return window['go']['internal']['App']['BetweenOverlayURL']();
 }
 
+export function ClearState() {
+  return window['go']['internal']['App']['ClearState']();
+}
+
 export function DeleteCasterPreset(arg1) {
   return window['go']['internal']['App']['DeleteCasterPreset'](arg1);
 }

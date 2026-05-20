@@ -1,43 +1,6 @@
-import { h, render } from "https://esm.sh/preact@10";
-import { useState, useEffect } from "https://esm.sh/preact@10/hooks";
-import htm from "https://esm.sh/htm@3";
+import { render } from "https://esm.sh/preact@10";
+import { html, useStreamState, WinPips, Icon } from "./components/shared.js";
 import { SponsorRotator } from "./components/sponsor-rotator.js";
-
-const html = htm.bind(h);
-
-function applyAppearance(a) {
-  const r = document.documentElement.style;
-  if (a.accent) r.setProperty("--accent", a.accent);
-  if (a.nameFont) r.setProperty("--name-font", a.nameFont);
-  if (a.nameFontSize) r.setProperty("--name-size", a.nameFontSize + "px");
-  if (a.roundFontSize) r.setProperty("--round-size", a.roundFontSize + "px");
-}
-
-import { PLATFORM_ICONS } from "./components/shared.js";
-
-function BgSocialIcon({ icon }) {
-  const d = PLATFORM_ICONS[icon];
-  if (!d) return html`<span class="bg-social-platform">${icon}</span>`;
-  return html`
-    <svg class="bg-social-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d=${d} />
-    </svg>
-  `;
-}
-
-function ScorePips({ score, bestOf, color }) {
-  const needed = Math.ceil(bestOf / 2);
-  return html`
-    <div class="bg-pips">
-      ${Array.from({ length: needed }, (_, i) => html`
-        <div
-          class=${"bg-pip" + (i < score ? " filled" : "")}
-          style=${{ "--pip-color": color }}
-        ></div>
-      `)}
-    </div>
-  `;
-}
 
 function TopBar({ setInfo, scoreEntities }) {
   const { tournamentName = "", roundLabel = "", bestOf = 3 } = setInfo || {};
@@ -63,9 +26,9 @@ function TopBar({ setInfo, scoreEntities }) {
           ${leftPrefix && html`<span class="bg-player-prefix">${leftPrefix}</span>`}
           <span class="bg-player-name">${leftName}</span>
         </div>
-        <${ScorePips} score=${leftScore} bestOf=${bestOf} color=${leftColor} />
+        <${WinPips} score=${leftScore} bestOf=${bestOf} color=${leftColor} />
         <span class="bg-vs">VS</span>
-        <${ScorePips} score=${rightScore} bestOf=${bestOf} color=${rightColor} />
+        <${WinPips} score=${rightScore} bestOf=${bestOf} color=${rightColor} />
         <div class="bg-player">
           ${rightPrefix && html`<span class="bg-player-prefix">${rightPrefix}</span>`}
           <span class="bg-player-name">${rightName}</span>
@@ -80,14 +43,14 @@ function CasterBanner({ caster }) {
   const pronouns = caster.pronouns || "";
   return html`
     <div class="bg-caster-banner">
-      <div class="bg-caster-name">${caster.name}</div>
-      ${pronouns && html`<div class="bg-caster-pronouns">${pronouns}</div>`}
+      <div class="caster-name">${caster.name}</div>
+      ${pronouns && html`<div class="caster-pronouns">${pronouns}</div>`}
       ${socials.length > 0 && html`
-        <div class="bg-caster-socials">
+        <div class="caster-socials">
           ${socials.map((s) => html`
-            <span class="bg-caster-social">
-              <${BgSocialIcon} icon=${s.icon} />
-              <span class="bg-social-handle">${s.handle}</span>
+            <span class="caster-social">
+              <${Icon} name=${s.icon} class="caster-social-icon" />
+              <span class="caster-social-handle">${s.handle}</span>
             </span>
           `)}
         </div>
@@ -97,29 +60,9 @@ function CasterBanner({ caster }) {
 }
 
 function App() {
-  const [state, setState] = useState(null);
-  const [appearance, setAppearance] = useState({});
+  const { state, appearance } = useStreamState();
 
-  useEffect(() => {
-    fetch("/overlay/appearance.json")
-      .then((r) => r.json())
-      .then((a) => { applyAppearance(a); setAppearance(a); })
-      .catch(() => { });
-
-    fetch("/state.json").then((r) => r.json()).then(setState).catch(() => { });
-    const es = new EventSource("/events");
-    es.onmessage = (ev) => {
-      try {
-        const { state, appearance } = JSON.parse(ev.data);
-        setState(state);
-        applyAppearance(appearance);
-        setAppearance(appearance);
-      } catch { }
-    };
-    return () => es.close();
-  }, []);
-
-  if (!state) return null;
+  if (!state || !appearance) return null;
   const { scoreEntities = [], setInfo = {}, casters = [] } = state;
 
   return html`

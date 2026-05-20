@@ -1,8 +1,5 @@
-import { h } from "https://esm.sh/preact@10";
 import { useState, useEffect } from "https://esm.sh/preact@10/hooks";
-import htm from "https://esm.sh/htm@3";
-
-const html = htm.bind(h);
+import { html } from "./shared.js";
 
 export function SponsorRotator({ appearance, inline = false }) {
   const intervalMs = (appearance?.sponsorInterval ?? 5) * 1000;

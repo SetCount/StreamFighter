@@ -1,9 +1,5 @@
-import { h } from "https://esm.sh/preact@10";
-import htm from "https://esm.sh/htm@3";
-import { WinPips, FitText, BrandLogo, CasterList } from "./shared.js";
+import { html, WinPips, FitText, BrandLogo, CasterList } from "./shared.js";
 import { SponsorRotator } from "./sponsor-rotator.js";
-
-const html = htm.bind(h);
 
 function PlayerPanel({ entity, bestOf }) {
   const player = entity?.players?.[0];

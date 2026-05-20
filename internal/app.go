@@ -18,6 +18,8 @@ const configPath = "streamfighter.config.json"
 
 const secretsPath = "streamfighter.secrets.json"
 
+const statePath = "streamfighter.state.json"
+
 type App struct {
 	ctx           context.Context
 	mu            sync.RWMutex
@@ -35,7 +37,7 @@ type App struct {
 func NewApp(overlayFS fs.FS) *App {
 	return &App{
 		overlayFS:     overlayFS,
-		state:         defaultState(),
+		state:         loadState(),
 		config:        loadConfig(),
 		secrets:       loadSecrets(),
 		playerPresets: loadPlayerPresets(),
@@ -74,6 +76,33 @@ func saveConfig(cfg OutputConfig) {
 	}
 	if err := os.WriteFile(configPath, b, 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "save config: %v\n", err)
+	}
+}
+
+func loadState() StreamState {
+	s := defaultState()
+	raw, err := os.ReadFile(statePath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "load state: %v\n", err)
+		}
+		return s
+	}
+	if err := json.Unmarshal(raw, &s); err != nil {
+		fmt.Fprintf(os.Stderr, "load state: %v (using defaults)\n", err)
+		return defaultState()
+	}
+	return s
+}
+
+func saveState(s StreamState) {
+	b, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "save state: %v\n", err)
+		return
+	}
+	if err := os.WriteFile(statePath, b, 0o644); err != nil {
+		fmt.Fprintf(os.Stderr, "save state: %v\n", err)
 	}
 }
 
@@ -159,12 +188,23 @@ func (a *App) GetState() StreamState {
 	return a.state
 }
 
-// SetState replaces the in-memory state from the frontend. It does not
-// persist to disk — call Update for that.
+// SetState replaces the in-memory state from the frontend and persists
+// it to disk so it survives restarts.
 func (a *App) SetState(s StreamState) {
 	a.mu.Lock()
 	a.state = s
 	a.mu.Unlock()
+	saveState(s)
+}
+
+// ClearState resets the stream state to defaults and persists the change.
+func (a *App) ClearState() StreamState {
+	s := defaultState()
+	a.mu.Lock()
+	a.state = s
+	a.mu.Unlock()
+	saveState(s)
+	return s
 }
 
 // GetConfig returns the current output configuration.

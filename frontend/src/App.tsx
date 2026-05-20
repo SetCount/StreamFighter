@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { Icon } from "./icons";
 import {
   GetState,
   SetState,
+  ClearState,
   GetConfig,
   SetConfig,
   GameOverlayURL,
@@ -214,6 +216,16 @@ function App() {
     setPickerOpen(false);
   };
 
+  const onClear = async () => {
+    try {
+      const s = (await ClearState()) as unknown as StreamState;
+      setSt(s);
+      ResizeWindow(1000, heightForFormat(s.setInfo.format));
+    } catch (e: any) {
+      setStatus("Error: " + e);
+    }
+  };
+
   const onTokenChange = (v: string) => setToken(v);
   const onTokenBlur = () => {
     SetSecrets({ startggToken: token } as any).catch((e) =>
@@ -327,19 +339,14 @@ function App() {
                     setStatus(`Copied ${label} URL`);
                   }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25z" />
-                    <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25z" />
-                  </svg>
+                  <Icon name="copy" width={14} height={14} />
                 </button>
                 <button
                   className="url-action"
                   title="Open in browser"
                   onClick={() => BrowserOpenURL(url)}
                 >
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M3.75 2h3.5a.75.75 0 010 1.5h-3.5a.25.25 0 00-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 00.25-.25v-3.5a.75.75 0 011.5 0v3.5A1.75 1.75 0 0112.25 14h-8.5A1.75 1.75 0 012 12.25v-8.5C2 2.784 2.784 2 3.75 2zm6.5-1h4a.75.75 0 01.75.75v4a.75.75 0 01-1.5 0V2.56L8.28 7.78a.75.75 0 01-1.06-1.06l5.22-5.22h-3.19a.75.75 0 010-1.5z" />
-                  </svg>
+                  <Icon name="open" width={14} height={14} />
                 </button>
               </div>
             ))}
@@ -384,6 +391,9 @@ function App() {
 
       {activeTab === "player" && (
         <main className="content" role="tabpanel">
+          <div className="content-actions">
+            <button className="clear-btn" onClick={onClear}>Clear</button>
+          </div>
           <div className="layout-grid">
             <div>
               <SetInfoEditor

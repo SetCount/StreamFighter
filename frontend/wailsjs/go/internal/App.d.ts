@@ -6,6 +6,8 @@ export function AssetsBaseURL():Promise<string>;
 
 export function BetweenOverlayURL():Promise<string>;
 
+export function ClearState():Promise<internal.StreamState>;
+
 export function DeleteCasterPreset(arg1:string):Promise<void>;
 
 export function DeletePlayerPreset(arg1:string):Promise<void>;

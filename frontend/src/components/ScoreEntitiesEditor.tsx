@@ -3,6 +3,7 @@ import type { ScoreEntity, Player, GamePack, PlayerPreset } from "../types";
 import { winCount } from "../reshape";
 import { findPack, findCharacter, portraitURL, stockURL } from "../assets";
 import { PORT_COLORS, paletteFor } from "../portColors";
+import { Icon } from "../icons";
 import CharacterPicker from "./CharacterPicker";
 
 type Props = {
@@ -151,7 +152,7 @@ export default function ScoreEntitiesEditor({
               className="swap-btn"
               aria-label={`Swap ${entityTitle(format, i - 1)} and ${entityTitle(format, i)}`}
               onClick={() => swapEntities(i - 1, i)}
-            >⇄</button>
+            ><Icon name="swap" width="1em" height="1em" /></button>
           );
         }
         nodes.push(
