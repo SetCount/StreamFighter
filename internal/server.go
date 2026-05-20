@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"context"
@@ -77,7 +77,8 @@ func newOverlayServer(
 		getAppearance:  getAppearance,
 	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/overlay", o.handleOverlay)
+	mux.HandleFunc("/game", o.handleOverlay)
+	mux.HandleFunc("/between", o.handleBetween)
 	mux.Handle("/overlay/", o.handleOverlayAssets())
 	mux.HandleFunc("/state.json", o.handleState)
 	mux.HandleFunc("/overlay/appearance.json", o.handleAppearance)
@@ -110,6 +111,23 @@ func (o *overlayServer) handleOverlay(w http.ResponseWriter, _ *http.Request) {
 	body, err := os.ReadFile(path)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("overlay file %q: %v", path, err), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	_, _ = w.Write(body)
+}
+
+func (o *overlayServer) handleBetween(w http.ResponseWriter, _ *http.Request) {
+	overlayPath := o.getOverlayPath()
+	if overlayPath == "" {
+		http.Error(w, "overlay path not configured", http.StatusInternalServerError)
+		return
+	}
+	path := filepath.Join(filepath.Dir(overlayPath), "between.html")
+	body, err := os.ReadFile(path)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("between overlay %q: %v", path, err), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

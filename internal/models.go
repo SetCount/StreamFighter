@@ -1,4 +1,4 @@
-package main
+package internal
 
 // Format describes the match composition.
 type Format string

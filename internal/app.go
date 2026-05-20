@@ -1,8 +1,7 @@
-package main
+package internal
 
 import (
 	"context"
-	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,26 +14,14 @@ import (
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// configPath is the cwd-relative file we persist OutputConfig to so
-// settings (game pack, paths, port toggles) survive across launches.
 const configPath = "streamfighter.config.json"
 
-// secretsPath holds credentials that are gitignored — currently the
-// start.gg API token. Loaded the same way as configPath but never
-// included in build artifacts or commits.
 const secretsPath = "streamfighter.secrets.json"
 
-// defaultOverlayFS is seeded to the overlay directory on first run. The
-// server always reads from disk afterwards so user edits are picked up on
-// the next browser-source refresh.
-//
-//go:embed all:overlay
-var defaultOverlayFS embed.FS
-
-// App struct
 type App struct {
 	ctx           context.Context
 	mu            sync.RWMutex
+	overlayFS     fs.FS
 	state         StreamState
 	config        OutputConfig
 	secrets       Secrets
@@ -42,14 +29,12 @@ type App struct {
 	games         []GamePack
 	playerPresets []PlayerPreset
 	casterPresets []CasterPreset
-	// fileManifest tracks which per-field files we wrote on the previous
-	// Update so we can clean up entries that have since gone away.
-	fileManifest map[string]struct{}
+	fileManifest  map[string]struct{}
 }
 
-// NewApp creates a new App application struct
-func NewApp() *App {
+func NewApp(overlayFS fs.FS) *App {
 	return &App{
+		overlayFS:     overlayFS,
 		state:         defaultState(),
 		config:        loadConfig(),
 		secrets:       loadSecrets(),
@@ -119,30 +104,24 @@ func saveSecrets(s Secrets) {
 	}
 }
 
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
-func (a *App) startup(ctx context.Context) {
+func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
-	if err := ensureOverlayDir(a.config.OverlayPath); err != nil {
+	if err := a.ensureOverlayDir(a.config.OverlayPath); err != nil {
 		fmt.Println("seed overlay dir:", err)
 	}
 	a.games = loadGames(a.config.GamesDir)
 	a.startServer()
 }
 
-// ensureOverlayDir seeds the bundled overlay files into the directory
-// containing htmlPath. Each file is written only if it doesn't already
-// exist, so user edits to any individual file are never clobbered.
-// Subdirectories (e.g. components/) are created and seeded recursively.
-func ensureOverlayDir(htmlPath string) error {
-	if htmlPath == "" {
+func (a *App) ensureOverlayDir(htmlPath string) error {
+	if htmlPath == "" || a.overlayFS == nil {
 		return nil
 	}
 	dir := filepath.Dir(htmlPath)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	return fs.WalkDir(defaultOverlayFS, "overlay", func(path string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(a.overlayFS, "overlay", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -156,7 +135,7 @@ func ensureOverlayDir(htmlPath string) error {
 		} else if !os.IsNotExist(statErr) {
 			return statErr
 		}
-		data, err := defaultOverlayFS.ReadFile(path)
+		data, err := fs.ReadFile(a.overlayFS, path)
 		if err != nil {
 			return err
 		}
@@ -164,8 +143,7 @@ func ensureOverlayDir(htmlPath string) error {
 	})
 }
 
-// shutdown gracefully tears down the overlay HTTP server.
-func (a *App) shutdown(_ context.Context) {
+func (a *App) Shutdown(_ context.Context) {
 	if a.server == nil {
 		return
 	}
@@ -226,11 +204,18 @@ func (a *App) effectiveAppearance() OverlayAppearance {
 	return app
 }
 
-// OverlayURL is the address an OBS browser source should point at.
-func (a *App) OverlayURL() string {
+// GameOverlayURL is the address for the in-game OBS browser source.
+func (a *App) GameOverlayURL() string {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
-	return fmt.Sprintf("http://localhost:%d/overlay", a.config.HTTPPort)
+	return fmt.Sprintf("http://localhost:%d/game", a.config.HTTPPort)
+}
+
+// BetweenOverlayURL is the address for the between-games OBS browser source.
+func (a *App) BetweenOverlayURL() string {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return fmt.Sprintf("http://localhost:%d/between", a.config.HTTPPort)
 }
 
 // AssetsBaseURL is the prefix the frontend (and OBS overlay) prepends to

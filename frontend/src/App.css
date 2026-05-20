@@ -64,20 +64,44 @@ body {
     font-weight: 700;
     letter-spacing: 0;
 }
-.overlay-url {
-    flex: 1;
-    font-size: var(--font-sm);
-    color: var(--text-muted);
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+.overlay-urls {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
-.overlay-url code {
-    padding: 3px 8px;
+.overlay-url-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.overlay-url-label {
+    min-width: 4.5em;
+    text-align: right;
+}
+.overlay-url-row code {
+    padding: 2px 6px;
     border-radius: 4px;
-    font-size: var(--font-sm);
+    font-size: var(--font-xs);
     background: var(--bg-page);
     font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+.url-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 3px;
+}
+.url-action:hover {
+    color: var(--accent);
+    background: rgba(255, 255, 255, 0.06);
 }
 
 .game-select {
