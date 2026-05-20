@@ -566,12 +566,9 @@ func defaultConfig() OutputConfig {
 			NameFont:        `"Arial Black", Impact, "Arial Narrow", sans-serif`,
 			NameFontSize:    30,
 			RoundFontSize:   30,
-			ShowSetInfo:     true,
-			ShowLogo:        true,
 			SponsorInterval: 5,
 			SponsorWidth:    200,
 			SponsorHeight:   0,
-			SponsorCorner:   "bottom-right",
 			SponsorPadding:  16,
 		},
 	}

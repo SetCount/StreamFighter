@@ -31,7 +31,7 @@ export function DualLayout({ scoreEntities, setInfo, casters, bestOf, appearance
         <div class="sidebar-spacer"></div>
         <div class="sidebar-bottom">
           <${CasterList} casters=${casters} />
-          ${appearance.showSetInfo !== false && html`<${SetInfo} setInfo=${setInfo} />`}
+          <${SetInfo} setInfo=${setInfo} />
         </div>
       </div>
 
@@ -42,7 +42,7 @@ export function DualLayout({ scoreEntities, setInfo, casters, bestOf, appearance
         <div class="sidebar-spacer"></div>
         <div class="sidebar-bottom">
           <${SponsorRotator} appearance=${appearance} inline=${true} />
-          ${appearance.showLogo !== false && html`<${BrandLogo} logoUrl=${appearance.logoUrl || ""} />`}
+          ${appearance.logoUrl && html`<${BrandLogo} logoUrl=${appearance.logoUrl} />`}
           <${TournamentName} name=${setInfo?.tournamentName} />
         </div>
       </div>

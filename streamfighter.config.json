@@ -12,19 +12,16 @@
   "overlayAppearance": {
     "layout": "dual",
     "gameAspect": "4:3",
-    "accent": "#e8711a",
+    "accent": "#f8e45c",
     "sidebarBg": "#18100a",
     "sidebarWidth": 240,
     "camHeight": 300,
     "nameFont": "\"Arial Black\", Impact, \"Arial Narrow\", sans-serif",
     "nameFontSize": 30,
     "roundFontSize": 30,
-    "showSetInfo": true,
-    "showLogo": false,
     "sponsorInterval": 5,
     "sponsorWidth": 200,
     "sponsorHeight": 0,
-    "sponsorCorner": "bottom-right",
     "sponsorPadding": 16
   }
 }

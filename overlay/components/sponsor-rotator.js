@@ -5,7 +5,6 @@ export function SponsorRotator({ appearance, inline = false }) {
   const intervalMs = (appearance?.sponsorInterval ?? 5) * 1000;
   const width      = appearance?.sponsorWidth  ?? 200;
   const height     = appearance?.sponsorHeight ?? 0;
-  const corner     = appearance?.sponsorCorner ?? "bottom-right";
   const padding    = appearance?.sponsorPadding ?? 16;
 
   const [images, setImages] = useState([]);
@@ -45,8 +44,8 @@ export function SponsorRotator({ appearance, inline = false }) {
   const style = inline
     ? { ...baseStyle, display: "block", margin: "0 auto" }
     : (() => {
-        const vPos = corner.includes("top")  ? { top: padding + "px" }  : { bottom: padding + "px" };
-        const hPos = corner.includes("left") ? { left: padding + "px" } : { right: padding + "px" };
+        const vPos = { bottom: padding + "px" };
+        const hPos = { right: padding + "px" };
         return { ...baseStyle, position: "fixed", ...vPos, ...hPos };
       })();
 

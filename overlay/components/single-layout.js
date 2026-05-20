@@ -23,22 +23,20 @@ export function SingleLayout({ scoreEntities, setInfo, casters, bestOf, appearan
           <div class="cam-label">CAM</div>
         </div>
         <div class="panel-scoreboard">
-          ${appearance.showSetInfo !== false && html`
-            <${TournamentName} name=${setInfo?.tournamentName} />
-            <div class="panel-set-info">
-              ${(setInfo?.roundLabel || "") && html`
-                <span class="round-label">${(setInfo.roundLabel || "").toUpperCase()}</span>
-              `}
-              <span class="best-of">BEST OF ${bestOf}</span>
-            </div>
-          `}
+          <${TournamentName} name=${setInfo?.tournamentName} />
+          <div class="panel-set-info">
+            ${(setInfo?.roundLabel || "") && html`
+              <span class="round-label">${(setInfo.roundLabel || "").toUpperCase()}</span>
+            `}
+            <span class="best-of">BEST OF ${bestOf}</span>
+          </div>
           ${scoreEntities.map((e, i) => html`<${ScoreRow} key=${i} entity=${e} bestOf=${bestOf} />`)}
         </div>
         <div class="sidebar-spacer"></div>
         <div class="panel-bottom">
           <${CasterList} casters=${casters} />
           <${SponsorRotator} appearance=${appearance} inline=${true} />
-          ${appearance.showLogo !== false && html`<${BrandLogo} logoUrl=${appearance.logoUrl || ""} />`}
+          ${appearance.logoUrl && html`<${BrandLogo} logoUrl=${appearance.logoUrl} />`}
         </div>
       </div>
       <div class="game-area"></div>

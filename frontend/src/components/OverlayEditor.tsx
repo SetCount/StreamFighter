@@ -152,35 +152,63 @@ export default function OverlayEditor({ value, onChange, onCommit }: Props) {
                 </label>
             </div>
 
-            <div className="checkboxes overlay-checkboxes">
-                <label className="checkbox-row">
-                    <input
-                        type="checkbox"
-                        checked={value.showSetInfo}
-                        onChange={e => commit({ showSetInfo: e.target.checked })}
-                    />
-                    Show set info (bottom-left of game overlay)
-                </label>
-                <label className="checkbox-row">
-                    <input
-                        type="checkbox"
-                        checked={value.showLogo}
-                        onChange={e => commit({ showLogo: e.target.checked })}
-                    />
-                    Show logo (bottom-right of game overlay)
-                </label>
-                <button
-                    type="button"
-                    className="reset-btn"
-                    onClick={() => {
-                        const next = { ...DEFAULT_APPEARANCE };
-                        onChange(next);
-                        onCommit(next);
-                    }}
-                >
-                    Reset to defaults
-                </button>
+            <div className="sponsor-section">
+                <div className="sponsor-section-title">Sponsor Rotator</div>
+                <div className="sponsor-grid">
+                    <label className="fw-num">
+                        Interval (s)
+                        <input
+                            type="number"
+                            min={1}
+                            value={value.sponsorInterval ?? 5}
+                            onChange={e => set({ sponsorInterval: Number(e.target.value) })}
+                            onBlur={() => commit()}
+                        />
+                    </label>
+                    <label className="fw-num">
+                        Width (px)
+                        <input
+                            type="number"
+                            min={0}
+                            value={value.sponsorWidth ?? 200}
+                            onChange={e => set({ sponsorWidth: Number(e.target.value) })}
+                            onBlur={() => commit()}
+                        />
+                    </label>
+                    <label className="fw-num">
+                        Height (px)
+                        <input
+                            type="number"
+                            min={0}
+                            value={value.sponsorHeight ?? 0}
+                            onChange={e => set({ sponsorHeight: Number(e.target.value) })}
+                            onBlur={() => commit()}
+                        />
+                    </label>
+                    <label className="fw-num">
+                        Padding (px)
+                        <input
+                            type="number"
+                            min={0}
+                            value={value.sponsorPadding ?? 16}
+                            onChange={e => set({ sponsorPadding: Number(e.target.value) })}
+                            onBlur={() => commit()}
+                        />
+                    </label>
+                </div>
             </div>
+
+            <button
+                type="button"
+                className="reset-btn"
+                onClick={() => {
+                    const next = { ...DEFAULT_APPEARANCE };
+                    onChange(next);
+                    onCommit(next);
+                }}
+            >
+                Reset to defaults
+            </button>
         </fieldset>
     );
 }

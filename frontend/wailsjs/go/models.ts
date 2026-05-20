@@ -187,12 +187,9 @@ export namespace internal {
 	    nameFontSize: number;
 	    roundFontSize: number;
 	    logoUrl?: string;
-	    showSetInfo: boolean;
-	    showLogo: boolean;
 	    sponsorInterval: number;
 	    sponsorWidth: number;
 	    sponsorHeight: number;
-	    sponsorCorner: string;
 	    sponsorPadding: number;
 	
 	    static createFrom(source: any = {}) {
@@ -212,12 +209,9 @@ export namespace internal {
 	        this.nameFontSize = source["nameFontSize"];
 	        this.roundFontSize = source["roundFontSize"];
 	        this.logoUrl = source["logoUrl"];
-	        this.showSetInfo = source["showSetInfo"];
-	        this.showLogo = source["showLogo"];
 	        this.sponsorInterval = source["sponsorInterval"];
 	        this.sponsorWidth = source["sponsorWidth"];
 	        this.sponsorHeight = source["sponsorHeight"];
-	        this.sponsorCorner = source["sponsorCorner"];
 	        this.sponsorPadding = source["sponsorPadding"];
 	    }
 	}
@@ -301,6 +295,7 @@ export namespace internal {
 	    prefix?: string;
 	    aliases?: string[];
 	    startggPlayerId?: number;
+	    gameId?: string;
 	    character?: string;
 	    costume?: number;
 	    portColor?: string;
@@ -317,6 +312,7 @@ export namespace internal {
 	        this.prefix = source["prefix"];
 	        this.aliases = source["aliases"];
 	        this.startggPlayerId = source["startggPlayerId"];
+	        this.gameId = source["gameId"];
 	        this.character = source["character"];
 	        this.costume = source["costume"];
 	        this.portColor = source["portColor"];
@@ -390,6 +386,7 @@ export namespace internal {
 	export class StartggPlayer {
 	    id: number;
 	    gamerTag: string;
+	    prefix?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new StartggPlayer(source);
@@ -399,6 +396,7 @@ export namespace internal {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
 	        this.gamerTag = source["gamerTag"];
+	        this.prefix = source["prefix"];
 	    }
 	}
 	export class StartggEntrant {

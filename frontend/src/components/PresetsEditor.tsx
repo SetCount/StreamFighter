@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import type { CSSProperties } from "react";
 import type { PlayerPreset, CasterPreset, GamePack } from "../types";
 import {
@@ -31,6 +31,71 @@ type Props = {
 const pKey = (p: PlayerPreset, i: number) => p.id || `new-${i}`;
 const cKey = (c: CasterPreset, i: number) => c.id || `cnew-${i}`;
 
+type GameGroup = {
+  gameId: string;
+  gameName: string;
+  presets: { preset: PlayerPreset; globalIndex: number }[];
+};
+
+function groupByGame(
+  players: PlayerPreset[],
+  games: GamePack[],
+  currentGameId: string,
+): GameGroup[] {
+  const byGame = new Map<string, { preset: PlayerPreset; globalIndex: number }[]>();
+  for (let i = 0; i < players.length; i++) {
+    const gid = players[i].gameId ?? "";
+    let arr = byGame.get(gid);
+    if (!arr) {
+      arr = [];
+      byGame.set(gid, arr);
+    }
+    arr.push({ preset: players[i], globalIndex: i });
+  }
+
+  const groups: GameGroup[] = [];
+  const gameMap = new Map(games.map((g) => [g.id, g]));
+
+  // Current game first
+  if (byGame.has(currentGameId)) {
+    const g = gameMap.get(currentGameId);
+    groups.push({
+      gameId: currentGameId,
+      gameName: g?.name ?? currentGameId,
+      presets: byGame.get(currentGameId)!,
+    });
+    byGame.delete(currentGameId);
+  }
+
+  // Other games, sorted by name
+  const others = [...byGame.entries()]
+    .filter(([gid]) => gid !== "")
+    .sort(([, a], [, b]) => {
+      const nameA = gameMap.get(a[0]?.preset.gameId ?? "")?.name ?? "";
+      const nameB = gameMap.get(b[0]?.preset.gameId ?? "")?.name ?? "";
+      return nameA.localeCompare(nameB);
+    });
+  for (const [gid, presets] of others) {
+    const g = gameMap.get(gid);
+    groups.push({
+      gameId: gid,
+      gameName: g?.name ?? gid,
+      presets,
+    });
+  }
+
+  // Unassigned (no gameId)
+  if (byGame.has("")) {
+    groups.push({
+      gameId: "",
+      gameName: "No Game",
+      presets: byGame.get("")!,
+    });
+  }
+
+  return groups;
+}
+
 export default function PresetsEditor({
   players,
   casters,
@@ -46,8 +111,6 @@ export default function PresetsEditor({
   onAddCaster,
   onChangeCasters,
 }: Props) {
-  const pack = findPack(games, gameId);
-  const portPalette = portPaletteFor(pack);
   const [pickerFor, setPickerFor] = useState<number | null>(null);
 
   const [expandedP, setExpandedP] = useState<Set<string>>(
@@ -100,6 +163,8 @@ export default function PresetsEditor({
   };
   const onPickCharacter = (charId: string | null) => {
     if (pickerFor !== null) {
+      const presetGameId = players[pickerFor]?.gameId ?? gameId;
+      const pack = findPack(games, presetGameId);
       const char = charId ? findCharacter(pack, charId) : undefined;
       setPlayer(pickerFor, {
         character: charId ?? "",
@@ -120,240 +185,262 @@ export default function PresetsEditor({
     else onChangeCasters(casters.filter((_, idx) => idx !== i));
   };
 
+  const gameGroups = useMemo(
+    () => groupByGame(players, games, gameId),
+    [players, games, gameId],
+  );
+
+  const pickerPack = useMemo(() => {
+    if (pickerFor === null) return findPack(games, gameId);
+    const presetGameId = players[pickerFor]?.gameId ?? gameId;
+    return findPack(games, presetGameId);
+  }, [pickerFor, players, games, gameId]);
+
   return (
     <>
       <div className="presets-columns">
         {/* ── Player Presets ── */}
         <fieldset className="presets-section">
           <legend>Player Presets</legend>
-          <div className="preset-list">
-            {players.map((p, i) => {
-              const k = pKey(p, i);
-              const isOpen = expandedP.has(k);
-              const char = findCharacter(pack, p.character ?? "");
-              const costumes = char?.costumes ?? [];
-              const thumbSrc = p.character
-                ? p.costume && p.costume > 0
-                  ? stockURL(assetsBase, gameId, p.character, p.costume)
-                  : selectURL(assetsBase, gameId, p.character)
-                : null;
-              const meta = [p.pronouns, p.prefix].filter(Boolean).join(" · ");
-              return (
-                <div
-                  key={k}
-                  className="preset-row"
-                  style={
-                    {
-                      "--port-color": p.portColor || "transparent",
-                    } as CSSProperties
-                  }
-                >
-                  <div
-                    className="preset-header"
-                    role="button"
-                    tabIndex={0}
-                    aria-expanded={isOpen}
-                    onClick={() => toggleP(k)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        toggleP(k);
-                      }
-                    }}
-                  >
-                    <div className="preset-thumb">
-                      {thumbSrc ? (
-                        <img src={thumbSrc} alt={char?.name ?? p.character} />
-                      ) : (
-                        <div className="preset-thumb-empty" />
-                      )}
-                    </div>
-                    <div className="preset-name-col">
-                      <span className={`preset-name${!p.name ? " empty" : ""}`}>
-                        {p.name || "New preset"}
-                      </span>
-                      {meta && <span className="preset-meta">{meta}</span>}
-                    </div>
-                    {p.portColor && (
-                      <span
-                        className="color-dot"
-                        style={{ background: p.portColor }}
-                      />
-                    )}
-                    <span className="expand-toggle" aria-hidden="true">
-                      {isOpen ? "▾" : "▸"}
-                    </span>
-                    <button
-                      type="button"
-                      className="icon-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removePlayer(i);
-                      }}
-                      aria-label="Remove preset"
-                    >
-                      ×
-                    </button>
-                  </div>
-                  {isOpen && (
-                    <div className="preset-body">
-                      <input
-                        className="name"
-                        placeholder="Tag"
-                        value={p.name}
-                        onChange={(ev) =>
-                          setPlayer(i, { name: ev.target.value })
+          {gameGroups.map((group) => {
+            const gPack = findPack(games, group.gameId);
+            const gPortPalette = portPaletteFor(gPack);
+            return (
+              <div key={group.gameId || "__none"} className="preset-game-group">
+                {gameGroups.length > 1 && (
+                  <div className="preset-game-heading">{group.gameName}</div>
+                )}
+                <div className="preset-list">
+                  {group.presets.map(({ preset: p, globalIndex: i }) => {
+                    const k = pKey(p, i);
+                    const isOpen = expandedP.has(k);
+                    const char = findCharacter(gPack, p.character ?? "");
+                    const costumes = char?.costumes ?? [];
+                    const thumbSrc = p.character
+                      ? p.costume && p.costume > 0
+                        ? stockURL(assetsBase, group.gameId, p.character, p.costume)
+                        : selectURL(assetsBase, group.gameId, p.character)
+                      : null;
+                    const meta = [p.pronouns, p.prefix].filter(Boolean).join(" · ");
+                    return (
+                      <div
+                        key={k}
+                        className="preset-row"
+                        style={
+                          {
+                            "--port-color": p.portColor || "transparent",
+                          } as CSSProperties
                         }
-                      />
-                      <div className="player-extras">
-                        <input
-                          className="pronouns"
-                          placeholder="Pronouns"
-                          value={p.pronouns ?? ""}
-                          onChange={(ev) =>
-                            setPlayer(i, {
-                              pronouns: ev.target.value || undefined,
-                            })
-                          }
-                        />
-                        <input
-                          className="prefix"
-                          placeholder="Prefix"
-                          value={p.prefix ?? ""}
-                          onChange={(ev) =>
-                            setPlayer(i, { prefix: ev.target.value || undefined })
-                          }
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className="player-portrait"
-                        onClick={() => setPickerFor(i)}
-                        aria-label="Choose character"
                       >
-                        {p.character && (p.costume ?? 0) > 0 ? (
-                          <img
-                            src={portraitURL(
-                              assetsBase,
-                              gameId,
-                              p.character,
-                              p.costume!,
+                        <div
+                          className="preset-header"
+                          role="button"
+                          tabIndex={0}
+                          aria-expanded={isOpen}
+                          onClick={() => toggleP(k)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              toggleP(k);
+                            }
+                          }}
+                        >
+                          <div className="preset-thumb">
+                            {thumbSrc ? (
+                              <img src={thumbSrc} alt={char?.name ?? p.character} />
+                            ) : (
+                              <div className="preset-thumb-empty" />
                             )}
-                            alt={char?.name ?? p.character}
-                          />
-                        ) : (
-                          <span className="portrait-empty">
-                            {p.character
-                              ? (char?.name ?? p.character)
-                              : "Click to choose character"}
+                          </div>
+                          <div className="preset-name-col">
+                            <span className={`preset-name${!p.name ? " empty" : ""}`}>
+                              {p.name || "New preset"}
+                            </span>
+                            {meta && <span className="preset-meta">{meta}</span>}
+                          </div>
+                          {p.portColor && (
+                            <span
+                              className="color-dot"
+                              style={{ background: p.portColor }}
+                            />
+                          )}
+                          <span className="expand-toggle" aria-hidden="true">
+                            {isOpen ? "▾" : "▸"}
                           </span>
-                        )}
-                      </button>
-                      {p.character && costumes.length > 0 && (
-                        <div
-                          className="stock-row"
-                          role="radiogroup"
-                          aria-label="Costume"
-                        >
-                          {costumes.map((cos) => (
-                            <button
-                              key={cos.index}
-                              type="button"
-                              role="radio"
-                              aria-checked={p.costume === cos.index}
-                              aria-label={`Costume ${cos.index}`}
-                              className="stock-btn"
-                              onClick={() =>
-                                setPlayer(i, { costume: cos.index })
-                              }
-                            >
-                              <img
-                                src={stockURL(
-                                  assetsBase,
-                                  gameId,
-                                  p.character!,
-                                  cos.index,
-                                )}
-                                alt=""
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                      <label>
-                        Color
-                        <div
-                          className="color-swatches"
-                          role="radiogroup"
-                          aria-label="Port Color"
-                        >
                           <button
                             type="button"
-                            className="color-swatch clear-swatch"
-                            role="radio"
-                            aria-checked={!p.portColor}
-                            aria-label="No preference"
-                            title="No preference"
-                            onClick={() =>
-                              setPlayer(i, { portColor: undefined })
-                            }
-                          />
-                          {portPalette.map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              className="color-swatch"
-                              role="radio"
-                              aria-checked={p.portColor === c}
-                              aria-label={c}
-                              style={{ background: c }}
-                              onClick={() => setPlayer(i, { portColor: c })}
-                            />
-                          ))}
+                            className="icon-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removePlayer(i);
+                            }}
+                            aria-label="Remove preset"
+                          >
+                            ×
+                          </button>
                         </div>
-                      </label>
-                      <details className="preset-secondary">
-                        <summary>Aliases &amp; Start.gg</summary>
-                        <label>
-                          Aliases (comma-separated)
-                          <input
-                            placeholder="alt-tag, old-tag"
-                            value={(p.aliases ?? []).join(", ")}
-                            onChange={(ev) =>
-                              setPlayer(i, {
-                                aliases: ev.target.value
-                                  .split(",")
-                                  .map((s) => s.trim())
-                                  .filter((s) => s.length > 0),
-                              })
-                            }
-                          />
-                        </label>
-                        <label>
-                          StartGG ID
-                          <input
-                            type="number"
-                            placeholder="0"
-                            value={p.startggPlayerId ?? ""}
-                            onChange={(ev) =>
-                              setPlayer(i, {
-                                startggPlayerId: ev.target.value
-                                  ? Number(ev.target.value)
-                                  : undefined,
-                              })
-                            }
-                          />
-                        </label>
-                      </details>
-                      <div className="preset-actions">
-                        <button onClick={() => onSavePlayer(p)}>Save</button>
+                        {isOpen && (
+                          <div className="preset-body">
+                            <input
+                              className="name"
+                              placeholder="Tag"
+                              value={p.name}
+                              onChange={(ev) =>
+                                setPlayer(i, { name: ev.target.value })
+                              }
+                            />
+                            <div className="player-extras">
+                              <input
+                                className="pronouns"
+                                placeholder="Pronouns"
+                                value={p.pronouns ?? ""}
+                                onChange={(ev) =>
+                                  setPlayer(i, {
+                                    pronouns: ev.target.value || undefined,
+                                  })
+                                }
+                              />
+                              <input
+                                className="prefix"
+                                placeholder="Prefix"
+                                value={p.prefix ?? ""}
+                                onChange={(ev) =>
+                                  setPlayer(i, { prefix: ev.target.value || undefined })
+                                }
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              className="player-portrait"
+                              onClick={() => setPickerFor(i)}
+                              aria-label="Choose character"
+                            >
+                              {p.character && (p.costume ?? 0) > 0 ? (
+                                <img
+                                  src={portraitURL(
+                                    assetsBase,
+                                    group.gameId,
+                                    p.character,
+                                    p.costume!,
+                                  )}
+                                  alt={char?.name ?? p.character}
+                                />
+                              ) : (
+                                <span className="portrait-empty">
+                                  {p.character
+                                    ? (char?.name ?? p.character)
+                                    : "Click to choose character"}
+                                </span>
+                              )}
+                            </button>
+                            {p.character && costumes.length > 0 && (
+                              <div
+                                className="stock-row"
+                                role="radiogroup"
+                                aria-label="Costume"
+                              >
+                                {costumes.map((cos) => (
+                                  <button
+                                    key={cos.index}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={p.costume === cos.index}
+                                    aria-label={`Costume ${cos.index}`}
+                                    className="stock-btn"
+                                    onClick={() =>
+                                      setPlayer(i, { costume: cos.index })
+                                    }
+                                  >
+                                    <img
+                                      src={stockURL(
+                                        assetsBase,
+                                        group.gameId,
+                                        p.character!,
+                                        cos.index,
+                                      )}
+                                      alt=""
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                            <label>
+                              Color
+                              <div
+                                className="color-swatches"
+                                role="radiogroup"
+                                aria-label="Port Color"
+                              >
+                                <button
+                                  type="button"
+                                  className="color-swatch clear-swatch"
+                                  role="radio"
+                                  aria-checked={!p.portColor}
+                                  aria-label="No preference"
+                                  title="No preference"
+                                  onClick={() =>
+                                    setPlayer(i, { portColor: undefined })
+                                  }
+                                />
+                                {gPortPalette.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    className="color-swatch"
+                                    role="radio"
+                                    aria-checked={p.portColor === c}
+                                    aria-label={c}
+                                    style={{ background: c }}
+                                    onClick={() => setPlayer(i, { portColor: c })}
+                                  />
+                                ))}
+                              </div>
+                            </label>
+                            <details className="preset-secondary">
+                              <summary>Aliases &amp; Start.gg</summary>
+                              <label>
+                                Aliases (comma-separated)
+                                <input
+                                  placeholder="alt-tag, old-tag"
+                                  value={(p.aliases ?? []).join(", ")}
+                                  onChange={(ev) =>
+                                    setPlayer(i, {
+                                      aliases: ev.target.value
+                                        .split(",")
+                                        .map((s) => s.trim())
+                                        .filter((s) => s.length > 0),
+                                    })
+                                  }
+                                />
+                              </label>
+                              <label>
+                                StartGG ID
+                                <input
+                                  type="number"
+                                  placeholder="0"
+                                  value={p.startggPlayerId ?? ""}
+                                  onChange={(ev) =>
+                                    setPlayer(i, {
+                                      startggPlayerId: ev.target.value
+                                        ? Number(ev.target.value)
+                                        : undefined,
+                                    })
+                                  }
+                                />
+                              </label>
+                            </details>
+                            <div className="preset-actions">
+                              <button onClick={() => onSavePlayer(p)}>Save</button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
           <button className="add-row" onClick={onAddPlayer}>
             + Player Preset
           </button>
@@ -449,7 +536,7 @@ export default function PresetsEditor({
         open={pickerFor !== null}
         onClose={() => setPickerFor(null)}
         onSelect={onPickCharacter}
-        pack={pack}
+        pack={pickerPack}
         assetsBase={assetsBase}
       />
     </>

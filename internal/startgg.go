@@ -26,6 +26,7 @@ type StartggTournament struct {
 type StartggPlayer struct {
 	ID       int64  `json:"id"`
 	GamerTag string `json:"gamerTag"`
+	Prefix   string `json:"prefix,omitempty"`
 }
 
 // StartggEntrant is one side of a set: a single player in 1v1 or a
@@ -140,6 +141,7 @@ type sggResp struct {
 							Entrant *struct {
 								Name         string `json:"name"`
 								Participants []struct {
+									Prefix string `json:"prefix"`
 									Player *struct {
 										ID       int64  `json:"id"`
 										GamerTag string `json:"gamerTag"`
@@ -169,7 +171,7 @@ query TournamentSets($slug: String!, $perPage: Int!) {
           slots {
             entrant {
               name
-              participants { player { id gamerTag } }
+              participants { prefix player { id gamerTag } }
             }
           }
         }
@@ -215,6 +217,7 @@ func (c *startggClient) FetchTournamentSets(
 					ents = append(ents, StartggPlayer{
 						ID:       p.Player.ID,
 						GamerTag: p.Player.GamerTag,
+						Prefix:   p.Prefix,
 					})
 				}
 				entrants = append(entrants, StartggEntrant{

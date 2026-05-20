@@ -53,12 +53,9 @@ export type OverlayAppearance = {
     nameFontSize: number;
     roundFontSize: number;
     logoUrl?: string;
-    showSetInfo: boolean;
-    showLogo: boolean;
     sponsorInterval: number;
     sponsorWidth: number;
     sponsorHeight: number;
-    sponsorCorner: string;
     sponsorPadding: number;
 };
 
@@ -73,12 +70,9 @@ export const DEFAULT_APPEARANCE: OverlayAppearance = {
     nameFontSize: 30,
     roundFontSize: 30,
     logoUrl: '',
-    showSetInfo: true,
-    showLogo: true,
     sponsorInterval: 5,
     sponsorWidth: 200,
     sponsorHeight: 0,
-    sponsorCorner: 'bottom-right',
     sponsorPadding: 16,
 };
 
@@ -107,6 +101,7 @@ export type PlayerPreset = {
     prefix?: string;
     aliases?: string[];
     startggPlayerId?: number;
+    gameId?: string;
     character?: string;
     costume?: number;
     portColor?: string;
@@ -123,6 +118,7 @@ export type CasterPreset = {
 export type StartggPlayer = {
     id: number;
     gamerTag: string;
+    prefix?: string;
 };
 
 export type StartggEntrant = {

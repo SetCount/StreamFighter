@@ -5,11 +5,12 @@ type Props = {
     value: Caster[];
     onChange: (v: Caster[]) => void;
     presets?: CasterPreset[];
+    onSaveCasterAsPreset?: (caster: Caster) => void;
 };
 
 const blankCaster = (): Caster => ({ name: '', pronouns: '', socials: [] });
 
-export default function CastersEditor({ value, onChange, presets = [] }: Props) {
+export default function CastersEditor({ value, onChange, presets = [], onSaveCasterAsPreset }: Props) {
     const setCaster = (i: number, patch: Partial<Caster>) => {
         const next = [...value];
         next[i] = { ...next[i], ...patch };
@@ -56,6 +57,15 @@ export default function CastersEditor({ value, onChange, presets = [] }: Props) 
                                 value={c.pronouns ?? ''}
                                 onChange={ev => setCaster(i, { pronouns: ev.target.value })}
                             />
+                            {onSaveCasterAsPreset && c.name && (
+                                <button
+                                    type="button"
+                                    className="icon-btn preset-save-btn"
+                                    title="Save as preset"
+                                    aria-label="Save as preset"
+                                    onClick={() => onSaveCasterAsPreset(c)}
+                                >⊕</button>
+                            )}
                             <button className="icon-btn" onClick={() => removeCaster(i)}>×</button>
                         </div>
                         <SocialsEditor

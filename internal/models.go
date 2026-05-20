@@ -120,12 +120,9 @@ type OverlayAppearance struct {
 	NameFontSize    int    `json:"nameFontSize"`
 	RoundFontSize   int    `json:"roundFontSize"`
 	LogoURL         string `json:"logoUrl,omitempty"`
-	ShowSetInfo     bool   `json:"showSetInfo"`
-	ShowLogo        bool   `json:"showLogo"`
 	SponsorInterval int    `json:"sponsorInterval"`
 	SponsorWidth    int    `json:"sponsorWidth"`
 	SponsorHeight   int    `json:"sponsorHeight"`
-	SponsorCorner   string `json:"sponsorCorner"`
 	SponsorPadding  int    `json:"sponsorPadding"`
 }
 
@@ -140,6 +137,7 @@ type PlayerPreset struct {
 	Prefix          string   `json:"prefix,omitempty"`
 	Aliases         []string `json:"aliases,omitempty"`
 	StartggPlayerID int64    `json:"startggPlayerId,omitempty"`
+	GameID          string   `json:"gameId,omitempty"`
 	Character       string   `json:"character,omitempty"`
 	Costume         int      `json:"costume,omitempty"`
 	PortColor       string   `json:"portColor,omitempty"`

@@ -28,13 +28,15 @@ import type {
   OutputConfig,
   SetInfo,
   GamePack,
+  Caster,
   Player,
   PlayerPreset,
   CasterPreset,
   StartggSet,
 } from "./types";
 import { reshapeForFormat, canResize, clampScores } from "./reshape";
-import { applyStartggSet } from "./startgg";
+import { applyStartggSet, collectAmbiguities } from "./startgg";
+import type { Ambiguity } from "./startgg";
 import { findPack } from "./assets";
 import { portPaletteFor } from "./portColors";
 import SetInfoEditor from "./components/SetInfoEditor";
@@ -44,13 +46,14 @@ import ConfigEditor from "./components/ConfigEditor";
 import OverlayEditor from "./components/OverlayEditor";
 import PresetsEditor from "./components/PresetsEditor";
 import SetPicker from "./components/SetPicker";
+import PresetDisambiguator from "./components/PresetDisambiguator";
 import { BrowserOpenURL } from "../wailsjs/runtime/runtime";
 import "./App.css";
 
 function heightForFormat(format: string): number {
-  if (format === "2v2") return 1150;
-  if (format === "1v1") return 650;
-  return 700;
+  if (format === "2v2") return 1400;
+  if (format === "1v1") return 800;
+  return 850;
 }
 
 function App() {
@@ -64,7 +67,7 @@ function App() {
   const [token, setToken] = useState("");
   const [playerPresets, setPlayerPresets] = useState<PlayerPreset[]>([]);
   const [casterPresets, setCasterPresets] = useState<CasterPreset[]>([]);
-  const [activeTab, setActiveTab] = useState<"player" | "presets" | "settings">(
+  const [activeTab, setActiveTab] = useState<"player" | "presets" | "output" | "appearance">(
     "player",
   );
 
@@ -73,6 +76,11 @@ function App() {
   const [pickerLoading, setPickerLoading] = useState(false);
   const [pickerError, setPickerError] = useState<string | null>(null);
   const [pickerTournament, setPickerTournament] = useState("");
+  const pickerUrlRef = useRef("");
+
+  const [disambigOpen, setDisambigOpen] = useState(false);
+  const [disambigAmbiguities, setDisambigAmbiguities] = useState<Ambiguity[]>([]);
+  const disambigSetRef = useRef<StartggSet | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -97,7 +105,7 @@ function App() {
         setToken((sec as any)?.startggToken ?? "");
         setPlayerPresets((pp ?? []) as unknown as PlayerPreset[]);
         setCasterPresets((cp ?? []) as unknown as CasterPreset[]);
-        ResizeWindow(1000, heightForFormat(st.setInfo.format));
+        ResizeWindow(1280, heightForFormat(st.setInfo.format));
       })
       .catch((e) => setStatus("Failed to load: " + e));
   }, []);
@@ -164,7 +172,7 @@ function App() {
     let entities = state.scoreEntities;
     if (si.format !== state.setInfo.format) {
       entities = reshapeForFormat(entities, si.format, portPalette);
-      ResizeWindow(1000, heightForFormat(si.format));
+      ResizeWindow(1280, heightForFormat(si.format));
     }
     if (si.bestOf !== state.setInfo.bestOf) {
       entities = clampScores(entities, si.bestOf);
@@ -194,33 +202,60 @@ function App() {
     }
   };
 
-  const onPickSet = async () => {
-    setPickerOpen(true);
+  const doPickerFetch = async (url?: string) => {
+    const fetchUrl = url ?? config.startggTournamentUrl ?? "";
     setPickerLoading(true);
     setPickerError(null);
     setPickerSets([]);
     try {
-      const res = await FetchStartggSets(config.startggTournamentUrl ?? "");
+      const res = await FetchStartggSets(fetchUrl);
       setPickerSets((res?.sets ?? []) as unknown as StartggSet[]);
       setPickerTournament(res?.tournament?.name ?? "");
+      pickerUrlRef.current = fetchUrl;
     } catch (e: any) {
       setPickerError(String(e?.message ?? e));
     } finally {
       setPickerLoading(false);
     }
   };
+
+  const onPickSet = async () => {
+    setPickerOpen(true);
+    const url = config.startggTournamentUrl ?? "";
+    if (pickerSets.length > 0 && pickerUrlRef.current === url) return;
+    await doPickerFetch(url);
+  };
   const onSelectSet = (s: StartggSet) => {
+    const ambiguities = collectAmbiguities(s, playerPresets);
+    if (ambiguities.length > 0) {
+      disambigSetRef.current = s;
+      setDisambigAmbiguities(ambiguities);
+      setPickerOpen(false);
+      setDisambigOpen(true);
+      return;
+    }
     setSt(
       applyStartggSet(state, pickerTournament, s, playerPresets, portPalette),
     );
     setPickerOpen(false);
   };
 
+  const onDisambigConfirm = (overrides: Map<number, PlayerPreset>) => {
+    const s = disambigSetRef.current;
+    if (s) {
+      setSt(
+        applyStartggSet(state, pickerTournament, s, playerPresets, portPalette, overrides),
+      );
+    }
+    setDisambigOpen(false);
+    disambigSetRef.current = null;
+  };
+
   const onClear = async () => {
     try {
       const s = (await ClearState()) as unknown as StreamState;
       setSt(s);
-      ResizeWindow(1000, heightForFormat(s.setInfo.format));
+      ResizeWindow(1280, heightForFormat(s.setInfo.format));
     } catch (e: any) {
       setStatus("Error: " + e);
     }
@@ -234,7 +269,7 @@ function App() {
   };
 
   const onAddPlayerPreset = () => {
-    setPlayerPresets([...playerPresets, { id: "", name: "" }]);
+    setPlayerPresets([...playerPresets, { id: "", name: "", gameId: config.game || undefined }]);
   };
   const onSavePlayerPresetRow = async (p: PlayerPreset) => {
     try {
@@ -293,16 +328,20 @@ function App() {
 
   const onSavePlayerAsPreset = (player: Player, portColor: string) => {
     if (!player.name) return;
-    const existing = playerPresets.find(p =>
-      (player.startggPlayerId && p.startggPlayerId === player.startggPlayerId) ||
-      p.name.toLowerCase() === player.name.toLowerCase()
-    );
+    const existing = playerPresets.find(p => {
+      const idMatch = player.startggPlayerId && p.startggPlayerId === player.startggPlayerId;
+      const nameMatch = p.name.toLowerCase() === player.name.toLowerCase();
+      if (!idMatch && !nameMatch) return false;
+      if (player.character) return p.character === player.character || !p.character;
+      return true;
+    });
     void onSavePlayerPresetRow({
       id: existing?.id ?? '',
       name: player.name,
       pronouns: player.pronouns,
       prefix: player.prefix,
       aliases: existing?.aliases ?? [],
+      gameId: existing?.gameId || config.game || undefined,
       character: player.character || undefined,
       costume: player.costume > 0 ? player.costume : undefined,
       startggPlayerId: player.startggPlayerId,
@@ -310,20 +349,30 @@ function App() {
     });
   };
 
+  const onSaveCasterAsPreset = (caster: Caster) => {
+    if (!caster.name) return;
+    const existing = casterPresets.find(p =>
+      p.name.toLowerCase() === caster.name.toLowerCase()
+    );
+    void onSaveCasterPresetRow({
+      id: existing?.id ?? '',
+      name: caster.name,
+      pronouns: caster.pronouns,
+      socials: caster.socials ?? [],
+    });
+  };
+
   const tabs: { id: typeof activeTab; label: string }[] = [
     { id: "player", label: "Player Info" },
     { id: "presets", label: "Presets" },
-    { id: "settings", label: "Settings" },
+    { id: "output", label: "Output" },
+    { id: "appearance", label: "Appearance" },
   ];
 
   return (
     <div className="app">
       <header className="topbar">
-        <div
-          style={{ display: "flex", flexDirection: "column", flexGrow: "1" }}
-        >
-          <h1>StreamFighter</h1>
-          <div className="overlay-urls">
+        <div className="overlay-urls">
             {[
               { label: "Game", url: gameUrl },
               { label: "Between", url: betweenUrl },
@@ -339,19 +388,18 @@ function App() {
                     setStatus(`Copied ${label} URL`);
                   }}
                 >
-                  <Icon name="copy" width={14} height={14} />
+                  <Icon name="copy" width={18} height={18} />
                 </button>
                 <button
                   className="url-action"
                   title="Open in browser"
                   onClick={() => BrowserOpenURL(url)}
                 >
-                  <Icon name="open" width={14} height={14} />
+                  <Icon name="open" width={18} height={18} />
                 </button>
               </div>
             ))}
           </div>
-        </div>
         <select
           className="game-select"
           value={config.game}
@@ -408,6 +456,7 @@ function App() {
                 value={state.casters}
                 onChange={(c) => setSt({ ...state, casters: c })}
                 presets={casterPresets}
+                onSaveCasterAsPreset={onSaveCasterAsPreset}
               />
             </div>
 
@@ -447,7 +496,7 @@ function App() {
         </main>
       )}
 
-      {activeTab === "settings" && (
+      {activeTab === "output" && (
         <main className="content" role="tabpanel">
           <ConfigEditor
             value={config}
@@ -457,6 +506,11 @@ function App() {
             onTokenChange={onTokenChange}
             onTokenBlur={onTokenBlur}
           />
+        </main>
+      )}
+
+      {activeTab === "appearance" && (
+        <main className="content" role="tabpanel">
           <OverlayEditor
             value={config.overlayAppearance}
             onChange={(a) => setCfg({ ...config, overlayAppearance: a })}
@@ -475,6 +529,17 @@ function App() {
         error={pickerError}
         sets={pickerSets}
         tournamentName={pickerTournament}
+        onReload={() => doPickerFetch()}
+      />
+
+      <PresetDisambiguator
+        open={disambigOpen}
+        onClose={() => setDisambigOpen(false)}
+        onConfirm={onDisambigConfirm}
+        ambiguities={disambigAmbiguities}
+        gameId={config.game}
+        games={games}
+        assetsBase={assetsBase}
       />
     </div>
   );

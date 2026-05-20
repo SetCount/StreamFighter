@@ -10,6 +10,7 @@ type Props = {
     error: string | null;
     sets: StartggSet[];
     tournamentName: string;
+    onReload?: () => void;
 };
 
 // SetPicker is the modal that appears after Pick Set. Mirrors the
@@ -27,7 +28,7 @@ function setSearchHaystack(s: StartggSet): string {
 }
 
 export default function SetPicker({
-    open, onClose, onSelect, loading, error, sets, tournamentName,
+    open, onClose, onSelect, loading, error, sets, tournamentName, onReload,
 }: Props) {
     const ref = useRef<HTMLDialogElement>(null);
     const [filter, setFilter] = useState('');
@@ -76,6 +77,16 @@ export default function SetPicker({
                                 />
                                 Hide completed
                             </label>
+                            {onReload && (
+                                <button
+                                    type="button"
+                                    className="pick-set-btn"
+                                    onClick={onReload}
+                                    disabled={loading}
+                                >
+                                    Reload
+                                </button>
+                            )}
                         </div>
                         {filtered.length === 0 ? (
                             <div className="empty">

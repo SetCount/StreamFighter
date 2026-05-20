@@ -19,18 +19,11 @@ export default function ConfigEditor({
         if (patch) onChange(next);
         onCommit(next);
     };
-    const setAppearance = (patch: Partial<OutputConfig['overlayAppearance']>) =>
-        onChange({ ...value, overlayAppearance: { ...value.overlayAppearance, ...patch } });
-    const commitAppearance = (patch: Partial<OutputConfig['overlayAppearance']>) => {
-        const next = { ...value, overlayAppearance: { ...value.overlayAppearance, ...patch } };
-        onChange(next);
-        onCommit(next);
-    };
     return (
         <fieldset className="config-editor">
-            <legend>Output Config</legend>
+            <legend>Output</legend>
             <div className="grid">
-                <label className="fw-long">
+                <label className="span-full">
                     StartGG Token
                     <input
                         type="password"
@@ -41,7 +34,7 @@ export default function ConfigEditor({
                         onBlur={onTokenBlur}
                     />
                 </label>
-                <label className="fw-path">
+                <label>
                     Output Directory
                     <input
                         value={value.outputDir}
@@ -49,7 +42,7 @@ export default function ConfigEditor({
                         onBlur={() => commit()}
                     />
                 </label>
-                <label className="fw-path">
+                <label>
                     Overlay HTML Path
                     <input
                         value={value.overlayPath}
@@ -57,7 +50,7 @@ export default function ConfigEditor({
                         onBlur={() => commit()}
                     />
                 </label>
-                <label className="fw-path">
+                <label>
                     Games Directory
                     <input
                         value={value.gamesDir}
@@ -65,7 +58,7 @@ export default function ConfigEditor({
                         onBlur={() => commit()}
                     />
                 </label>
-                <label className="fw-path">
+                <label>
                     Sponsors Directory
                     <input
                         value={value.sponsorsDir ?? ''}
@@ -73,7 +66,7 @@ export default function ConfigEditor({
                         onBlur={() => commit()}
                     />
                 </label>
-                <label className="fw-num">
+                <label>
                     HTTP Port
                     <input
                         type="number"
@@ -83,63 +76,6 @@ export default function ConfigEditor({
                     />
                 </label>
             </div>
-            <fieldset>
-                <legend>Sponsor Rotator</legend>
-                <div className="grid">
-                    <label className="fw-mid">
-                        Corner
-                        <select
-                            value={value.overlayAppearance.sponsorCorner ?? 'bottom-right'}
-                            onChange={e => commitAppearance({ sponsorCorner: e.target.value })}
-                        >
-                            <option value="top-left">Top Left</option>
-                            <option value="top-right">Top Right</option>
-                            <option value="bottom-left">Bottom Left</option>
-                            <option value="bottom-right">Bottom Right</option>
-                        </select>
-                    </label>
-                    <label className="fw-num">
-                        Interval (sec)
-                        <input
-                            type="number"
-                            min={1}
-                            value={value.overlayAppearance.sponsorInterval ?? 5}
-                            onChange={e => setAppearance({ sponsorInterval: Number(e.target.value) })}
-                            onBlur={() => commit()}
-                        />
-                    </label>
-                    <label className="fw-num">
-                        Width (px)
-                        <input
-                            type="number"
-                            min={0}
-                            value={value.overlayAppearance.sponsorWidth ?? 200}
-                            onChange={e => setAppearance({ sponsorWidth: Number(e.target.value) })}
-                            onBlur={() => commit()}
-                        />
-                    </label>
-                    <label className="fw-num-md">
-                        Height (px, 0 = auto)
-                        <input
-                            type="number"
-                            min={0}
-                            value={value.overlayAppearance.sponsorHeight ?? 0}
-                            onChange={e => setAppearance({ sponsorHeight: Number(e.target.value) })}
-                            onBlur={() => commit()}
-                        />
-                    </label>
-                    <label className="fw-num">
-                        Padding (px)
-                        <input
-                            type="number"
-                            min={0}
-                            value={value.overlayAppearance.sponsorPadding ?? 16}
-                            onChange={e => setAppearance({ sponsorPadding: Number(e.target.value) })}
-                            onBlur={() => commit()}
-                        />
-                    </label>
-                </div>
-            </fieldset>
             <div className="checkboxes">
                 <label className="checkbox-row">
                     <input

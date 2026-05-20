@@ -1,26 +1,27 @@
 [
   {
-    "id": "fc553836daf3c1ad",
+    "id": "4fe8fff6320b7b32",
     "name": "Dalton",
     "pronouns": "he/they",
-    "prefix": "Hampter",
+    "gameId": "melee",
     "character": "fox",
     "costume": 2,
-    "portColor": "#c96a6a"
+    "portColor": "#cdb466"
   },
   {
-    "id": "f1dc842eac5dffa8",
+    "id": "305881a71edf184d",
     "name": "jopo",
     "pronouns": "she/they",
     "prefix": "Rubin Law",
+    "gameId": "melee",
     "character": "luigi",
-    "costume": 1,
-    "portColor": "#5f8fc4"
+    "costume": 1
   },
   {
-    "id": "aeac00555d9af93d",
-    "name": "bing crossbery",
-    "pronouns": "bing/bam/boom",
+    "id": "50784c823327962c",
+    "name": "Bing Crossberry",
+    "pronouns": "bing/bang/boom",
+    "gameId": "melee",
     "character": "dr_mario",
     "costume": 3
   }
