@@ -20,18 +20,24 @@ const secretsPath = "streamfighter.secrets.json"
 
 const statePath = "streamfighter.state.json"
 
+const layoutRegistryPath = "layouts.json"
+
+// LayoutRegistry maps aspect ratio strings to their compatible layout IDs.
+type LayoutRegistry map[string][]string
+
 type App struct {
-	ctx           context.Context
-	mu            sync.RWMutex
-	overlayFS     fs.FS
-	state         StreamState
-	config        OutputConfig
-	secrets       Secrets
-	server        *overlayServer
-	games         []GamePack
-	playerPresets []PlayerPreset
-	casterPresets []CasterPreset
-	fileManifest  map[string]struct{}
+	ctx            context.Context
+	mu             sync.RWMutex
+	overlayFS      fs.FS
+	state          StreamState
+	config         OutputConfig
+	secrets        Secrets
+	server         *overlayServer
+	games          []GamePack
+	layoutRegistry LayoutRegistry
+	playerPresets  []PlayerPreset
+	casterPresets  []CasterPreset
+	fileManifest   map[string]struct{}
 }
 
 func NewApp(overlayFS fs.FS) *App {
@@ -133,12 +139,29 @@ func saveSecrets(s Secrets) {
 	}
 }
 
+func loadLayoutRegistry(path string) LayoutRegistry {
+	reg := make(LayoutRegistry)
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "load layout registry: %v\n", err)
+		}
+		return reg
+	}
+	if err := json.Unmarshal(raw, &reg); err != nil {
+		fmt.Fprintf(os.Stderr, "load layout registry: %v\n", err)
+		return make(LayoutRegistry)
+	}
+	return reg
+}
+
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	if err := a.ensureOverlayDir(a.config.OverlayPath); err != nil {
 		fmt.Println("seed overlay dir:", err)
 	}
 	a.games = loadGames(a.config.GamesDir)
+	a.layoutRegistry = loadLayoutRegistry(layoutRegistryPath)
 	a.startServer()
 }
 
@@ -231,18 +254,34 @@ func (a *App) SetConfig(c OutputConfig) {
 }
 
 // effectiveAppearance returns the persisted appearance with GameAspect
-// overridden by the active game pack's aspect when the pack declares
-// one. Always source the game-area aspect from the pack so changing
-// games re-shapes the overlay without manual config.
+// validated against the active game pack's supported ratios, and Layout
+// validated against the layout registry. Ensures the overlay always
+// receives a coherent aspect+layout pair.
 func (a *App) effectiveAppearance() OverlayAppearance {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	app := a.config.Appearance
 	app.GameID = a.config.Game
-	if pack := findGamePack(a.games, a.config.Game); pack != nil && pack.AspectRatio != "" {
-		app.GameAspect = pack.AspectRatio
+	if pack := findGamePack(a.games, a.config.Game); pack != nil && len(pack.AspectRatios) > 0 {
+		if app.GameAspect == "" || !contains(pack.AspectRatios, app.GameAspect) {
+			app.GameAspect = pack.AspectRatios[0]
+		}
+	}
+	if layouts, ok := a.layoutRegistry[app.GameAspect]; ok && len(layouts) > 0 {
+		if !contains(layouts, app.Layout) {
+			app.Layout = layouts[0]
+		}
 	}
 	return app
+}
+
+func contains(slice []string, val string) bool {
+	for _, s := range slice {
+		if s == val {
+			return true
+		}
+	}
+	return false
 }
 
 // GameOverlayURL is the address for the in-game OBS browser source.
@@ -272,6 +311,13 @@ func (a *App) ListGames() []GamePack {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return a.games
+}
+
+// GetLayoutRegistry returns the aspect-ratio-to-layouts mapping.
+func (a *App) GetLayoutRegistry() LayoutRegistry {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return a.layoutRegistry
 }
 
 // ReloadGames re-scans GamesDir. Call after dropping new art into a

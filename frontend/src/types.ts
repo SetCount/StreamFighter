@@ -160,8 +160,11 @@ export type GamePack = {
     id: string;
     name: string;
     shortName: string;
+    aspectRatios?: string[];
     characters: Character[];
     characterLayout?: string[][];
     portColors?: string[];
     teamColors?: string[];
 };
+
+export type LayoutRegistry = Record<string, string[]>;

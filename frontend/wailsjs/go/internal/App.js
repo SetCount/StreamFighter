@@ -38,6 +38,10 @@ export function GetConfig() {
   return window['go']['internal']['App']['GetConfig']();
 }
 
+export function GetLayoutRegistry() {
+  return window['go']['internal']['App']['GetLayoutRegistry']();
+}
+
 export function GetSecrets() {
   return window['go']['internal']['App']['GetSecrets']();
 }

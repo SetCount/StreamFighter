@@ -27,7 +27,7 @@ export function applyAppearance(a) {
     const m = /^\s*(\d+(?:\.\d+)?)\s*[:/]\s*(\d+(?:\.\d+)?)\s*$/.exec(a.gameAspect);
     if (m) r.setProperty("--game-aspect", `${m[1]} / ${m[2]}`);
   }
-  document.body.dataset.layout = a.layout === "single" ? "single" : "dual";
+  document.body.dataset.layout = a.layout || "dual";
 }
 
 export function useStreamState() {

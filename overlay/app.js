@@ -54,6 +54,7 @@ import { render } from "https://esm.sh/preact@10";
 import { html, useStreamState } from "./components/shared.js";
 import { SingleLayout } from "./components/single-layout.js";
 import { DualLayout } from "./components/dual-layout.js";
+import { WidescreenLayout } from "./components/widescreen-layout.js";
 
 function App() {
   const { state, appearance } = useStreamState();
@@ -61,6 +62,13 @@ function App() {
   if (!state || !appearance) return null;
   const { scoreEntities = [], setInfo = {}, casters = [] } = state;
   const bestOf = setInfo?.bestOf ?? 3;
+
+  if (appearance.layout === "widescreen") {
+    return html`<${WidescreenLayout}
+      scoreEntities=${scoreEntities} setInfo=${setInfo}
+      casters=${casters} bestOf=${bestOf} appearance=${appearance}
+    />`;
+  }
 
   if (appearance.layout === "single") {
     return html`<${SingleLayout}

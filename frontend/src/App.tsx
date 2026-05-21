@@ -11,6 +11,7 @@ import {
   AssetsBaseURL,
   Update,
   ListGames,
+  GetLayoutRegistry,
   GetSecrets,
   SetSecrets,
   ListPlayerPresets,
@@ -28,6 +29,7 @@ import type {
   OutputConfig,
   SetInfo,
   GamePack,
+  LayoutRegistry,
   Caster,
   Player,
   PlayerPreset,
@@ -67,6 +69,7 @@ function App() {
   const [token, setToken] = useState("");
   const [playerPresets, setPlayerPresets] = useState<PlayerPreset[]>([]);
   const [casterPresets, setCasterPresets] = useState<CasterPreset[]>([]);
+  const [layoutRegistry, setLayoutRegistry] = useState<LayoutRegistry>({});
   const [activeTab, setActiveTab] = useState<"player" | "presets" | "output" | "appearance">(
     "player",
   );
@@ -90,11 +93,12 @@ function App() {
       BetweenOverlayURL(),
       AssetsBaseURL(),
       ListGames(),
+      GetLayoutRegistry(),
       GetSecrets(),
       ListPlayerPresets(),
       ListCasterPresets(),
     ])
-      .then(([s, c, gu, bu, a, g, sec, pp, cp]) => {
+      .then(([s, c, gu, bu, a, g, lr, sec, pp, cp]) => {
         const st = s as unknown as StreamState;
         setSt(st);
         setCfg(c as unknown as OutputConfig);
@@ -102,6 +106,7 @@ function App() {
         setBetweenUrl(bu);
         setAssetsBase(a);
         setGames((g ?? []) as unknown as GamePack[]);
+        setLayoutRegistry((lr ?? {}) as unknown as LayoutRegistry);
         setToken((sec as any)?.startggToken ?? "");
         setPlayerPresets((pp ?? []) as unknown as PlayerPreset[]);
         setCasterPresets((cp ?? []) as unknown as CasterPreset[]);
@@ -148,7 +153,17 @@ function App() {
   };
 
   const onPickGame = (id: string) => {
-    commitConfig({ ...config, game: id });
+    const pack = games.find((g) => g.id === id);
+    let appearance = { ...config.overlayAppearance };
+    const packARs = pack?.aspectRatios ?? [];
+    if (packARs.length > 0 && !packARs.includes(appearance.gameAspect)) {
+      appearance.gameAspect = packARs[0];
+    }
+    const validLayouts = layoutRegistry[appearance.gameAspect] ?? [];
+    if (validLayouts.length > 0 && !validLayouts.includes(appearance.layout)) {
+      appearance.layout = validLayouts[0];
+    }
+    commitConfig({ ...config, game: id, overlayAppearance: appearance });
     setSt((prev) =>
       prev
         ? {
@@ -517,6 +532,9 @@ function App() {
             onCommit={(a) =>
               commitConfig({ ...config, overlayAppearance: a })
             }
+            gameId={config.game}
+            games={games}
+            layoutRegistry={layoutRegistry}
           />
         </main>
       )}

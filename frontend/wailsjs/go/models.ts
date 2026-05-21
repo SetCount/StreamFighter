@@ -1,5 +1,7 @@
 export namespace internal {
-	
+
+	export type LayoutRegistry = Record<string, string[]>;
+
 	export class Social {
 	    icon: string;
 	    handle: string;
@@ -135,7 +137,7 @@ export namespace internal {
 	    id: string;
 	    name: string;
 	    shortName: string;
-	    aspectRatio?: string;
+	    aspectRatios?: string[];
 	    characters: Character[];
 	    characterLayout?: string[][];
 	    portColors?: string[];
@@ -150,7 +152,7 @@ export namespace internal {
 	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.shortName = source["shortName"];
-	        this.aspectRatio = source["aspectRatio"];
+	        this.aspectRatios = source["aspectRatios"];
 	        this.characters = this.convertValues(source["characters"], Character);
 	        this.characterLayout = source["characterLayout"];
 	        this.portColors = source["portColors"];

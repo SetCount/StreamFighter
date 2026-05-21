@@ -16,15 +16,11 @@ import (
 // referenced by ID are served by the overlay HTTP server at
 // /games/<id>/characters/<charId>/{select,portrait_NN,stock_NN}.png.
 type GamePack struct {
-	ID         string      `json:"id"`
-	Name       string      `json:"name"`
-	ShortName  string      `json:"shortName"`
-	// AspectRatio is the game's native display aspect as "W:H"
-	// (e.g. Melee "73:60", P+ "19:15"). Drives the overlay's center
-	// game-area sizing. Optional; empty falls back to a sane default
-	// in the overlay CSS.
-	AspectRatio string      `json:"aspectRatio,omitempty"`
-	Characters []Character `json:"characters"`
+	ID          string      `json:"id"`
+	Name        string      `json:"name"`
+	ShortName   string      `json:"shortName"`
+	AspectRatios []string   `json:"aspectRatios,omitempty"`
+	Characters  []Character `json:"characters"`
 	// CharacterLayout mirrors the in-game CSS row layout: each inner
 	// slice is one row of character IDs, rendered horizontally centered
 	// in CharacterPicker. Optional; when empty the picker falls back to
@@ -59,6 +55,7 @@ type gameManifest struct {
 	Name            string            `json:"name"`
 	ShortName       string            `json:"shortName"`
 	AspectRatio     string            `json:"aspectRatio"`
+	AspectRatios    []string          `json:"aspectRatios"`
 	CharacterNames  map[string]string `json:"characterNames"`
 	CharacterLayout [][]string        `json:"characterLayout"`
 	PortColors      []string          `json:"portColors"`
@@ -110,7 +107,7 @@ func loadGamePack(dir, id string) (GamePack, error) {
 		ID:              id,
 		Name:            coalesce(m.Name, humanizeID(id)),
 		ShortName:       coalesce(m.ShortName, m.Name, humanizeID(id)),
-		AspectRatio:     m.AspectRatio,
+		AspectRatios:    normalizeAspectRatios(m.AspectRatios, m.AspectRatio),
 		CharacterLayout: m.CharacterLayout,
 		PortColors:      m.PortColors,
 		TeamColors:      m.TeamColors,
@@ -196,6 +193,16 @@ func coalesce(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func normalizeAspectRatios(ratios []string, legacy string) []string {
+	if len(ratios) > 0 {
+		return ratios
+	}
+	if legacy != "" {
+		return []string{legacy}
+	}
+	return nil
 }
 
 // findGamePack returns the pack with the given ID or nil if not loaded.

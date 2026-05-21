@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import type { OverlayAppearance } from '../types';
+import type { OverlayAppearance, GamePack, LayoutRegistry } from '../types';
 import { DEFAULT_APPEARANCE } from '../types';
 import Segmented from './Segmented';
 
@@ -10,13 +10,22 @@ const FONT_SUGGESTIONS = [
     '"Courier New", Courier, monospace',
 ];
 
+const LAYOUT_LABELS: Record<string, string> = {
+    dual: 'Dual sidebar',
+    single: 'Single left panel',
+    widescreen: 'Widescreen bar',
+};
+
 type Props = {
     value: OverlayAppearance;
     onChange: (v: OverlayAppearance) => void;
     onCommit: (v: OverlayAppearance) => void;
+    gameId: string;
+    games: GamePack[];
+    layoutRegistry: LayoutRegistry;
 };
 
-export default function OverlayEditor({ value, onChange, onCommit }: Props) {
+export default function OverlayEditor({ value, onChange, onCommit, gameId, games, layoutRegistry }: Props) {
     const id = useId();
     const set = (patch: Partial<OverlayAppearance>) => onChange({ ...value, ...patch });
     const commit = (patch?: Partial<OverlayAppearance>) => {
@@ -26,24 +35,43 @@ export default function OverlayEditor({ value, onChange, onCommit }: Props) {
     };
     const fontListId = `${id}-fonts`;
 
+    const activePack = games.find(g => g.id === gameId);
+    const availableARs = activePack?.aspectRatios ?? [];
+    const currentAR = value.gameAspect || availableARs[0] || '4:3';
+    const compatibleLayouts = layoutRegistry[currentAR] ?? ['dual', 'single'];
+
     return (
         <fieldset className="overlay-editor">
             <legend>Overlay Appearance</legend>
 
+            {availableARs.length > 1 && (
+                <label className="overlay-layout-row">
+                    Aspect Ratio
+                    <Segmented<string>
+                        value={currentAR}
+                        options={availableARs.map(ar => ({ value: ar, label: ar }))}
+                        onChange={ar => {
+                            let layout = value.layout;
+                            const valid = layoutRegistry[ar] ?? [];
+                            if (valid.length > 0 && !valid.includes(layout)) {
+                                layout = valid[0];
+                            }
+                            commit({ gameAspect: ar, layout });
+                        }}
+                    />
+                </label>
+            )}
+
             <label className="overlay-layout-row">
                 Layout
                 <Segmented<string>
-                    value={value.layout || 'dual'}
-                    options={[
-                        { value: 'dual', label: 'Dual sidebar' },
-                        { value: 'single', label: 'Single left panel' },
-                    ]}
+                    value={value.layout || compatibleLayouts[0] || 'dual'}
+                    options={compatibleLayouts.map(l => ({
+                        value: l,
+                        label: LAYOUT_LABELS[l] ?? l,
+                    }))}
                     onChange={v => commit({ layout: v })}
                 />
-                <small className="hint">
-                    Dual: cam + panel on each side of the game. Single: one wide left
-                    panel with both cams, score, casters, sponsors.
-                </small>
             </label>
 
             <div className="grid">

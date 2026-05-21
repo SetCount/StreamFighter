@@ -20,6 +20,8 @@ export function GameOverlayURL():Promise<string>;
 
 export function GetConfig():Promise<internal.OutputConfig>;
 
+export function GetLayoutRegistry():Promise<internal.LayoutRegistry>;
+
 export function GetSecrets():Promise<internal.Secrets>;
 
 export function GetState():Promise<internal.StreamState>;
