@@ -12,6 +12,8 @@ export function DeleteCasterPreset(arg1:string):Promise<void>;
 
 export function DeletePlayerPreset(arg1:string):Promise<void>;
 
+export function ExecuteHotkeyAction(arg1:string):Promise<void>;
+
 export function FetchStartggSets(arg1:string):Promise<internal.StartggSetsResult>;
 
 export function FetchStartggTournament(arg1:string):Promise<internal.StartggTournament>;
@@ -19,6 +21,8 @@ export function FetchStartggTournament(arg1:string):Promise<internal.StartggTour
 export function GameOverlayURL():Promise<string>;
 
 export function GetConfig():Promise<internal.OutputConfig>;
+
+export function GetHotkeyConfig():Promise<internal.HotkeyConfig>;
 
 export function GetLayoutRegistry():Promise<internal.LayoutRegistry>;
 
@@ -41,6 +45,8 @@ export function SaveCasterPreset(arg1:internal.CasterPreset):Promise<internal.Ca
 export function SavePlayerPreset(arg1:internal.PlayerPreset):Promise<internal.PlayerPreset>;
 
 export function SetConfig(arg1:internal.OutputConfig):Promise<void>;
+
+export function SetHotkeyConfig(arg1:internal.HotkeyConfig):Promise<void>;
 
 export function SetSecrets(arg1:internal.Secrets):Promise<void>;
 

@@ -175,6 +175,20 @@ export namespace internal {
 		    return a;
 		}
 	}
+	export class HotkeyConfig {
+	    enabled: boolean;
+	    bindings: Record<string, string>;
+	
+	    static createFrom(source: any = {}) {
+	        return new HotkeyConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.enabled = source["enabled"];
+	        this.bindings = source["bindings"];
+	    }
+	}
 	export class OverlayAppearance {
 	    layout: string;
 	    gameId?: string;

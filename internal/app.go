@@ -18,6 +18,8 @@ const configPath = "streamfighter.config.json"
 
 const secretsPath = "streamfighter.secrets.json"
 
+const hotkeyConfigPath = "streamfighter.hotkeys.json"
+
 const statePath = "streamfighter.state.json"
 
 const layoutRegistryPath = "layouts.json"
@@ -32,7 +34,9 @@ type App struct {
 	state          StreamState
 	config         OutputConfig
 	secrets        Secrets
+	hotkeyConfig   HotkeyConfig
 	server         *overlayServer
+	hotkeys        *hotkeyManager
 	games          []GamePack
 	layoutRegistry LayoutRegistry
 	playerPresets  []PlayerPreset
@@ -46,6 +50,7 @@ func NewApp(overlayFS fs.FS) *App {
 		state:         loadState(),
 		config:        loadConfig(),
 		secrets:       loadSecrets(),
+		hotkeyConfig:  loadHotkeyConfig(),
 		playerPresets: loadPlayerPresets(),
 		casterPresets: loadCasterPresets(),
 		fileManifest:  map[string]struct{}{},
@@ -139,6 +144,36 @@ func saveSecrets(s Secrets) {
 	}
 }
 
+func loadHotkeyConfig() HotkeyConfig {
+	cfg := HotkeyConfig{Bindings: map[string]string{}}
+	raw, err := os.ReadFile(hotkeyConfigPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "load hotkey config: %v\n", err)
+		}
+		return cfg
+	}
+	if err := json.Unmarshal(raw, &cfg); err != nil {
+		fmt.Fprintf(os.Stderr, "load hotkey config: %v (using defaults)\n", err)
+		return HotkeyConfig{Bindings: map[string]string{}}
+	}
+	if cfg.Bindings == nil {
+		cfg.Bindings = map[string]string{}
+	}
+	return cfg
+}
+
+func saveHotkeyConfig(cfg HotkeyConfig) {
+	b, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "save hotkey config: %v\n", err)
+		return
+	}
+	if err := os.WriteFile(hotkeyConfigPath, b, 0o644); err != nil {
+		fmt.Fprintf(os.Stderr, "save hotkey config: %v\n", err)
+	}
+}
+
 func loadLayoutRegistry(path string) LayoutRegistry {
 	reg := make(LayoutRegistry)
 	raw, err := os.ReadFile(path)
@@ -163,6 +198,8 @@ func (a *App) Startup(ctx context.Context) {
 	a.games = loadGames(a.config.GamesDir)
 	a.layoutRegistry = loadLayoutRegistry(layoutRegistryPath)
 	a.startServer()
+	a.hotkeys = newHotkeyManager(a)
+	a.hotkeys.start()
 }
 
 func (a *App) ensureOverlayDir(htmlPath string) error {
@@ -196,6 +233,9 @@ func (a *App) ensureOverlayDir(htmlPath string) error {
 }
 
 func (a *App) Shutdown(_ context.Context) {
+	if a.hotkeys != nil {
+		a.hotkeys.stop()
+	}
 	if a.server == nil {
 		return
 	}
@@ -348,6 +388,28 @@ func (a *App) SetSecrets(s Secrets) {
 	a.secrets = s
 	a.mu.Unlock()
 	saveSecrets(s)
+}
+
+// GetHotkeyConfig returns the current hotkey configuration.
+func (a *App) GetHotkeyConfig() HotkeyConfig {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return a.hotkeyConfig
+}
+
+// SetHotkeyConfig replaces the hotkey config, persists it, and
+// re-registers any active global hotkeys.
+func (a *App) SetHotkeyConfig(cfg HotkeyConfig) {
+	if cfg.Bindings == nil {
+		cfg.Bindings = map[string]string{}
+	}
+	a.mu.Lock()
+	a.hotkeyConfig = cfg
+	a.mu.Unlock()
+	saveHotkeyConfig(cfg)
+	if a.hotkeys != nil {
+		a.hotkeys.rebind()
+	}
 }
 
 // ListPlayerPresets reloads from players.json on every call so a

@@ -325,7 +325,7 @@
 
 .player-info-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 1.55fr);
     gap: 16px;
     align-items: start;
 }

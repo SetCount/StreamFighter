@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { SetInfo } from "../types";
 import Segmented from "./Segmented";
 import { Card, CardHeader } from "./Card";
@@ -35,50 +34,35 @@ export default function SetInfoEditor({
   onPickSet,
   onClear,
 }: Props) {
-  const [urlOpen, setUrlOpen] = useState(Boolean(tournamentUrl));
   const set = (patch: Partial<SetInfo>) => onChange({ ...value, ...patch });
 
   return (
     <Card variant="accent">
-      <CardHeader
-        eyebrow="Match"
-        title={
-          <input
-            className="match-tournament-input"
-            placeholder="Tournament name"
-            value={value.tournamentName}
-            onChange={(e) => set({ tournamentName: e.target.value })}
-          />
-        }
-        actions={
-          <button
-            type="button"
-            className={`btn-icon ${urlOpen ? "is-active" : ""}`}
-            title={urlOpen ? "Hide StartGG URL" : "Show StartGG URL"}
-            aria-pressed={urlOpen}
-            aria-label="Toggle StartGG URL"
-            onClick={() => setUrlOpen((v) => !v)}
-          >
-            🔗
-          </button>
-        }
-      />
+      <CardHeader title="Tournament Info" />
 
-      {urlOpen && (
-        <label className="match-url-row">
-          <span className="match-url-label">StartGG URL</span>
-          <input
-            type="url"
-            placeholder="https://www.start.gg/tournament/<slug>"
-            value={tournamentUrl}
-            onChange={(e) => onTournamentUrlChange(e.target.value)}
-            onBlur={onTournamentUrlBlur}
-          />
-        </label>
-      )}
+
+      <label className="match-field">
+        StartGG URL
+        <input
+          type="url"
+          placeholder="https://www.start.gg/tournament/..."
+          value={tournamentUrl}
+          onChange={(e) => onTournamentUrlChange(e.target.value)}
+          onBlur={onTournamentUrlBlur}
+        />
+      </label>
 
       <div className="match-controls">
-        <label className="match-round">
+        <label className="match-field">
+          Name
+          <input
+            value={value.tournamentName}
+            onChange={(e) => set({ tournamentName: e.target.value })}
+            placeholder="The Big House 11"
+          />
+        </label>
+
+        <label className="match-field">
           Round
           <input
             value={value.roundLabel}
@@ -86,6 +70,7 @@ export default function SetInfoEditor({
             placeholder="Winners Quarter-Final"
           />
         </label>
+
         <div className="match-segments">
           <label>
             Best Of

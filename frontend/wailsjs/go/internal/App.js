@@ -22,6 +22,10 @@ export function DeletePlayerPreset(arg1) {
   return window['go']['internal']['App']['DeletePlayerPreset'](arg1);
 }
 
+export function ExecuteHotkeyAction(arg1) {
+  return window['go']['internal']['App']['ExecuteHotkeyAction'](arg1);
+}
+
 export function FetchStartggSets(arg1) {
   return window['go']['internal']['App']['FetchStartggSets'](arg1);
 }
@@ -36,6 +40,10 @@ export function GameOverlayURL() {
 
 export function GetConfig() {
   return window['go']['internal']['App']['GetConfig']();
+}
+
+export function GetHotkeyConfig() {
+  return window['go']['internal']['App']['GetHotkeyConfig']();
 }
 
 export function GetLayoutRegistry() {
@@ -80,6 +88,10 @@ export function SavePlayerPreset(arg1) {
 
 export function SetConfig(arg1) {
   return window['go']['internal']['App']['SetConfig'](arg1);
+}
+
+export function SetHotkeyConfig(arg1) {
+  return window['go']['internal']['App']['SetHotkeyConfig'](arg1);
 }
 
 export function SetSecrets(arg1) {

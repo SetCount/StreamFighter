@@ -14,6 +14,9 @@ import {
   GetLayoutRegistry,
   GetSecrets,
   SetSecrets,
+  GetHotkeyConfig,
+  SetHotkeyConfig,
+  ExecuteHotkeyAction,
   ListPlayerPresets,
   SavePlayerPreset,
   DeletePlayerPreset,
@@ -35,6 +38,7 @@ import type {
   PlayerPreset,
   CasterPreset,
   StartggSet,
+  HotkeyConfig,
 } from "./types";
 import { reshapeForFormat, canResize, clampScores } from "./reshape";
 import { applyStartggSet, collectAmbiguities } from "./startgg";
@@ -48,18 +52,20 @@ import OutputSettings from "./components/OutputSettings";
 import SystemSettings from "./components/SystemSettings";
 import OverlayEditor from "./components/OverlayEditor";
 import PresetsEditor from "./components/PresetsEditor";
+import HotkeysEditor from "./components/HotkeysEditor";
 import SetPicker from "./components/SetPicker";
 import PresetDisambiguator from "./components/PresetDisambiguator";
-import { BrowserOpenURL } from "../wailsjs/runtime/runtime";
+import { BrowserOpenURL, EventsOn } from "../wailsjs/runtime/runtime";
 import "./App.css";
 
-type TabId = "player" | "presets" | "overlay" | "output" | "system";
+type TabId = "player" | "presets" | "overlay" | "output" | "hotkeys" | "system";
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: "player",  label: "Player Info", icon: "player" },
   { id: "presets", label: "Presets",     icon: "presets" },
   { id: "overlay", label: "Overlay",     icon: "overlay" },
   { id: "output",  label: "Output",      icon: "output" },
+  { id: "hotkeys", label: "Hotkeys",     icon: "hotkeys" },
   { id: "system",  label: "System",      icon: "system" },
 ];
 
@@ -85,6 +91,7 @@ function App() {
   const [playerPresets, setPlayerPresets] = useState<PlayerPreset[]>([]);
   const [casterPresets, setCasterPresets] = useState<CasterPreset[]>([]);
   const [layoutRegistry, setLayoutRegistry] = useState<LayoutRegistry>({});
+  const [hotkeyConfig, setHotkeyConfig] = useState<HotkeyConfig>({ enabled: false, bindings: {} });
   const [activeTab, setActiveTab] = useState<TabId>("player");
 
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -118,8 +125,9 @@ function App() {
       GetSecrets(),
       ListPlayerPresets(),
       ListCasterPresets(),
+      GetHotkeyConfig(),
     ])
-      .then(([s, c, gu, bu, a, g, lr, sec, pp, cp]) => {
+      .then(([s, c, gu, bu, a, g, lr, sec, pp, cp, hk]) => {
         const st = s as unknown as StreamState;
         setSt(st);
         setCfg(c as unknown as OutputConfig);
@@ -131,16 +139,22 @@ function App() {
         setToken((sec as any)?.startggToken ?? "");
         setPlayerPresets((pp ?? []) as unknown as PlayerPreset[]);
         setCasterPresets((cp ?? []) as unknown as CasterPreset[]);
+        setHotkeyConfig((hk as unknown as HotkeyConfig) ?? { enabled: false, bindings: {} });
         ResizeWindow(1280, heightForFormat(st.setInfo.format));
       })
       .catch((e) => flash("err", "Failed to load: " + e));
   }, []);
 
   const loadedRef = useRef(false);
+  const fromGoRef = useRef(false);
   useEffect(() => {
     if (!state) return;
     if (!loadedRef.current) {
       loadedRef.current = true;
+      return;
+    }
+    if (fromGoRef.current) {
+      fromGoRef.current = false;
       return;
     }
     const timer = setTimeout(async () => {
@@ -153,6 +167,57 @@ function App() {
     }, 300);
     return () => clearTimeout(timer);
   }, [state]);
+
+  useEffect(() => {
+    const cancel = EventsOn("state:changed", (newState: StreamState) => {
+      fromGoRef.current = true;
+      setSt(newState as unknown as StreamState);
+    });
+    return cancel;
+  }, []);
+
+  const hotkeyRef = useRef(hotkeyConfig);
+  hotkeyRef.current = hotkeyConfig;
+  useEffect(() => {
+    const formatCombo = (e: KeyboardEvent): string => {
+      const parts: string[] = [];
+      if (e.ctrlKey) parts.push("Ctrl");
+      if (e.altKey) parts.push("Alt");
+      if (e.shiftKey) parts.push("Shift");
+      if (e.metaKey) parts.push("Meta");
+      const key = e.code;
+      if (!["ControlLeft","ControlRight","AltLeft","AltRight","ShiftLeft","ShiftRight","MetaLeft","MetaRight"].includes(key)) {
+        let name = key;
+        if (key.startsWith("Key")) name = key.slice(3);
+        else if (key.startsWith("Digit")) name = key.slice(5);
+        else if (key.startsWith("Numpad")) name = "Num" + key.slice(6);
+        parts.push(name);
+      }
+      return parts.join("+");
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const cfg = hotkeyRef.current;
+      if (!cfg.enabled) return;
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT") return;
+      if (target.isContentEditable) return;
+
+      const combo = formatCombo(e);
+      if (!combo) return;
+
+      for (const [action, binding] of Object.entries(cfg.bindings)) {
+        if (binding === combo) {
+          e.preventDefault();
+          ExecuteHotkeyAction(action);
+          return;
+        }
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   if (!state || !config) {
     return <div className="loading">Loading…</div>;
@@ -592,6 +657,21 @@ function App() {
               value={config}
               onChange={setCfg}
               onCommit={commitConfig}
+            />
+          </main>
+        )}
+
+        {activeTab === "hotkeys" && (
+          <main className="content" role="tabpanel">
+            <HotkeysEditor
+              value={hotkeyConfig}
+              onChange={setHotkeyConfig}
+              onCommit={(hk) => {
+                setHotkeyConfig(hk);
+                SetHotkeyConfig(hk as any).catch((e) =>
+                  flash("err", "Error saving hotkeys: " + e)
+                );
+              }}
             />
           </main>
         )}

@@ -168,3 +168,8 @@ export type GamePack = {
 };
 
 export type LayoutRegistry = Record<string, string[]>;
+
+export type HotkeyConfig = {
+    enabled: boolean;
+    bindings: Record<string, string>;
+};

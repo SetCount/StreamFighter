@@ -158,3 +158,11 @@ type CasterPreset struct {
 type Secrets struct {
 	StartggToken string `json:"startggToken,omitempty"`
 }
+
+// HotkeyConfig holds the user's hotkey bindings. Persisted to
+// streamfighter.hotkeys.json. Each key in Bindings maps an action ID
+// (e.g. "score_e1_inc") to a key combo string (e.g. "Ctrl+Shift+1").
+type HotkeyConfig struct {
+	Enabled  bool              `json:"enabled"`
+	Bindings map[string]string `json:"bindings"`
+}
