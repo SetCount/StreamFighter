@@ -5,6 +5,8 @@ import { findPack, findCharacter, portraitURL, stockURL } from "../assets";
 import { PORT_COLORS, paletteFor } from "../portColors";
 import { Icon } from "../icons";
 import CharacterPicker from "./CharacterPicker";
+import { Card, CardHeader } from "./Card";
+import "./ScoreEntitiesEditor.css";
 
 type Props = {
   value: ScoreEntity[];
@@ -25,10 +27,10 @@ const blankPlayer = (): Player => ({
   costume: 0,
 });
 
-function entityTitle(format: string, i: number): string {
-  if (format === "2v2") return `Team ${i + 1}`;
-  if (format === "1v1") return `Player ${i + 1}`;
-  return `Entity ${i + 1}`;
+function entityRole(format: string): string {
+  if (format === "2v2") return "Team";
+  if (format === "1v1") return "Player";
+  return "Entity";
 }
 
 export default function ScoreEntitiesEditor({
@@ -46,6 +48,7 @@ export default function ScoreEntitiesEditor({
   const pipCount = winCount(bestOf);
   const pack = findPack(games, gameId);
   const palette = paletteFor(pack, format);
+  const role = entityRole(format);
   const blankEntity = (i: number): ScoreEntity => ({
     players: [blankPlayer()],
     currentScore: 0,
@@ -136,220 +139,238 @@ export default function ScoreEntitiesEditor({
   };
 
   return (
-    <div className="board">
+    <div className="entity-board">
       <datalist id="player-preset-names">
         {presets.map((p) => (
           <option key={p.id} value={p.name} />
         ))}
       </datalist>
-      {value.flatMap((e, i) => {
-        const nodes: React.ReactNode[] = [];
-        if (i > 0) {
-          nodes.push(
+
+      {value.map((e, i) => (
+        <div key={i} className="entity-slot">
+          {i > 0 && (
             <button
-              key={`swap-${i}`}
               type="button"
-              className="swap-btn"
-              aria-label={`Swap ${entityTitle(format, i - 1)} and ${entityTitle(format, i)}`}
+              className="btn-icon entity-swap"
+              aria-label={`Swap ${role} ${i} and ${role} ${i + 1}`}
+              title="Swap"
               onClick={() => swapEntities(i - 1, i)}
-            ><Icon name="swap" width="1em" height="1em" /></button>
-          );
-        }
-        nodes.push(
-        <fieldset
-          key={`entity-${i}`}
-          className="entity-card"
-          style={
-            { "--port-color": e.portColor || "transparent" } as CSSProperties
-          }
-        >
-          <legend>
-            <span
-              className="legend-swatch"
-              style={{ background: e.portColor || "transparent" }}
-            />
-            {entityTitle(format, i)}
-            {canResize && (
-              <button
-                className="icon-btn legend-action"
-                onClick={() => removeEntity(i)}
-                disabled={value.length <= 2}
-                aria-label="Remove entity"
-              >
-                ×
-              </button>
-            )}
-          </legend>
-
-          <label>
-            Color
-            <div
-              className="color-swatches"
-              role="radiogroup"
-              aria-label={format === "2v2" ? "Team Color" : "Port Color"}
             >
-              {palette.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className="color-swatch"
-                  role="radio"
-                  aria-checked={e.portColor === c}
-                  aria-label={c}
-                  style={{ background: c }}
-                  onClick={() => setEntity(i, { portColor: c })}
-                />
-              ))}
-            </div>
-          </label>
+              <Icon name="swap" width={16} height={16} />
+            </button>
+          )}
 
-          <label>
-            Score ({e.currentScore} / {pipCount})
-            <div className="score-row">
-              <div className="pips" role="group" aria-label="Score">
-                {Array.from({ length: pipCount }, (_, idx) => idx + 1).map(
-                  (n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      className="pip"
-                      aria-pressed={e.currentScore >= n}
-                      aria-label={`Score ${n}`}
-                      onClick={() => onPipClick(i, n)}
-                    />
-                  ),
-                )}
-              </div>
-            </div>
-          </label>
-
-          <div className="players">
-            {e.players.map((p, pi) => {
-              const char = findCharacter(pack, p.character);
-              const costumes = char?.costumes ?? [];
-              return (
-                <div key={pi} className="player">
-                  <div className="player-row">
-                    <input
-                      className="name"
-                      placeholder="Player name"
-                      value={p.name}
-                      list="player-preset-names"
-                      onChange={(ev) => onNameChange(i, pi, ev.target.value)}
-                    />
-                    {onSavePlayerAsPreset && p.name && (
-                      <button
-                        type="button"
-                        className="icon-btn preset-save-btn"
-                        title="Save as preset"
-                        aria-label="Save as preset"
-                        onClick={() => onSavePlayerAsPreset(p, e.portColor)}
-                      >⊕</button>
-                    )}
-                    {canResize && (
-                      <button
-                        className="icon-btn"
-                        onClick={() => removePlayer(i, pi)}
-                        disabled={e.players.length <= 1}
-                        aria-label="Remove player"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                  <div className="player-extras">
-                    <input
-                      className="pronouns"
-                      placeholder="Pronouns"
-                      value={p.pronouns ?? ""}
-                      onChange={(ev) =>
-                        setPlayer(i, pi, {
-                          pronouns: ev.target.value || undefined,
-                        })
-                      }
-                    />
-                    <input
-                      className="prefix"
-                      placeholder="Prefix"
-                      value={p.prefix ?? ""}
-                      onChange={(ev) =>
-                        setPlayer(i, pi, { prefix: ev.target.value || undefined })
-                      }
-                    />
-                  </div>
+          <Card
+            variant="entity"
+            style={{ "--port-color": e.portColor || "transparent" } as CSSProperties}
+          >
+            <CardHeader
+              eyebrow={`${role} ${i + 1}`}
+              title={
+                e.players[0]?.name?.trim()
+                  ? e.players[0].name
+                  : <span className="entity-name-placeholder">Unnamed</span>
+              }
+              swatch={e.portColor || "transparent"}
+              actions={
+                canResize && (
                   <button
                     type="button"
-                    className="player-portrait"
-                    onClick={() => setPickerFor({ ei: i, pi })}
-                    aria-label="Choose character"
+                    className="btn-icon is-danger"
+                    onClick={() => removeEntity(i)}
+                    disabled={value.length <= 2}
+                    aria-label={`Remove ${role}`}
+                    title="Remove"
                   >
-                    {p.character && p.costume > 0 ? (
-                      <img
-                        src={portraitURL(
-                          assetsBase,
-                          gameId,
-                          p.character,
-                          p.costume,
-                        )}
-                        alt={char?.name ?? p.character}
-                      />
-                    ) : (
-                      <span className="portrait-empty">
-                        {p.character
-                          ? (char?.name ?? p.character)
-                          : "Click to choose character"}
-                      </span>
-                    )}
+                    ×
                   </button>
-                  {p.character && costumes.length > 0 && (
-                    <div
-                      className="stock-row"
-                      role="radiogroup"
-                      aria-label="Costume"
-                    >
-                      {costumes.map((cos) => (
-                        <button
-                          key={cos.index}
-                          type="button"
-                          role="radio"
-                          aria-checked={p.costume === cos.index}
-                          aria-label={`Costume ${cos.index}`}
-                          className="stock-btn"
-                          onClick={() =>
-                            setPlayer(i, pi, { costume: cos.index })
-                          }
-                        >
-                          <img
-                            src={stockURL(
-                              assetsBase,
-                              gameId,
-                              p.character,
-                              cos.index,
-                            )}
-                            alt=""
-                          />
-                        </button>
-                      ))}
-                    </div>
+                )
+              }
+            />
+
+            <div className="entity-meters">
+              <div className="entity-meter">
+                <span className="entity-meter-label">
+                  {format === "2v2" ? "Team color" : "Port"}
+                </span>
+                <div
+                  className="color-swatches"
+                  role="radiogroup"
+                  aria-label={format === "2v2" ? "Team Color" : "Port Color"}
+                >
+                  {palette.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className="color-swatch"
+                      role="radio"
+                      aria-checked={e.portColor === c}
+                      aria-label={c}
+                      style={{ background: c }}
+                      onClick={() => setEntity(i, { portColor: c })}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="entity-meter">
+                <span className="entity-meter-label">
+                  Score <span className="entity-meter-value">{e.currentScore}/{pipCount}</span>
+                </span>
+                <div className="pips" role="group" aria-label="Score">
+                  {Array.from({ length: pipCount }, (_, idx) => idx + 1).map(
+                    (n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        className="pip"
+                        aria-pressed={e.currentScore >= n}
+                        aria-label={`Score ${n}`}
+                        onClick={() => onPipClick(i, n)}
+                      />
+                    ),
                   )}
                 </div>
-              );
-            })}
-            {canResize && (
-              <button className="add-row" onClick={() => addPlayer(i)}>
-                + Player
-              </button>
-            )}
-          </div>
-        </fieldset>
-        );
-        return nodes;
-      })}
+              </div>
+            </div>
+
+            <div className="entity-players">
+              {e.players.map((p, pi) => {
+                const char = findCharacter(pack, p.character);
+                const costumes = char?.costumes ?? [];
+                return (
+                  <div key={pi} className="entity-player">
+                    <div className="entity-player-head">
+                      <input
+                        className="entity-player-name"
+                        placeholder="Player name"
+                        value={p.name}
+                        list="player-preset-names"
+                        onChange={(ev) => onNameChange(i, pi, ev.target.value)}
+                      />
+                      {onSavePlayerAsPreset && p.name && (
+                        <button
+                          type="button"
+                          className="btn-icon btn-icon-soft"
+                          title="Save as preset"
+                          aria-label="Save as preset"
+                          onClick={() => onSavePlayerAsPreset(p, e.portColor)}
+                        >
+                          ⊕
+                        </button>
+                      )}
+                      {canResize && (
+                        <button
+                          type="button"
+                          className="btn-icon is-danger"
+                          onClick={() => removePlayer(i, pi)}
+                          disabled={e.players.length <= 1}
+                          aria-label="Remove player"
+                          title="Remove"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="entity-player-extras">
+                      <input
+                        placeholder="Pronouns"
+                        value={p.pronouns ?? ""}
+                        onChange={(ev) =>
+                          setPlayer(i, pi, {
+                            pronouns: ev.target.value || undefined,
+                          })
+                        }
+                      />
+                      <input
+                        placeholder="Prefix / Team tag"
+                        value={p.prefix ?? ""}
+                        onChange={(ev) =>
+                          setPlayer(i, pi, { prefix: ev.target.value || undefined })
+                        }
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      className={`entity-portrait ${p.character ? "is-filled" : "is-empty"}`}
+                      onClick={() => setPickerFor({ ei: i, pi })}
+                      aria-label="Choose character"
+                    >
+                      {p.character && p.costume > 0 ? (
+                        <img
+                          src={portraitURL(
+                            assetsBase,
+                            gameId,
+                            p.character,
+                            p.costume,
+                          )}
+                          alt={char?.name ?? p.character}
+                        />
+                      ) : (
+                        <span className="entity-portrait-empty">
+                          <span className="entity-portrait-empty-icon">+</span>
+                          <span>
+                            {p.character ? (char?.name ?? p.character) : "Choose character"}
+                          </span>
+                        </span>
+                      )}
+                    </button>
+
+                    {p.character && costumes.length > 0 && (
+                      <div
+                        className="stock-row"
+                        role="radiogroup"
+                        aria-label="Costume"
+                      >
+                        {costumes.map((cos) => (
+                          <button
+                            key={cos.index}
+                            type="button"
+                            role="radio"
+                            aria-checked={p.costume === cos.index}
+                            aria-label={`Costume ${cos.index}`}
+                            className="stock-btn"
+                            onClick={() =>
+                              setPlayer(i, pi, { costume: cos.index })
+                            }
+                          >
+                            <img
+                              src={stockURL(
+                                assetsBase,
+                                gameId,
+                                p.character,
+                                cos.index,
+                              )}
+                              alt=""
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {canResize && (
+                <button
+                  type="button"
+                  className="btn-add entity-add-player"
+                  onClick={() => addPlayer(i)}
+                >
+                  + Player
+                </button>
+              )}
+            </div>
+          </Card>
+        </div>
+      ))}
+
       {canResize && (
-        <button className="add-card" onClick={addEntity}>
-          + Entity
+        <button type="button" className="btn-add entity-add-card" onClick={addEntity}>
+          + {role}
         </button>
       )}
+
       <CharacterPicker
         open={pickerFor !== null}
         onClose={() => setPickerFor(null)}

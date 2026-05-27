@@ -1,0 +1,352 @@
+/* ============================================================
+ * Shell — top-level app layout
+ *
+ * .app is a horizontal flex: a vertical sidebar on the left,
+ * then a column that holds an appbar above the main content.
+ * The sidebar collapses to an icon rail at narrow widths so
+ * the multi-column working surface keeps its real estate.
+ * ============================================================ */
+
+.app {
+    height: 100vh;
+    display: flex;
+    flex-direction: row;
+    background: var(--bg-page);
+    color: var(--text);
+}
+
+/* ---------- Sidebar ---------------------------------------------------- */
+
+.sidebar {
+    flex: 0 0 var(--sidebar-w);
+    width: var(--sidebar-w);
+    background: var(--bg-bar);
+    border-right: 1px solid var(--ctp-crust);
+    display: flex;
+    flex-direction: column;
+    padding: 14px 10px 10px;
+    gap: 14px;
+    transition: flex-basis 160ms ease, width 160ms ease;
+}
+
+.sidebar-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 2px 8px 6px;
+    border-bottom: 1px solid var(--line);
+}
+.sidebar-brand-name {
+    font-size: var(--font-md);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--text);
+}
+.sidebar-brand-eyebrow {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.sidebar-nav .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    color: var(--text-soft);
+    background: transparent;
+    border: 1px solid transparent;
+    font-size: var(--font-sm);
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    position: relative;
+    transition: background 80ms ease, color 80ms ease, border-color 80ms ease;
+}
+.sidebar-nav .nav-item:hover {
+    background: var(--bg-card);
+    color: var(--text);
+}
+.sidebar-nav .nav-item[aria-current="page"] {
+    background: var(--bg-card);
+    color: var(--text);
+    border-color: var(--line);
+}
+.sidebar-nav .nav-item[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    left: -10px;
+    top: 8px;
+    bottom: 8px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+}
+.sidebar-nav .nav-icon {
+    flex: 0 0 18px;
+    width: 18px;
+    color: var(--text-muted);
+}
+.sidebar-nav .nav-item:hover .nav-icon,
+.sidebar-nav .nav-item[aria-current="page"] .nav-icon {
+    color: var(--accent);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+}
+.sidebar-footer label {
+    gap: 2px;
+}
+.sidebar-footer-label {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+.sidebar-game-select {
+    width: 100%;
+    background: var(--bg-card);
+}
+
+.sidebar-status {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 8px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+.sidebar-status.is-warn {
+    border-color: var(--warn);
+    color: var(--warn);
+}
+.sidebar-status.is-ok {
+    border-color: var(--ok);
+    color: var(--ok);
+}
+.sidebar-status.is-err {
+    border-color: var(--err);
+    color: var(--err);
+}
+
+/* ---------- Mini sidebar (collapsed) ----------------------------------- */
+/* Below ~1080px viewport width we collapse to an icon-only rail. The
+   brand subtitle/footer label/footer text/status text hide; the game
+   selector becomes a compact icon-and-glyph control. */
+
+@media (max-width: 1080px) {
+    .sidebar {
+        flex: 0 0 var(--sidebar-w-mini);
+        width: var(--sidebar-w-mini);
+        padding: 14px 6px 10px;
+        align-items: center;
+    }
+    .sidebar-brand-eyebrow,
+    .sidebar-brand-name,
+    .sidebar-footer-label,
+    .sidebar-status,
+    .sidebar-game-select option { /* options still appear in dropdown */
+        /* no-op */
+    }
+    .sidebar-brand {
+        border-bottom: none;
+        padding: 0 0 6px;
+        align-items: center;
+    }
+    .sidebar-brand-name {
+        font-size: 0;
+    }
+    .sidebar-brand-name::first-letter {
+        font-size: var(--font-lg);
+    }
+    .sidebar-brand-eyebrow { display: none; }
+    .sidebar-nav .nav-item {
+        justify-content: center;
+        padding: 8px 0;
+    }
+    .sidebar-nav .nav-label { display: none; }
+    .sidebar-footer-label { display: none; }
+    .sidebar-status {
+        padding: 4px;
+        text-align: center;
+    }
+    .sidebar-game-select {
+        font-size: var(--font-xs);
+    }
+}
+
+/* ---------- Main column (appbar + content) ---------------------------- */
+
+.main {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.appbar {
+    flex: 0 0 var(--appbar-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 18px;
+    background: var(--bg-bar);
+    border-bottom: 1px solid var(--ctp-crust);
+}
+.appbar-title {
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.01em;
+}
+.appbar-urls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-left: auto;
+}
+.url-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    white-space: nowrap;
+    transition: border-color 80ms ease, color 80ms ease;
+}
+.url-chip:hover { border-color: var(--line-hover); color: var(--text); }
+.url-chip-label {
+    font-weight: 600;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 10px;
+}
+.url-chip code {
+    background: transparent;
+    padding: 0;
+    color: var(--text-soft);
+    font-size: var(--font-xs);
+}
+.url-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+}
+.url-action:hover {
+    color: var(--accent);
+    background: color-mix(in oklab, var(--ctp-text) 8%, transparent);
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+}
+.content-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.content-header h1 {
+    margin: 0;
+    font-size: var(--font-lg);
+    font-weight: 600;
+    color: var(--text);
+}
+.content-subhead {
+    font-size: var(--font-sm);
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Inline status toast — surfaces above the content briefly after a save
+   or error. The sidebar status pill is for steady state; this one is
+   for ephemeral messaging. */
+.toast {
+    position: fixed;
+    bottom: 18px;
+    right: 18px;
+    z-index: 50;
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    color: var(--text-soft);
+    font-size: var(--font-sm);
+    box-shadow: var(--shadow-card);
+}
+.toast.is-err  { border-color: var(--err);  color: var(--err); }
+.toast.is-ok   { border-color: var(--ok);   color: var(--ok); }
+.toast.is-warn { border-color: var(--warn); color: var(--warn); }
+
+/* ---------- Player Info: two-zone layout ----------------------------- */
+/* Left column owns the entity board (the focus). Right column is a
+   sticky stack with Match info + Casters. On narrow main areas the
+   right column moves to a horizontal strip above the board so the
+   entity cards can use the full width without going single-column. */
+
+.player-info-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+.player-info-board { min-width: 0; }
+.player-info-side {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+}
+
+@media (max-width: 1180px) {
+    .player-info-layout {
+        grid-template-columns: 1fr;
+    }
+    .player-info-side {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+}
+@media (max-width: 760px) {
+    .player-info-side { grid-template-columns: 1fr; }
+}

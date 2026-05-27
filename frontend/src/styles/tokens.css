@@ -1,0 +1,84 @@
+/* ============================================================
+ * Design tokens — Catppuccin Mocha base
+ *
+ * Mocha is the canonical dark palette. We expose the full named
+ * set as --ctp-* vars so port-color pickers and overlay editors
+ * can pull authoritative hues, then map semantic tokens
+ * (--bg-page, --text, --accent, ...) on top of them.
+ * ============================================================ */
+
+:root {
+    color-scheme: dark;
+
+    /* Catppuccin Mocha — named palette */
+    --ctp-rosewater: #f5e0dc;
+    --ctp-flamingo:  #f2cdcd;
+    --ctp-pink:      #f5c2e7;
+    --ctp-mauve:     #cba6f7;
+    --ctp-red:       #f38ba8;
+    --ctp-maroon:    #eba0ac;
+    --ctp-peach:     #fab387;
+    --ctp-yellow:    #f9e2af;
+    --ctp-green:     #a6e3a1;
+    --ctp-teal:      #94e2d5;
+    --ctp-sky:       #89dceb;
+    --ctp-sapphire:  #74c7ec;
+    --ctp-blue:      #89b4fa;
+    --ctp-lavender:  #b4befe;
+
+    --ctp-text:      #cdd6f4;
+    --ctp-subtext1:  #bac2de;
+    --ctp-subtext0:  #a6adc8;
+    --ctp-overlay2:  #9399b2;
+    --ctp-overlay1:  #7f849c;
+    --ctp-overlay0:  #6c7086;
+    --ctp-surface2:  #585b70;
+    --ctp-surface1:  #45475a;
+    --ctp-surface0:  #313244;
+    --ctp-base:      #1e1e2e;
+    --ctp-mantle:    #181825;
+    --ctp-crust:     #11111b;
+
+    /* Semantic surface tokens */
+    --bg-page:        var(--ctp-base);
+    --bg-bar:         var(--ctp-mantle);
+    --bg-card:        var(--ctp-surface0);
+    --bg-card-hover:  var(--ctp-surface1);
+    --bg-sunken:      var(--ctp-crust);
+    --bg-input:       var(--ctp-mantle);
+
+    --line:           var(--ctp-surface1);
+    --line-hover:     var(--ctp-surface2);
+
+    --text:           var(--ctp-text);
+    --text-soft:      var(--ctp-subtext1);
+    --text-muted:     var(--ctp-subtext0);
+
+    /* Accents + status */
+    --accent:         var(--ctp-lavender);
+    --accent-soft:    color-mix(in oklab, var(--ctp-lavender) 22%, transparent);
+    --accent-2:       var(--ctp-mauve);
+    --ok:             var(--ctp-green);
+    --warn:           var(--ctp-yellow);
+    --err:            var(--ctp-red);
+
+    /* Fluid type scale. Min keeps things legible at the 1024px Wails
+       default; max keeps very wide windows from getting silly. */
+    --font-xs:   clamp(11px, calc(0.25vw +  9.5px), 14px);
+    --font-sm:   clamp(13px, calc(0.30vw + 10.5px), 16px);
+    --font-md:   clamp(14px, calc(0.35vw + 11.5px), 18px);
+    --font-base: clamp(15px, calc(0.40vw + 12.5px), 19px);
+    --font-lg:   clamp(17px, calc(0.45vw + 14.0px), 22px);
+
+    /* Geometry */
+    --radius-sm: 4px;
+    --radius:    6px;
+    --radius-lg: 10px;
+    --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.18);
+    --shadow-modal: 0 18px 48px rgba(0, 0, 0, 0.55);
+
+    /* Layout sizes */
+    --sidebar-w:       220px;
+    --sidebar-w-mini:   56px;
+    --appbar-h:         48px;
+}

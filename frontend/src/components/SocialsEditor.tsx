@@ -1,5 +1,6 @@
 import type { Social } from '../types';
 import { Icon } from '../icons';
+import './SocialsEditor.css';
 
 export const SOCIAL_PLATFORMS = [
     { key: 'twitter', label: 'X (Twitter)' },
@@ -29,7 +30,7 @@ export default function SocialsEditor({ value, onChange }: Props) {
     return (
         <div className="socials">
             {value.map((s, si) => (
-                <div key={si} className="social">
+                <div key={si} className="social-row">
                     <div className="social-pick" role="radiogroup" aria-label="Platform">
                         {SOCIAL_PLATFORMS.map(p => (
                             <button
@@ -47,14 +48,21 @@ export default function SocialsEditor({ value, onChange }: Props) {
                         ))}
                     </div>
                     <input
+                        className="social-handle"
                         placeholder="@handle"
                         value={s.handle}
                         onChange={ev => setSocial(si, { handle: ev.target.value })}
                     />
-                    <button className="icon-btn" onClick={() => remove(si)}>×</button>
+                    <button
+                        type="button"
+                        className="btn-icon is-danger"
+                        onClick={() => remove(si)}
+                        title="Remove social"
+                        aria-label="Remove social"
+                    >×</button>
                 </div>
             ))}
-            <button className="add-row" onClick={add}>+ Social</button>
+            <button type="button" className="btn-add socials-add" onClick={add}>+ Social</button>
         </div>
     );
 }

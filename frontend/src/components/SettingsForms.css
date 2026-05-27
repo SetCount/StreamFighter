@@ -1,0 +1,61 @@
+/* Shared CSS for the Output + System + Overlay settings tabs.
+   The forms share spacing, label sizing, and helper-text patterns
+   even though the cards themselves differ. */
+
+.settings-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-width: 760px;
+}
+
+.settings-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+.settings-label {
+    font-size: var(--font-sm);
+    color: var(--text-soft);
+    font-weight: 500;
+}
+.settings-hint {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+.settings-hint code,
+.card-section-hint code,
+.card-subtitle code {
+    font-size: 0.9em;
+}
+
+.settings-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px 18px;
+}
+.settings-row-grow { flex: 1 1 220px; }
+.settings-field-narrow { flex: 0 0 140px; }
+
+.settings-toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Screen-reader-only label for inputs whose meaning is carried by the
+   CardSection title above them. */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

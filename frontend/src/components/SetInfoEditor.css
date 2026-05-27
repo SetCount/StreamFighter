@@ -1,0 +1,83 @@
+/* SetInfoEditor — the "Match" card on Player Info.
+   Wraps a tournament-name input as the card title, with a disclosure
+   for the StartGG URL, then round + best-of + format controls, and
+   primary action at the bottom. */
+
+.match-tournament-input {
+    /* Use the card title slot as the editable tournament name field —
+       inputs inherit the parent surface via tokens, but here we want
+       a flush, headline-weight feel. */
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text);
+    font-size: var(--font-md);
+    font-weight: 600;
+    padding: 4px 6px;
+    margin-left: -6px;
+    border-radius: var(--radius-sm);
+    min-height: 1.8em;
+    width: 100%;
+}
+.match-tournament-input:hover {
+    border-color: var(--line);
+}
+.match-tournament-input:focus {
+    background: var(--bg-input);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+}
+.match-tournament-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.match-url-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+}
+.match-url-label {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+}
+.match-url-row input {
+    background: var(--bg-card);
+}
+
+.match-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.match-segments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+}
+.match-segments > label {
+    flex: 0 0 auto;
+}
+.match-segments .segmented {
+    width: max-content;
+}
+
+.match-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+}
+.match-actions .btn-primary { flex: 1 1 auto; max-width: 220px; }
+
+.btn-icon.is-active {
+    background: var(--accent-soft);
+    color: var(--accent);
+}

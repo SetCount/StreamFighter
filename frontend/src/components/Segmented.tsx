@@ -1,3 +1,5 @@
+import './Segmented.css';
+
 type Option<T> = { value: T; label: string };
 
 type Props<T extends string | number> = {

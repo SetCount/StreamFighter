@@ -11,6 +11,8 @@ import {
 import { portPaletteFor } from "../portColors";
 import CharacterPicker from "./CharacterPicker";
 import SocialsEditor from "./SocialsEditor";
+import { Card, CardHeader, CardSection } from "./Card";
+import "./PresetsEditor.css";
 
 type Props = {
   players: PlayerPreset[];
@@ -56,7 +58,6 @@ function groupByGame(
   const groups: GameGroup[] = [];
   const gameMap = new Map(games.map((g) => [g.id, g]));
 
-  // Current game first
   if (byGame.has(currentGameId)) {
     const g = gameMap.get(currentGameId);
     groups.push({
@@ -67,7 +68,6 @@ function groupByGame(
     byGame.delete(currentGameId);
   }
 
-  // Other games, sorted by name
   const others = [...byGame.entries()]
     .filter(([gid]) => gid !== "")
     .sort(([, a], [, b]) => {
@@ -84,7 +84,6 @@ function groupByGame(
     });
   }
 
-  // Unassigned (no gameId)
   if (byGame.has("")) {
     groups.push({
       gameId: "",
@@ -119,6 +118,19 @@ export default function PresetsEditor({
   const [expandedC, setExpandedC] = useState<Set<string>>(
     () => new Set(casters.filter((c) => !c.id).map((c, i) => cKey(c, i))),
   );
+
+  // Saved-flash highlight for ~1.2s after a Save click.
+  const [flashed, setFlashed] = useState<Set<string>>(new Set());
+  const flash = (key: string) => {
+    setFlashed((s) => new Set(s).add(key));
+    window.setTimeout(() => {
+      setFlashed((s) => {
+        const n = new Set(s);
+        n.delete(key);
+        return n;
+      });
+    }, 1200);
+  };
 
   const prevPLen = useRef(players.length);
   useEffect(() => {
@@ -161,6 +173,11 @@ export default function PresetsEditor({
     if (p.id) void onDeletePlayer(p.id);
     else onChangePlayers(players.filter((_, idx) => idx !== i));
   };
+  const savePlayer = async (i: number) => {
+    const p = players[i];
+    await onSavePlayer(p);
+    flash(pKey(p, i));
+  };
   const onPickCharacter = (charId: string | null) => {
     if (pickerFor !== null) {
       const presetGameId = players[pickerFor]?.gameId ?? gameId;
@@ -184,6 +201,11 @@ export default function PresetsEditor({
     if (c.id) void onDeleteCaster(c.id);
     else onChangeCasters(casters.filter((_, idx) => idx !== i));
   };
+  const saveCaster = async (i: number) => {
+    const c = casters[i];
+    await onSaveCaster(c);
+    flash(cKey(c, i));
+  };
 
   const gameGroups = useMemo(
     () => groupByGame(players, games, gameId),
@@ -200,8 +222,17 @@ export default function PresetsEditor({
     <>
       <div className="presets-columns">
         {/* ── Player Presets ── */}
-        <fieldset className="presets-section">
-          <legend>Player Presets</legend>
+        <Card>
+          <CardHeader
+            title="Player presets"
+            eyebrow={`${players.length} saved`}
+            actions={
+              <button type="button" className="btn-add" onClick={onAddPlayer}>
+                + Preset
+              </button>
+            }
+          />
+
           {gameGroups.map((group) => {
             const gPack = findPack(games, group.gameId);
             const gPortPalette = portPaletteFor(gPack);
@@ -214,6 +245,7 @@ export default function PresetsEditor({
                   {group.presets.map(({ preset: p, globalIndex: i }) => {
                     const k = pKey(p, i);
                     const isOpen = expandedP.has(k);
+                    const isFlashed = flashed.has(k);
                     const char = findCharacter(gPack, p.character ?? "");
                     const costumes = char?.costumes ?? [];
                     const thumbSrc = p.character
@@ -223,9 +255,10 @@ export default function PresetsEditor({
                       : null;
                     const meta = [p.pronouns, p.prefix].filter(Boolean).join(" · ");
                     return (
-                      <div
+                      <Card
                         key={k}
-                        className="preset-row"
+                        variant="compact"
+                        className={`preset-card ${isOpen ? "is-open" : ""}`}
                         style={
                           {
                             "--port-color": p.portColor || "transparent",
@@ -269,49 +302,57 @@ export default function PresetsEditor({
                           </span>
                           <button
                             type="button"
-                            className="icon-btn"
+                            className="btn-icon is-danger"
                             onClick={(e) => {
                               e.stopPropagation();
                               removePlayer(i);
                             }}
                             aria-label="Remove preset"
+                            title="Remove preset"
                           >
                             ×
                           </button>
                         </div>
                         {isOpen && (
                           <div className="preset-body">
-                            <input
-                              className="name"
-                              placeholder="Tag"
-                              value={p.name}
-                              onChange={(ev) =>
-                                setPlayer(i, { name: ev.target.value })
-                              }
-                            />
-                            <div className="player-extras">
+                            <label className="settings-field">
+                              <span className="settings-label">Tag</span>
                               <input
-                                className="pronouns"
-                                placeholder="Pronouns"
-                                value={p.pronouns ?? ""}
+                                placeholder="Tag"
+                                value={p.name}
                                 onChange={(ev) =>
-                                  setPlayer(i, {
-                                    pronouns: ev.target.value || undefined,
-                                  })
+                                  setPlayer(i, { name: ev.target.value })
                                 }
                               />
-                              <input
-                                className="prefix"
-                                placeholder="Prefix"
-                                value={p.prefix ?? ""}
-                                onChange={(ev) =>
-                                  setPlayer(i, { prefix: ev.target.value || undefined })
-                                }
-                              />
+                            </label>
+                            <div className="preset-extras-grid">
+                              <label className="settings-field">
+                                <span className="settings-label">Pronouns</span>
+                                <input
+                                  placeholder="he/him"
+                                  value={p.pronouns ?? ""}
+                                  onChange={(ev) =>
+                                    setPlayer(i, {
+                                      pronouns: ev.target.value || undefined,
+                                    })
+                                  }
+                                />
+                              </label>
+                              <label className="settings-field">
+                                <span className="settings-label">Prefix</span>
+                                <input
+                                  placeholder="Sponsor / Team"
+                                  value={p.prefix ?? ""}
+                                  onChange={(ev) =>
+                                    setPlayer(i, { prefix: ev.target.value || undefined })
+                                  }
+                                />
+                              </label>
                             </div>
+
                             <button
                               type="button"
-                              className="player-portrait"
+                              className={`entity-portrait ${p.character ? "is-filled" : "is-empty"}`}
                               onClick={() => setPickerFor(i)}
                               aria-label="Choose character"
                             >
@@ -326,10 +367,13 @@ export default function PresetsEditor({
                                   alt={char?.name ?? p.character}
                                 />
                               ) : (
-                                <span className="portrait-empty">
-                                  {p.character
-                                    ? (char?.name ?? p.character)
-                                    : "Click to choose character"}
+                                <span className="entity-portrait-empty">
+                                  <span className="entity-portrait-empty-icon">+</span>
+                                  <span>
+                                    {p.character
+                                      ? (char?.name ?? p.character)
+                                      : "Choose character"}
+                                  </span>
                                 </span>
                               )}
                             </button>
@@ -364,8 +408,9 @@ export default function PresetsEditor({
                                 ))}
                               </div>
                             )}
-                            <label>
-                              Color
+
+                            <label className="settings-field">
+                              <span className="settings-label">Color</span>
                               <div
                                 className="color-swatches"
                                 role="radiogroup"
@@ -396,10 +441,13 @@ export default function PresetsEditor({
                                 ))}
                               </div>
                             </label>
-                            <details className="preset-secondary">
-                              <summary>Aliases &amp; Start.gg</summary>
-                              <label>
-                                Aliases (comma-separated)
+
+                            <CardSection
+                              title="Identifiers"
+                              hint="Aliases let typed names auto-match this preset. Start.gg ID matches even when the player renames."
+                            >
+                              <label className="settings-field">
+                                <span className="settings-label">Aliases</span>
                                 <input
                                   placeholder="alt-tag, old-tag"
                                   value={(p.aliases ?? []).join(", ")}
@@ -413,8 +461,8 @@ export default function PresetsEditor({
                                   }
                                 />
                               </label>
-                              <label>
-                                StartGG ID
+                              <label className="settings-field">
+                                <span className="settings-label">Start.gg user ID</span>
                                 <input
                                   type="number"
                                   placeholder="0"
@@ -428,37 +476,55 @@ export default function PresetsEditor({
                                   }
                                 />
                               </label>
-                            </details>
+                            </CardSection>
+
                             <div className="preset-actions">
-                              <button onClick={() => onSavePlayer(p)}>Save</button>
+                              <button
+                                type="button"
+                                className={`btn btn-primary ${isFlashed ? "btn-confirm" : ""}`}
+                                onClick={() => savePlayer(i)}
+                              >
+                                {isFlashed ? "Saved" : "Save"}
+                              </button>
                             </div>
                           </div>
                         )}
-                      </div>
+                      </Card>
                     );
                   })}
                 </div>
               </div>
             );
           })}
-          <button className="add-row" onClick={onAddPlayer}>
-            + Player Preset
-          </button>
-        </fieldset>
+        </Card>
 
         {/* ── Caster Presets ── */}
-        <fieldset className="presets-section">
-          <legend>Caster Presets</legend>
+        <Card>
+          <CardHeader
+            title="Caster presets"
+            eyebrow={`${casters.length} saved`}
+            actions={
+              <button type="button" className="btn-add" onClick={onAddCaster}>
+                + Preset
+              </button>
+            }
+          />
+
           <div className="preset-list">
             {casters.map((c, i) => {
               const k = cKey(c, i);
               const isOpen = expandedC.has(k);
+              const isFlashed = flashed.has(k);
               const handlesMeta = [c.pronouns, ...c.socials
                 .map((s) => s.handle)]
                 .filter(Boolean)
                 .join(" · ");
               return (
-                <div key={k} className="preset-row">
+                <Card
+                  key={k}
+                  variant="compact"
+                  className={`preset-card ${isOpen ? "is-open" : ""}`}
+                >
                   <div
                     className="preset-header"
                     role="button"
@@ -485,51 +551,61 @@ export default function PresetsEditor({
                     </span>
                     <button
                       type="button"
-                      className="icon-btn"
+                      className="btn-icon is-danger"
                       onClick={(e) => {
                         e.stopPropagation();
                         removeCaster(i);
                       }}
                       aria-label="Remove preset"
+                      title="Remove preset"
                     >
                       ×
                     </button>
                   </div>
                   {isOpen && (
                     <div className="preset-body">
-                      <input
-                        className="name"
-                        placeholder="Caster name"
-                        value={c.name}
-                        onChange={(ev) =>
-                          setCaster(i, { name: ev.target.value })
-                        }
-                      />
-                      <input
-                        className="pronouns"
-                        placeholder="Pronouns"
-                        value={c.pronouns ?? ""}
-                        onChange={(ev) =>
-                          setCaster(i, { pronouns: ev.target.value || undefined })
-                        }
-                      />
+                      <div className="preset-extras-grid">
+                        <label className="settings-field">
+                          <span className="settings-label">Name</span>
+                          <input
+                            placeholder="Caster name"
+                            value={c.name}
+                            onChange={(ev) =>
+                              setCaster(i, { name: ev.target.value })
+                            }
+                          />
+                        </label>
+                        <label className="settings-field">
+                          <span className="settings-label">Pronouns</span>
+                          <input
+                            placeholder="they/them"
+                            value={c.pronouns ?? ""}
+                            onChange={(ev) =>
+                              setCaster(i, { pronouns: ev.target.value || undefined })
+                            }
+                          />
+                        </label>
+                      </div>
                       <SocialsEditor
                         value={c.socials}
                         onChange={(s) => setCaster(i, { socials: s })}
                       />
                       <div className="preset-actions">
-                        <button onClick={() => onSaveCaster(c)}>Save</button>
+                        <button
+                          type="button"
+                          className={`btn btn-primary ${isFlashed ? "btn-confirm" : ""}`}
+                          onClick={() => saveCaster(i)}
+                        >
+                          {isFlashed ? "Saved" : "Save"}
+                        </button>
                       </div>
                     </div>
                   )}
-                </div>
+                </Card>
               );
             })}
           </div>
-          <button className="add-row" onClick={onAddCaster}>
-            + Caster Preset
-          </button>
-        </fieldset>
+        </Card>
       </div>
 
       <CharacterPicker

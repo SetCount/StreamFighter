@@ -44,7 +44,8 @@ import { portPaletteFor } from "./portColors";
 import SetInfoEditor from "./components/SetInfoEditor";
 import ScoreEntitiesEditor from "./components/ScoreEntitiesEditor";
 import CastersEditor from "./components/CastersEditor";
-import ConfigEditor from "./components/ConfigEditor";
+import OutputSettings from "./components/OutputSettings";
+import SystemSettings from "./components/SystemSettings";
 import OverlayEditor from "./components/OverlayEditor";
 import PresetsEditor from "./components/PresetsEditor";
 import SetPicker from "./components/SetPicker";
@@ -52,11 +53,24 @@ import PresetDisambiguator from "./components/PresetDisambiguator";
 import { BrowserOpenURL } from "../wailsjs/runtime/runtime";
 import "./App.css";
 
+type TabId = "player" | "presets" | "overlay" | "output" | "system";
+
+const TABS: { id: TabId; label: string; icon: string }[] = [
+  { id: "player",  label: "Player Info", icon: "player" },
+  { id: "presets", label: "Presets",     icon: "presets" },
+  { id: "overlay", label: "Overlay",     icon: "overlay" },
+  { id: "output",  label: "Output",      icon: "output" },
+  { id: "system",  label: "System",      icon: "system" },
+];
+
 function heightForFormat(format: string): number {
   if (format === "2v2") return 1400;
   if (format === "1v1") return 800;
   return 850;
 }
+
+type ToastKind = "info" | "ok" | "warn" | "err";
+type Toast = { kind: ToastKind; message: string } | null;
 
 function App() {
   const [state, setSt] = useState<StreamState | null>(null);
@@ -65,14 +79,13 @@ function App() {
   const [betweenUrl, setBetweenUrl] = useState("");
   const [assetsBase, setAssetsBase] = useState("");
   const [games, setGames] = useState<GamePack[]>([]);
-  const [status, setStatus] = useState("");
+  const [toast, setToast] = useState<Toast>(null);
+  const [restartNotice, setRestartNotice] = useState(false);
   const [token, setToken] = useState("");
   const [playerPresets, setPlayerPresets] = useState<PlayerPreset[]>([]);
   const [casterPresets, setCasterPresets] = useState<CasterPreset[]>([]);
   const [layoutRegistry, setLayoutRegistry] = useState<LayoutRegistry>({});
-  const [activeTab, setActiveTab] = useState<"player" | "presets" | "output" | "appearance">(
-    "player",
-  );
+  const [activeTab, setActiveTab] = useState<TabId>("player");
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerSets, setPickerSets] = useState<StartggSet[]>([]);
@@ -84,6 +97,14 @@ function App() {
   const [disambigOpen, setDisambigOpen] = useState(false);
   const [disambigAmbiguities, setDisambigAmbiguities] = useState<Ambiguity[]>([]);
   const disambigSetRef = useRef<StartggSet | null>(null);
+
+  const flash = (kind: ToastKind, message: string) => setToast({ kind, message });
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   useEffect(() => {
     Promise.all([
@@ -112,7 +133,7 @@ function App() {
         setCasterPresets((cp ?? []) as unknown as CasterPreset[]);
         ResizeWindow(1280, heightForFormat(st.setInfo.format));
       })
-      .catch((e) => setStatus("Failed to load: " + e));
+      .catch((e) => flash("err", "Failed to load: " + e));
   }, []);
 
   const loadedRef = useRef(false);
@@ -127,7 +148,7 @@ function App() {
         await SetState(state as any);
         await Update();
       } catch (e: any) {
-        setStatus("Error: " + e);
+        flash("err", "Error: " + e);
       }
     }, 300);
     return () => clearTimeout(timer);
@@ -143,13 +164,9 @@ function App() {
     setCfg(next);
     SetConfig(next as any)
       .then(() => {
-        if (portChanged || serverChanged) {
-          setStatus("Saved — port/server changes need restart");
-        } else {
-          setStatus("");
-        }
+        if (portChanged || serverChanged) setRestartNotice(true);
       })
-      .catch((e) => setStatus("Error saving config: " + e));
+      .catch((e) => flash("err", "Error saving config: " + e));
   };
 
   const onPickGame = (id: string) => {
@@ -272,15 +289,15 @@ function App() {
       setSt(s);
       ResizeWindow(1280, heightForFormat(s.setInfo.format));
     } catch (e: any) {
-      setStatus("Error: " + e);
+      flash("err", "Error: " + e);
     }
   };
 
   const onTokenChange = (v: string) => setToken(v);
   const onTokenBlur = () => {
-    SetSecrets({ startggToken: token } as any).catch((e) =>
-      setStatus("Error saving token: " + e),
-    );
+    SetSecrets({ startggToken: token } as any)
+      .then(() => flash("ok", "Token saved"))
+      .catch((e) => flash("err", "Error saving token: " + e));
   };
 
   const onAddPlayerPreset = () => {
@@ -298,9 +315,9 @@ function App() {
       if (idx >= 0) next[idx] = saved;
       else next.push(saved);
       setPlayerPresets(next);
-      setStatus("Saved player preset");
+      flash("ok", "Saved player preset");
     } catch (e: any) {
-      setStatus("Error: " + e);
+      flash("err", "Error: " + e);
     }
   };
   const onDeletePlayerPresetRow = async (id: string) => {
@@ -308,7 +325,7 @@ function App() {
       await DeletePlayerPreset(id);
       setPlayerPresets(playerPresets.filter((p) => p.id !== id));
     } catch (e: any) {
-      setStatus("Error: " + e);
+      flash("err", "Error: " + e);
     }
   };
 
@@ -327,9 +344,9 @@ function App() {
       if (idx >= 0) next[idx] = saved;
       else next.push(saved);
       setCasterPresets(next);
-      setStatus("Saved caster preset");
+      flash("ok", "Saved caster preset");
     } catch (e: any) {
-      setStatus("Error: " + e);
+      flash("err", "Error: " + e);
     }
   };
   const onDeleteCasterPresetRow = async (id: string) => {
@@ -337,7 +354,7 @@ function App() {
       await DeleteCasterPreset(id);
       setCasterPresets(casterPresets.filter((c) => c.id !== id));
     } catch (e: any) {
-      setStatus("Error: " + e);
+      flash("err", "Error: " + e);
     }
   };
 
@@ -377,166 +394,226 @@ function App() {
     });
   };
 
-  const tabs: { id: typeof activeTab; label: string }[] = [
-    { id: "player", label: "Player Info" },
-    { id: "presets", label: "Presets" },
-    { id: "output", label: "Output" },
-    { id: "appearance", label: "Appearance" },
-  ];
+  const copyUrl = (label: string, url: string) => {
+    navigator.clipboard.writeText(url);
+    flash("ok", `Copied ${label} URL`);
+  };
+
+  const activePack = findPack(games, config.game);
+  const activeTabMeta = TABS.find((t) => t.id === activeTab)!;
+
+  // ----- Sidebar status pill state ----------------------------------------
+  // Steady state: server enabled/disabled. Layered: restart notice when
+  // port/enable-server changed since the last save.
+  let statusClass = "sidebar-status";
+  let statusBody: React.ReactNode;
+  if (restartNotice) {
+    statusClass += " is-warn";
+    statusBody = (
+      <>
+        <strong>Restart needed</strong>
+        <span>Port or server toggle changed.</span>
+      </>
+    );
+  } else if (!config.enableServer) {
+    statusClass += " is-warn";
+    statusBody = (
+      <>
+        <strong>Server off</strong>
+        <span>Overlay browser source won't connect.</span>
+      </>
+    );
+  } else {
+    statusBody = (
+      <>
+        <strong>Server running</strong>
+        <span>Port {config.httpPort}</span>
+      </>
+    );
+  }
 
   return (
     <div className="app">
-      <header className="topbar">
-        <div className="overlay-urls">
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <span className="sidebar-brand-eyebrow">
+            {activePack ? activePack.shortName ?? activePack.name : "No game"}
+          </span>
+          <span className="sidebar-brand-name">StreamFighter</span>
+        </div>
+
+        <nav aria-label="Section">
+          <ul className="sidebar-nav">
+            {TABS.map((t) => (
+              <li key={t.id}>
+                <button
+                  type="button"
+                  className="nav-item"
+                  aria-current={activeTab === t.id ? "page" : undefined}
+                  onClick={() => setActiveTab(t.id)}
+                  title={t.label}
+                >
+                  <Icon name={t.icon} width={18} height={18} className="nav-icon" />
+                  <span className="nav-label">{t.label}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="sidebar-footer">
+          <div className={statusClass}>{statusBody}</div>
+
+          <label>
+            <span className="sidebar-footer-label">Game pack</span>
+            <select
+              className="sidebar-game-select"
+              value={config.game}
+              onChange={(e) => onPickGame(e.target.value)}
+              aria-label="Game"
+            >
+              <option value="">— Game —</option>
+              {games.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </aside>
+
+      <div className="main">
+        <header className="appbar">
+          <h1 className="appbar-title">{activeTabMeta.label}</h1>
+          <div className="appbar-urls">
             {[
               { label: "Game", url: gameUrl },
               { label: "Between", url: betweenUrl },
             ].map(({ label, url }) => (
-              <div key={label} className="overlay-url-row">
-                <span className="overlay-url-label">{label}:</span>
+              <div key={label} className="url-chip" title={url}>
+                <span className="url-chip-label">{label}</span>
                 <code>{url}</code>
                 <button
                   className="url-action"
                   title="Copy link"
-                  onClick={() => {
-                    navigator.clipboard.writeText(url);
-                    setStatus(`Copied ${label} URL`);
-                  }}
+                  onClick={() => copyUrl(label, url)}
                 >
-                  <Icon name="copy" width={18} height={18} />
+                  <Icon name="copy" width={14} height={14} />
                 </button>
                 <button
                   className="url-action"
                   title="Open in browser"
                   onClick={() => BrowserOpenURL(url)}
                 >
-                  <Icon name="open" width={18} height={18} />
+                  <Icon name="open" width={14} height={14} />
                 </button>
               </div>
             ))}
           </div>
-        <select
-          className="game-select"
-          value={config.game}
-          onChange={(e) => onPickGame(e.target.value)}
-          aria-label="Game"
-        >
-          <option value="">— Game —</option>
-          {games.map((g) => (
-            <option key={g.id} value={g.id}>
-              {g.name}
-            </option>
-          ))}
-        </select>
-      </header>
+        </header>
 
-      <nav className="tabs" role="tablist" aria-label="Section">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            role="tab"
-            className="tab"
-            aria-selected={activeTab === t.id}
-            onClick={() => setActiveTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
-
-      {status ? (
-        <div className="status-bar" aria-live="polite">
-          {status}
-        </div>
-      ) : (
-        <></>
-      )}
-
-      {activeTab === "player" && (
-        <main className="content" role="tabpanel">
-          <div className="content-actions">
-            <button className="clear-btn" onClick={onClear}>Clear</button>
-          </div>
-          <div className="layout-grid">
-            <div>
-              <SetInfoEditor
-                value={state.setInfo}
-                onChange={onSetInfoChange}
-                tournamentUrl={config.startggTournamentUrl ?? ""}
-                onTournamentUrlChange={onTournamentUrlChange}
-                onTournamentUrlBlur={onTournamentUrlBlur}
-                onPickSet={onPickSet}
-              />
-              <CastersEditor
-                value={state.casters}
-                onChange={(c) => setSt({ ...state, casters: c })}
-                presets={casterPresets}
-                onSaveCasterAsPreset={onSaveCasterAsPreset}
-              />
+        {activeTab === "player" && (
+          <main className="content" role="tabpanel">
+            <div className="player-info-layout">
+              <div className="player-info-board">
+                <ScoreEntitiesEditor
+                  value={state.scoreEntities}
+                  onChange={(se) => setSt({ ...state, scoreEntities: se })}
+                  canResize={canResize(state.setInfo.format)}
+                  format={state.setInfo.format}
+                  bestOf={state.setInfo.bestOf}
+                  games={games}
+                  gameId={config.game}
+                  assetsBase={assetsBase}
+                  presets={playerPresets}
+                  onSavePlayerAsPreset={onSavePlayerAsPreset}
+                />
+              </div>
+              <div className="player-info-side">
+                <SetInfoEditor
+                  value={state.setInfo}
+                  onChange={onSetInfoChange}
+                  tournamentUrl={config.startggTournamentUrl ?? ""}
+                  onTournamentUrlChange={onTournamentUrlChange}
+                  onTournamentUrlBlur={onTournamentUrlBlur}
+                  onPickSet={onPickSet}
+                  onClear={onClear}
+                />
+                <CastersEditor
+                  value={state.casters}
+                  onChange={(c) => setSt({ ...state, casters: c })}
+                  presets={casterPresets}
+                  onSaveCasterAsPreset={onSaveCasterAsPreset}
+                />
+              </div>
             </div>
+          </main>
+        )}
 
-            <ScoreEntitiesEditor
-              value={state.scoreEntities}
-              onChange={(se) => setSt({ ...state, scoreEntities: se })}
-              canResize={canResize(state.setInfo.format)}
-              format={state.setInfo.format}
-              bestOf={state.setInfo.bestOf}
+        {activeTab === "presets" && (
+          <main className="content" role="tabpanel">
+            <PresetsEditor
+              players={playerPresets}
+              casters={casterPresets}
               games={games}
               gameId={config.game}
               assetsBase={assetsBase}
-              presets={playerPresets}
-              onSavePlayerAsPreset={onSavePlayerAsPreset}
+              onSavePlayer={onSavePlayerPresetRow}
+              onDeletePlayer={onDeletePlayerPresetRow}
+              onAddPlayer={onAddPlayerPreset}
+              onChangePlayers={setPlayerPresets}
+              onSaveCaster={onSaveCasterPresetRow}
+              onDeleteCaster={onDeleteCasterPresetRow}
+              onAddCaster={onAddCasterPreset}
+              onChangeCasters={setCasterPresets}
             />
-          </div>
-        </main>
-      )}
+          </main>
+        )}
 
-      {activeTab === "presets" && (
-        <main className="content" role="tabpanel">
-          <PresetsEditor
-            players={playerPresets}
-            casters={casterPresets}
-            games={games}
-            gameId={config.game}
-            assetsBase={assetsBase}
-            onSavePlayer={onSavePlayerPresetRow}
-            onDeletePlayer={onDeletePlayerPresetRow}
-            onAddPlayer={onAddPlayerPreset}
-            onChangePlayers={setPlayerPresets}
-            onSaveCaster={onSaveCasterPresetRow}
-            onDeleteCaster={onDeleteCasterPresetRow}
-            onAddCaster={onAddCasterPreset}
-            onChangeCasters={setCasterPresets}
-          />
-        </main>
-      )}
+        {activeTab === "overlay" && (
+          <main className="content" role="tabpanel">
+            <OverlayEditor
+              value={config.overlayAppearance}
+              onChange={(a) => setCfg({ ...config, overlayAppearance: a })}
+              onCommit={(a) =>
+                commitConfig({ ...config, overlayAppearance: a })
+              }
+              gameId={config.game}
+              games={games}
+              layoutRegistry={layoutRegistry}
+            />
+          </main>
+        )}
 
-      {activeTab === "output" && (
-        <main className="content" role="tabpanel">
-          <ConfigEditor
-            value={config}
-            onChange={setCfg}
-            onCommit={commitConfig}
-            startggToken={token}
-            onTokenChange={onTokenChange}
-            onTokenBlur={onTokenBlur}
-          />
-        </main>
-      )}
+        {activeTab === "output" && (
+          <main className="content" role="tabpanel">
+            <OutputSettings
+              value={config}
+              onChange={setCfg}
+              onCommit={commitConfig}
+            />
+          </main>
+        )}
 
-      {activeTab === "appearance" && (
-        <main className="content" role="tabpanel">
-          <OverlayEditor
-            value={config.overlayAppearance}
-            onChange={(a) => setCfg({ ...config, overlayAppearance: a })}
-            onCommit={(a) =>
-              commitConfig({ ...config, overlayAppearance: a })
-            }
-            gameId={config.game}
-            games={games}
-            layoutRegistry={layoutRegistry}
-          />
-        </main>
+        {activeTab === "system" && (
+          <main className="content" role="tabpanel">
+            <SystemSettings
+              value={config}
+              onChange={setCfg}
+              onCommit={commitConfig}
+              startggToken={token}
+              onTokenChange={onTokenChange}
+              onTokenBlur={onTokenBlur}
+            />
+          </main>
+        )}
+      </div>
+
+      {toast && (
+        <div className={`toast is-${toast.kind}`} role="status" aria-live="polite">
+          {toast.message}
+        </div>
       )}
 
       <SetPicker

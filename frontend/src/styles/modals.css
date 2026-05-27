@@ -1,0 +1,66 @@
+/* ============================================================
+ * Modals — shared <dialog> chrome
+ *
+ * The CharacterPicker, SetPicker, and PresetDisambiguator all
+ * use the same backdrop, padding, header, and close-affordance
+ * pattern. Component CSS only adds the body layout.
+ * ============================================================ */
+
+dialog.modal {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 0;
+    background: var(--bg-card);
+    color: var(--text);
+    width: min(96vw, 960px);
+    max-height: 84vh;
+    margin: auto;
+    box-shadow: var(--shadow-modal);
+    overflow: hidden;
+}
+dialog.modal::backdrop {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--bg-card);
+}
+.modal-title {
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+.modal-eyebrow {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+.modal-close {
+    margin-left: auto;
+}
+
+.modal-body {
+    padding: 14px;
+    overflow-y: auto;
+    max-height: calc(84vh - 56px);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--line);
+}

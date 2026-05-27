@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { PlayerPreset, GamePack } from '../types';
 import type { Ambiguity } from '../startgg';
 import { selectURL, findCharacter } from '../assets';
+import { Icon } from '../icons';
+import './PresetDisambiguator.css';
 
 type Props = {
     open: boolean;
@@ -43,13 +45,21 @@ export default function PresetDisambiguator({
     };
 
     return (
-        <dialog ref={ref} className="disambiguator" onClose={onClose}>
-            <fieldset>
-                <legend>Choose Preset</legend>
-                <div className="dialog-actions">
-                    <button className="icon-btn" onClick={onClose} aria-label="Close">&times;</button>
-                </div>
-                <p className="disambiguator-hint">Multiple presets match these players. Pick one for each:</p>
+        <dialog ref={ref} className="modal disambiguator" onClose={onClose}>
+            <header className="modal-header">
+                <span className="modal-eyebrow">Pick set</span>
+                <h2 className="modal-title">Choose preset</h2>
+                <button
+                    type="button"
+                    className="btn-icon modal-close"
+                    onClick={onClose}
+                    aria-label="Close"
+                >
+                    <Icon name="close" width={16} height={16} />
+                </button>
+            </header>
+            <div className="modal-body">
+                <p className="hint">Multiple presets match these players. Pick one for each:</p>
                 {ambiguities.map(a => {
                     const selected = choices.get(a.player.id);
                     return (
@@ -75,7 +85,7 @@ export default function PresetDisambiguator({
                                             )}
                                             {preset.portColor && (
                                                 <span
-                                                    className="legend-swatch"
+                                                    className="card-swatch"
                                                     style={{ background: preset.portColor }}
                                                 />
                                             )}
@@ -87,10 +97,11 @@ export default function PresetDisambiguator({
                         </div>
                     );
                 })}
-                <div className="disambiguator-footer">
-                    <button type="button" onClick={() => onConfirm(choices)}>Confirm</button>
-                </div>
-            </fieldset>
+            </div>
+            <footer className="modal-footer">
+                <button type="button" className="btn" onClick={onClose}>Cancel</button>
+                <button type="button" className="btn btn-primary" onClick={() => onConfirm(choices)}>Confirm</button>
+            </footer>
         </dialog>
     );
 }

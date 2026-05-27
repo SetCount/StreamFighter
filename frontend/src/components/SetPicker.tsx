@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { StartggSet } from '../types';
 import { setStateLabel } from '../startgg';
+import { Icon } from '../icons';
+import './SetPicker.css';
 
 type Props = {
     open: boolean;
@@ -12,11 +14,6 @@ type Props = {
     tournamentName: string;
     onReload?: () => void;
 };
-
-// SetPicker is the modal that appears after Pick Set. Mirrors the
-// CharacterPicker pattern: useRef + showModal/close synced to the
-// `open` prop. Filter input substring-matches across event, round,
-// and entrant names so the user can narrow a 64-row dump quickly.
 
 function setSummary(s: StartggSet): string {
     const tags = s.entrants.map(e => e.name || e.players.map(p => p.gamerTag).join(' / '));
@@ -51,12 +48,32 @@ export default function SetPicker({
     if (f) filtered = filtered.filter(s => setSearchHaystack(s).includes(f));
 
     return (
-        <dialog ref={ref} className="set-picker" onClose={onClose}>
-            <fieldset>
-                <legend>{tournamentName ? `Pick Set — ${tournamentName}` : 'Pick Set'}</legend>
-                <div className="dialog-actions">
-                    <button className="icon-btn" onClick={onClose} aria-label="Close">×</button>
-                </div>
+        <dialog ref={ref} className="modal set-picker" onClose={onClose}>
+            <header className="modal-header">
+                <span className="modal-eyebrow">{tournamentName || 'start.gg'}</span>
+                <h2 className="modal-title">Pick a set</h2>
+                {onReload && (
+                    <button
+                        type="button"
+                        className="btn-icon"
+                        onClick={onReload}
+                        disabled={loading}
+                        title="Reload sets"
+                        aria-label="Reload sets"
+                    >
+                        <Icon name="refresh" width={16} height={16} />
+                    </button>
+                )}
+                <button
+                    type="button"
+                    className="btn-icon modal-close"
+                    onClick={onClose}
+                    aria-label="Close"
+                >
+                    <Icon name="close" width={16} height={16} />
+                </button>
+            </header>
+            <div className="modal-body">
                 {loading && <div className="empty">Fetching sets…</div>}
                 {error && <div className="empty error-msg">{error}</div>}
                 {!loading && !error && (
@@ -77,16 +94,6 @@ export default function SetPicker({
                                 />
                                 Hide completed
                             </label>
-                            {onReload && (
-                                <button
-                                    type="button"
-                                    className="pick-set-btn"
-                                    onClick={onReload}
-                                    disabled={loading}
-                                >
-                                    Reload
-                                </button>
-                            )}
                         </div>
                         {filtered.length === 0 ? (
                             <div className="empty">
@@ -118,7 +125,7 @@ export default function SetPicker({
                         )}
                     </>
                 )}
-            </fieldset>
+            </div>
         </dialog>
     );
 }

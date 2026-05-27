@@ -1,0 +1,59 @@
+/* CharacterPicker — tile grid inside a modal. */
+
+.character-picker {
+    width: min(96vw, 1120px);
+}
+
+.character-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.character-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+}
+.character-row .character-tile {
+    flex: 0 0 72px;
+    padding: 2px;
+}
+
+.character-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--text-soft);
+    cursor: pointer;
+    font-size: var(--font-xs);
+    min-height: 0;
+    transition: border-color 80ms ease, background 80ms ease, transform 80ms ease;
+}
+.character-tile:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    transform: translateY(-1px);
+}
+.character-tile img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    display: block;
+}
+.character-tile-name {
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-word;
+}
+.character-tile.clear {
+    aspect-ratio: 1 / 1;
+    justify-content: center;
+    background: var(--bg-card);
+    color: var(--text-muted);
+}

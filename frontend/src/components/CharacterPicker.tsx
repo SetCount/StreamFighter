@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import type { Character, GamePack } from '../types';
 import { selectURL } from '../assets';
+import { Icon } from '../icons';
+import './CharacterPicker.css';
 
 type Props = {
     open: boolean;
@@ -33,14 +35,22 @@ export default function CharacterPicker({
     const rows = useMemo(() => buildRows(pack), [pack]);
 
     return (
-        <dialog ref={ref} className="character-picker" onClose={onClose}>
-            <fieldset>
-                <legend>Choose Character</legend>
-                <div className="dialog-actions">
-                    <button className="icon-btn" onClick={onClose} aria-label="Close">×</button>
-                </div>
+        <dialog ref={ref} className="modal character-picker" onClose={onClose}>
+            <header className="modal-header">
+                <span className="modal-eyebrow">{pack ? pack.shortName ?? pack.name : 'Game'}</span>
+                <h2 className="modal-title">Choose character</h2>
+                <button
+                    type="button"
+                    className="btn-icon modal-close"
+                    onClick={onClose}
+                    aria-label="Close"
+                >
+                    <Icon name="close" width={16} height={16} />
+                </button>
+            </header>
+            <div className="modal-body">
                 {!pack ? (
-                    <p className="empty">No game pack selected. Choose one in Settings.</p>
+                    <p className="empty">No game pack selected. Choose one in the sidebar.</p>
                 ) : pack.characters.length === 0 ? (
                     <p className="empty">
                         No characters loaded for {pack.name}. Drop art into{' '}
@@ -75,7 +85,7 @@ export default function CharacterPicker({
                         ))}
                     </div>
                 )}
-            </fieldset>
+            </div>
         </dialog>
     );
 }

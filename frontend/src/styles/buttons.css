@@ -1,0 +1,129 @@
+/* ============================================================
+ * Buttons — utility classes
+ *
+ * .btn         — base neutral
+ * .btn-primary — main CTA per card
+ * .btn-ghost   — minimal/secondary
+ * .btn-icon    — 32px square (delete, save-as-preset, etc.)
+ * .btn-add     — dashed "+ Thing" entry to a list
+ * .btn-confirm — flashes green for ~1.2s after a save
+ * ============================================================ */
+
+button {
+    font-family: inherit;
+    font-size: var(--font-sm);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    min-height: 2.2em;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    color: var(--text-soft);
+    font-size: var(--font-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 80ms ease, border-color 80ms ease, color 80ms ease;
+}
+.btn:hover {
+    border-color: var(--line-hover);
+    color: var(--text);
+    background: var(--bg-card-hover);
+}
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--ctp-crust);
+    font-weight: 600;
+}
+.btn-primary:hover {
+    background: color-mix(in oklab, var(--accent) 86%, white);
+    border-color: color-mix(in oklab, var(--accent) 86%, white);
+    color: var(--ctp-crust);
+}
+.btn-primary:disabled { background: var(--accent); }
+
+.btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-muted);
+}
+.btn-ghost:hover {
+    background: var(--bg-card-hover);
+    color: var(--text);
+}
+
+.btn-icon {
+    flex: 0 0 30px;
+    width: 30px;
+    min-height: 30px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-md);
+    transition: background 80ms ease, color 80ms ease, border-color 80ms ease;
+}
+.btn-icon:hover {
+    color: var(--text);
+    background: var(--bg-card-hover);
+}
+.btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-icon.is-danger:hover { color: var(--err); }
+
+.btn-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    border: 1px dashed var(--line-hover);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: var(--font-sm);
+    cursor: pointer;
+    transition: background 80ms ease, border-color 80ms ease, color 80ms ease;
+}
+.btn-add:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.btn-confirm {
+    animation: confirm-flash 1.2s ease-out;
+}
+@keyframes confirm-flash {
+    0%   { background: var(--ok); color: var(--ctp-crust); border-color: var(--ok); }
+    70%  { background: var(--ok); color: var(--ctp-crust); border-color: var(--ok); }
+    100% { /* settles back to .btn defaults */ }
+}
+
+/* Inline icon buttons that should always be visible at low contrast,
+   not on hover-only. Used for "save-as-preset" affordances. */
+.btn-icon-soft {
+    color: var(--text-muted);
+    opacity: 0.7;
+    transition: opacity 80ms ease, color 80ms ease;
+}
+.btn-icon-soft:hover,
+.btn-icon-soft:focus-visible {
+    opacity: 1;
+    color: var(--accent);
+}

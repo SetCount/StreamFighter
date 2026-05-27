@@ -1,7 +1,5 @@
 export namespace internal {
-
-	export type LayoutRegistry = Record<string, string[]>;
-
+	
 	export class Social {
 	    icon: string;
 	    handle: string;

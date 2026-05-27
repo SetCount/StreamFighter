@@ -1,5 +1,8 @@
+import { useState } from "react";
 import type { SetInfo } from "../types";
 import Segmented from "./Segmented";
+import { Card, CardHeader } from "./Card";
+import "./SetInfoEditor.css";
 
 type Props = {
   value: SetInfo;
@@ -8,6 +11,7 @@ type Props = {
   onTournamentUrlChange: (v: string) => void;
   onTournamentUrlBlur: () => void;
   onPickSet: () => void;
+  onClear: () => void;
 };
 
 const BEST_OF_OPTIONS = [
@@ -29,76 +33,87 @@ export default function SetInfoEditor({
   onTournamentUrlChange,
   onTournamentUrlBlur,
   onPickSet,
+  onClear,
 }: Props) {
+  const [urlOpen, setUrlOpen] = useState(Boolean(tournamentUrl));
   const set = (patch: Partial<SetInfo>) => onChange({ ...value, ...patch });
+
   return (
-    <div className="set-info-bar">
-      <fieldset className="set-info-card">
-        <legend>Tournament</legend>
+    <Card variant="accent">
+      <CardHeader
+        eyebrow="Match"
+        title={
+          <input
+            className="match-tournament-input"
+            placeholder="Tournament name"
+            value={value.tournamentName}
+            onChange={(e) => set({ tournamentName: e.target.value })}
+          />
+        }
+        actions={
+          <button
+            type="button"
+            className={`btn-icon ${urlOpen ? "is-active" : ""}`}
+            title={urlOpen ? "Hide StartGG URL" : "Show StartGG URL"}
+            aria-pressed={urlOpen}
+            aria-label="Toggle StartGG URL"
+            onClick={() => setUrlOpen((v) => !v)}
+          >
+            🔗
+          </button>
+        }
+      />
 
-        <details className="startgg-details">
-          <summary>StartGG URL</summary>
+      {urlOpen && (
+        <label className="match-url-row">
+          <span className="match-url-label">StartGG URL</span>
+          <input
+            type="url"
+            placeholder="https://www.start.gg/tournament/<slug>"
+            value={tournamentUrl}
+            onChange={(e) => onTournamentUrlChange(e.target.value)}
+            onBlur={onTournamentUrlBlur}
+          />
+        </label>
+      )}
+
+      <div className="match-controls">
+        <label className="match-round">
+          Round
+          <input
+            value={value.roundLabel}
+            onChange={(e) => set({ roundLabel: e.target.value })}
+            placeholder="Winners Quarter-Final"
+          />
+        </label>
+        <div className="match-segments">
           <label>
-            <input
-              type="url"
-              placeholder="https://www.start.gg/tournament/<slug>"
-              value={tournamentUrl}
-              onChange={(e) => onTournamentUrlChange(e.target.value)}
-              onBlur={onTournamentUrlBlur}
+            Best Of
+            <Segmented
+              value={value.bestOf}
+              options={BEST_OF_OPTIONS}
+              onChange={(n) => set({ bestOf: n })}
             />
           </label>
-        </details>
-
-        <div className="set-info-row">
-          <label className="grow">
-            Name
-            <input
-              value={value.tournamentName}
-              onChange={(e) => set({ tournamentName: e.target.value })}
+          <label>
+            Format
+            <Segmented
+              value={value.format}
+              options={FORMAT_OPTIONS}
+              onChange={(f) => set({ format: f })}
             />
           </label>
         </div>
+      </div>
 
-        <div>
-          <div className="set-info-row">
-            <label className="grow">
-              Round
-              <input
-                value={value.roundLabel}
-                onChange={(e) => set({ roundLabel: e.target.value })}
-              />
-            </label>
-          </div>
-
-          <div className="set-info-row">
-            <label className="shrink">
-              <button
-                type="button"
-                className="pick-set-btn"
-                onClick={onPickSet}
-              >
-                Pick Set
-              </button>
-            </label>
-            <label className="shrink">
-              Best Of
-              <Segmented
-                value={value.bestOf}
-                options={BEST_OF_OPTIONS}
-                onChange={(n) => set({ bestOf: n })}
-              />
-            </label>
-            <label className="shrink">
-              Format
-              <Segmented
-                value={value.format}
-                options={FORMAT_OPTIONS}
-                onChange={(f) => set({ format: f })}
-              />
-            </label>
-          </div>
-        </div>
-      </fieldset>
-    </div>
+      <div className="match-actions">
+        <button type="button" className="btn btn-ghost" onClick={onClear}>
+          Clear
+        </button>
+        <button type="button" className="btn btn-primary" onClick={onPickSet}>
+          Pick Set
+        </button>
+      </div>
+    </Card>
   );
 }

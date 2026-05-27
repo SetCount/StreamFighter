@@ -1,0 +1,213 @@
+/* ScoreEntitiesEditor — the entity board.
+   Vertical stack of entity cards, each with port-color edge stripe,
+   color/score meters row, and a player grid that fans out to 2 cols
+   when there's room (2v2 with players side-by-side). */
+
+.entity-board {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+.entity-slot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+.entity-swap {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    background: var(--bg-page);
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+    opacity: 0.65;
+    transition: opacity 80ms ease, color 80ms ease, border-color 80ms ease;
+}
+.entity-swap:hover {
+    opacity: 1;
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.entity-name-placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+    font-weight: 500;
+}
+
+/* ---------- Meters row (color + score) -------------------------------- */
+
+.entity-meters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    padding: 6px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+.entity-meter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.entity-meter-label {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.entity-meter-value {
+    margin-left: 4px;
+    color: var(--text-soft);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* ---------- Players grid --------------------------------------------- */
+
+.entity-players {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+.entity-player {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.entity-player-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.entity-player-name {
+    flex: 1;
+    min-width: 0;
+}
+.entity-player-extras {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+.entity-player-extras input {
+    font-size: var(--font-sm);
+    min-height: 1.9em;
+    padding: 0.3em 0.5em;
+}
+
+/* ---------- Character portrait button -------------------------------- */
+
+.entity-portrait {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    max-height: 200px;
+    padding: 0;
+    border-radius: var(--radius);
+    cursor: pointer;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-sunken);
+    color: var(--text-muted);
+    transition: border-color 80ms ease, background 80ms ease, color 80ms ease;
+}
+.entity-portrait.is-empty {
+    border: 1px dashed var(--line-hover);
+}
+.entity-portrait.is-empty:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+.entity-portrait.is-filled {
+    border: 1px solid var(--line);
+}
+.entity-portrait.is-filled:hover {
+    border-color: var(--line-hover);
+}
+.entity-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+.entity-portrait-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-sm);
+    font-weight: 500;
+    padding: 8px;
+}
+.entity-portrait-empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--line-hover);
+    font-size: var(--font-md);
+    color: inherit;
+}
+
+/* ---------- Stock costume row ---------------------------------------- */
+
+.stock-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    min-height: 2em;
+}
+.stock-btn {
+    width: 30px;
+    height: 30px;
+    padding: 2px;
+    border: 2px solid transparent;
+    border-radius: var(--radius-sm);
+    background: var(--bg-sunken);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 80ms ease, background 80ms ease, transform 80ms ease;
+    min-height: 0;
+}
+.stock-btn:hover {
+    background: var(--bg-card-hover);
+    transform: translateY(-1px);
+}
+.stock-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+.stock-btn[aria-checked="true"] {
+    border-color: var(--port-color, var(--accent));
+    background: var(--bg-card);
+}
+
+/* ---------- Add buttons inside the board ----------------------------- */
+
+.entity-add-player {
+    align-self: flex-start;
+}
+.entity-add-card {
+    margin-top: 4px;
+    align-self: stretch;
+}

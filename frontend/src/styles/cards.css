@@ -1,0 +1,139 @@
+/* ============================================================
+ * Cards — the universal section container
+ *
+ * Replaces the previous <fieldset>/<legend> pattern. Cards are
+ * <section class="card"> with optional <header class="card-header">.
+ * Variants:
+ *   .card--accent  — primary surface, accent left-bar
+ *   .card--entity  — player entity card, port-color left-bar
+ *   .card--compact — tighter padding (used inside lists)
+ *   .card--flat    — no border, used for nested groupings
+ * ============================================================ */
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px 16px;
+    box-shadow: var(--shadow-card);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    position: relative;
+}
+
+.card-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.card-header > .card-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.card-title {
+    font-size: var(--font-md);
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.card-eyebrow {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+}
+.card-subtitle {
+    font-size: var(--font-sm);
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* A swatch shown inline with the card title (e.g. entity port color). */
+.card-swatch {
+    width: 0.85em;
+    height: 0.85em;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+    flex: 0 0 auto;
+}
+
+/* Sub-region inside a card. Visually separated by a hairline above the
+   first child block — fine for stacking related groups. */
+.card-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+}
+.card-section:first-of-type {
+    padding-top: 0;
+    border-top: none;
+}
+.card-section-title {
+    font-size: var(--font-sm);
+    color: var(--text-soft);
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.02em;
+}
+.card-section-hint {
+    font-size: var(--font-xs);
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin: -2px 0 6px;
+}
+
+/* Variants */
+
+.card--accent {
+    border-color: color-mix(in oklab, var(--accent) 35%, var(--line));
+}
+.card--accent::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: -1px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+}
+
+.card--entity {
+    border-color: var(--line);
+}
+.card--entity::before {
+    content: "";
+    position: absolute;
+    top: 12px;
+    bottom: 12px;
+    left: -1px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--port-color, var(--accent));
+    opacity: 0.85;
+}
+
+.card--compact {
+    padding: 10px 12px;
+    gap: 8px;
+    border-radius: var(--radius);
+}
+
+.card--flat {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    padding: 0;
+}
