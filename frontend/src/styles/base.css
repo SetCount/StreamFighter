@@ -6,7 +6,6 @@
 
 html, body, #root, #app {
     margin: 0;
-    height: 100%;
 }
 
 body {

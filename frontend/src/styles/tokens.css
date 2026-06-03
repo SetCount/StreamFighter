@@ -78,7 +78,7 @@
     --shadow-modal: 0 18px 48px rgba(0, 0, 0, 0.55);
 
     /* Layout sizes */
-    --sidebar-w:       220px;
+    --sidebar-w:       150px;
     --sidebar-w-mini:   56px;
     --appbar-h:         48px;
 }

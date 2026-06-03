@@ -5,8 +5,7 @@
 
 .entity-board {
     display: flex;
-    /* flex-direction: column; */
-    gap: 12px;
+    gap: 40px;
     min-width: 0;
 }
 
@@ -18,9 +17,9 @@
 
 .entity-swap {
     position: absolute;
-    top: -14px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: 50%;
+    left: -20px;
+    transform: translate(-50%, -50%);
     z-index: 1;
     background: var(--bg-page);
     border: 1px solid var(--line);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Icon } from "./icons";
 import {
   GetState,
@@ -61,19 +61,13 @@ import "./App.css";
 type TabId = "player" | "presets" | "overlay" | "output" | "hotkeys" | "system";
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
-  { id: "player",  label: "Player Info", icon: "player" },
-  { id: "presets", label: "Presets",     icon: "presets" },
-  { id: "overlay", label: "Overlay",     icon: "overlay" },
-  { id: "output",  label: "Output",      icon: "output" },
-  { id: "hotkeys", label: "Hotkeys",     icon: "hotkeys" },
-  { id: "system",  label: "System",      icon: "system" },
+  { id: "player", label: "Player Info", icon: "player" },
+  { id: "presets", label: "Presets", icon: "presets" },
+  { id: "overlay", label: "Overlay", icon: "overlay" },
+  { id: "output", label: "Output", icon: "output" },
+  { id: "hotkeys", label: "Hotkeys", icon: "hotkeys" },
+  { id: "system", label: "System", icon: "system" },
 ];
-
-function heightForFormat(format: string): number {
-  if (format === "2v2") return 1400;
-  if (format === "1v1") return 800;
-  return 850;
-}
 
 type ToastKind = "info" | "ok" | "warn" | "err";
 type Toast = { kind: ToastKind; message: string } | null;
@@ -140,7 +134,6 @@ function App() {
         setPlayerPresets((pp ?? []) as unknown as PlayerPreset[]);
         setCasterPresets((cp ?? []) as unknown as CasterPreset[]);
         setHotkeyConfig((hk as unknown as HotkeyConfig) ?? { enabled: false, bindings: {} });
-        ResizeWindow(1280, heightForFormat(st.setInfo.format));
       })
       .catch((e) => flash("err", "Failed to load: " + e));
   }, []);
@@ -186,7 +179,7 @@ function App() {
       if (e.shiftKey) parts.push("Shift");
       if (e.metaKey) parts.push("Meta");
       const key = e.code;
-      if (!["ControlLeft","ControlRight","AltLeft","AltRight","ShiftLeft","ShiftRight","MetaLeft","MetaRight"].includes(key)) {
+      if (!["ControlLeft", "ControlRight", "AltLeft", "AltRight", "ShiftLeft", "ShiftRight", "MetaLeft", "MetaRight"].includes(key)) {
         let name = key;
         if (key.startsWith("Key")) name = key.slice(3);
         else if (key.startsWith("Digit")) name = key.slice(5);
@@ -219,6 +212,31 @@ function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  const appRef = useRef<HTMLDivElement>(null);
+  const lastWindowH = useRef(0);
+
+  const syncWindowSize = useCallback(() => {
+    const appEl = appRef.current;
+    if (!appEl) return;
+    const h = Math.ceil(appEl.offsetHeight);
+    const max = window.screen.availHeight;
+    const clamped = Math.min(Math.max(h, 500), max);
+    if (Math.abs(clamped - lastWindowH.current) > 2) {
+      lastWindowH.current = clamped;
+      ResizeWindow(1280, clamped);
+    }
+  }, []);
+
+  useLayoutEffect(syncWindowSize);
+
+  useEffect(() => {
+    const appEl = appRef.current;
+    if (!appEl) return;
+    const ro = new ResizeObserver(syncWindowSize);
+    ro.observe(appEl);
+    return () => ro.disconnect();
+  }, [!!state, syncWindowSize]);
+
   if (!state || !config) {
     return <div className="loading">Loading…</div>;
   }
@@ -249,16 +267,16 @@ function App() {
     setSt((prev) =>
       prev
         ? {
-            ...prev,
-            scoreEntities: prev.scoreEntities.map((e) => ({
-              ...e,
-              players: e.players.map((p) => ({
-                ...p,
-                character: "",
-                costume: 0,
-              })),
+          ...prev,
+          scoreEntities: prev.scoreEntities.map((e) => ({
+            ...e,
+            players: e.players.map((p) => ({
+              ...p,
+              character: "",
+              costume: 0,
             })),
-          }
+          })),
+        }
         : prev,
     );
   };
@@ -269,7 +287,6 @@ function App() {
     let entities = state.scoreEntities;
     if (si.format !== state.setInfo.format) {
       entities = reshapeForFormat(entities, si.format, portPalette);
-      ResizeWindow(1280, heightForFormat(si.format));
     }
     if (si.bestOf !== state.setInfo.bestOf) {
       entities = clampScores(entities, si.bestOf);
@@ -352,7 +369,6 @@ function App() {
     try {
       const s = (await ClearState()) as unknown as StreamState;
       setSt(s);
-      ResizeWindow(1280, heightForFormat(s.setInfo.format));
     } catch (e: any) {
       flash("err", "Error: " + e);
     }
@@ -498,7 +514,7 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className="app" ref={appRef}>
       <aside className="sidebar">
         <div className="sidebar-brand">
           <span className="sidebar-brand-eyebrow">
@@ -529,22 +545,30 @@ function App() {
         <div className="sidebar-footer">
           <div className={statusClass}>{statusBody}</div>
 
-          <label>
+          <div className="sidebar-game-picker" role="radiogroup" aria-label="Game pack">
             <span className="sidebar-footer-label">Game pack</span>
-            <select
-              className="sidebar-game-select"
-              value={config.game}
-              onChange={(e) => onPickGame(e.target.value)}
-              aria-label="Game"
+            <button
+              type="button"
+              className={`sidebar-game-option${config.game === "" ? " is-active" : ""}`}
+              role="radio"
+              aria-checked={config.game === ""}
+              onClick={() => onPickGame("")}
             >
-              <option value="">— Game —</option>
-              {games.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
-          </label>
+              No game
+            </button>
+            {games.map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                className={`sidebar-game-option${config.game === g.id ? " is-active" : ""}`}
+                role="radio"
+                aria-checked={config.game === g.id}
+                onClick={() => onPickGame(g.id)}
+              >
+                {g.name}
+              </button>
+            ))}
+          </div>
         </div>
       </aside>
 
@@ -581,7 +605,16 @@ function App() {
         {activeTab === "player" && (
           <main className="content" role="tabpanel">
             <div className="player-info-layout">
-              <div className="player-info-board">
+              <SetInfoEditor
+                value={state.setInfo}
+                onChange={onSetInfoChange}
+                tournamentUrl={config.startggTournamentUrl ?? ""}
+                onTournamentUrlChange={onTournamentUrlChange}
+                onTournamentUrlBlur={onTournamentUrlBlur}
+                onPickSet={onPickSet}
+                onClear={onClear}
+              />
+              <div className="player-info-row">
                 <ScoreEntitiesEditor
                   value={state.scoreEntities}
                   onChange={(se) => setSt({ ...state, scoreEntities: se })}
@@ -593,17 +626,6 @@ function App() {
                   assetsBase={assetsBase}
                   presets={playerPresets}
                   onSavePlayerAsPreset={onSavePlayerAsPreset}
-                />
-              </div>
-              <div className="player-info-side">
-                <SetInfoEditor
-                  value={state.setInfo}
-                  onChange={onSetInfoChange}
-                  tournamentUrl={config.startggTournamentUrl ?? ""}
-                  onTournamentUrlChange={onTournamentUrlChange}
-                  onTournamentUrlBlur={onTournamentUrlBlur}
-                  onPickSet={onPickSet}
-                  onClear={onClear}
                 />
                 <CastersEditor
                   value={state.casters}

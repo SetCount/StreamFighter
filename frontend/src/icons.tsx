@@ -16,6 +16,7 @@ export const ICONS: Record<string, { viewBox: string; d: string[] }> = {
   hotkeys:  { viewBox: "0 0 24 24", d: ['M20 5H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-9 3h2v2h-2V8zm0 3h2v2h-2v-2zM8 8h2v2H8V8zm0 3h2v2H8v-2zm-1 2H5v-2h2v2zm0-3H5V8h2v2zm9 7H8v-2h8v2zm0-4h-2v-2h2v2zm0-3h-2V8h2v2zm3 3h-2v-2h2v2zm0-3h-2V8h2v2z'] },
   close:    { viewBox: "0 0 24 24", d: ['M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'] },
   refresh:  { viewBox: "0 0 24 24", d: ['M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z'] },
+  chevron:  { viewBox: "0 0 24 24", d: ['M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z'] },
 };
 
 export function Icon({ name, ...rest }: { name: string } & SVGProps<SVGSVGElement>) {
