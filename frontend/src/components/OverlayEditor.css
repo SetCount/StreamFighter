@@ -1,28 +1,31 @@
 /* OverlayEditor — sectioned settings inside a single card. */
 
 .overlay-segmented-row {
-    display: grid;
-    grid-template-columns: 140px 1fr;
-    align-items: center;
-    column-gap: 12px;
-    row-gap: 4px;
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 4px;
 }
-.overlay-segmented-row .segmented { width: max-content; max-width: 100%; }
+.overlay-segmented-row .segmented {
+  width: max-content;
+  max-width: 100%;
+}
 
 .overlay-color-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 16px;
 }
 
 .overlay-slider-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 18px;
 }
 
 .sponsor-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 12px 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px 16px;
 }

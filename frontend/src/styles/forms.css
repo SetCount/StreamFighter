@@ -9,160 +9,184 @@
 /* ---------- Generic grids --------------------------------------------- */
 
 .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px 16px;
-    align-items: start;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px 16px;
+  align-items: start;
 }
-.form-grid .span-full { grid-column: 1 / -1; }
+.form-grid .span-full {
+  grid-column: 1 / -1;
+}
 
 /* Two-column grid for settings forms where labels live above inputs. */
 .form-grid-2 {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px 16px;
-    align-items: start;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  align-items: start;
 }
-.form-grid-2 > .span-full { grid-column: 1 / -1; }
+.form-grid-2 > .span-full {
+  grid-column: 1 / -1;
+}
 
 @media (max-width: 720px) {
-    .form-grid-2 { grid-template-columns: 1fr; }
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Row of inline checkbox labels. */
 .checkbox-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    margin-top: 0;
-    color: var(--text-soft);
-    font-size: var(--font-sm);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-top: 0;
+  color: var(--text-soft);
+  font-size: var(--font-sm);
 }
-.checkbox-row input { width: auto; min-height: 0; }
+.checkbox-row input {
+  width: auto;
+  min-height: 0;
+}
 
 .checkbox-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* ---------- Color picker rows ---------------------------------------- */
 
 .color-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .color-row input[type="color"] {
-    flex: 0 0 36px;
+  flex: 0 0 36px;
 }
 .color-row .color-text {
-    flex: 0 0 100px;
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    font-size: var(--font-sm);
-    text-transform: lowercase;
+  flex: 0 0 100px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: var(--font-sm);
+  text-transform: lowercase;
 }
 
 /* ---------- Slider rows ---------------------------------------------- */
 
 .slider-row {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .slider-row-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
 }
 .slider-row-label {
-    font-size: var(--font-sm);
-    color: var(--text-soft);
+  font-size: var(--font-sm);
+  color: var(--text-soft);
 }
 .slider-row-value {
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    font-size: var(--font-xs);
-    color: var(--text-muted);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: var(--font-xs);
+  color: var(--text-muted);
 }
 
 /* ---------- Color swatch radiogroup (port color, team color) --------- */
 
 .color-swatches {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 .color-swatch {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 2px solid var(--line);
-    padding: 0;
-    cursor: pointer;
-    flex: 0 0 auto;
-    background-clip: padding-box;
-    transition: border-color 80ms ease, transform 80ms ease;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  padding: 0;
+  cursor: pointer;
+  flex: 0 0 auto;
+  background-clip: padding-box;
+  transition:
+    border-color 80ms ease,
+    transform 80ms ease;
 }
-.color-swatch:hover { border-color: var(--line-hover); }
+.color-swatch:hover {
+  border-color: var(--line-hover);
+}
 .color-swatch[aria-checked="true"] {
-    border-color: var(--text);
-    transform: scale(1.12);
+  border-color: var(--text);
+  transform: scale(1.12);
 }
 .color-swatch.clear-swatch {
-    background:
-        linear-gradient(45deg,
-            transparent 45%,
-            var(--text-muted) 45%,
-            var(--text-muted) 55%,
-            transparent 55%),
-        var(--bg-sunken);
+  background:
+    linear-gradient(
+      45deg,
+      transparent 45%,
+      var(--text-muted) 45%,
+      var(--text-muted) 55%,
+      transparent 55%
+    ),
+    var(--bg-sunken);
 }
 
 /* ---------- Pip score buttons ---------------------------------------- */
 
 .pips {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .pip {
-    width: 22px;
-    height: 22px;
-    min-height: 0;
-    border-radius: 50%;
-    border: 2px solid var(--line);
-    background: transparent;
-    padding: 0;
-    cursor: pointer;
-    transition: background 80ms ease, border-color 80ms ease;
-    flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    background 80ms ease,
+    border-color 80ms ease;
+  flex: 0 0 auto;
 }
-.pip:hover { border-color: var(--line-hover); }
+.pip:hover {
+  border-color: var(--line-hover);
+}
 .pip[aria-pressed="true"] {
-    background: var(--port-color, var(--accent));
-    border-color: var(--port-color, var(--accent));
+  background: var(--port-color, var(--accent));
+  border-color: var(--port-color, var(--accent));
 }
 
 /* ---------- Label utility variants ----------------------------------- */
 
 .label-row {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
-.label-strong { font-weight: 600; color: var(--text); }
+.label-strong {
+  font-weight: 600;
+  color: var(--text);
+}
 
 /* For dialog forms where you want a label sitting next to the input
    instead of stacking above. */
 .label-side {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    column-gap: 12px;
-    row-gap: 4px;
-    align-items: center;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 12px;
+  row-gap: 4px;
+  align-items: center;
 }
-.label-side > .hint { grid-column: 2; }
+.label-side > .hint {
+  grid-column: 2;
+}

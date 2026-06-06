@@ -44,7 +44,10 @@ export default function SetInfoEditor({
     .join(" · ");
 
   return (
-    <Card variant="accent" className={collapsed ? "set-info-collapsed" : undefined}>
+    <Card
+      variant="accent"
+      className={collapsed ? "set-info-collapsed" : undefined}
+    >
       <CardHeader
         title="Tournament Info"
         subtitle={collapsed && summary ? summary : undefined}
@@ -54,7 +57,9 @@ export default function SetInfoEditor({
             className="btn-icon set-info-toggle"
             onClick={() => setCollapsed((c) => !c)}
             aria-expanded={!collapsed}
-            aria-label={collapsed ? "Expand tournament info" : "Collapse tournament info"}
+            aria-label={
+              collapsed ? "Expand tournament info" : "Collapse tournament info"
+            }
           >
             <Icon name="chevron" width={18} height={18} />
           </button>
@@ -113,10 +118,18 @@ export default function SetInfoEditor({
                 </label>
               </div>
               <div className="match-actions">
-                <button type="button" className="btn btn-ghost" onClick={onClear}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={onClear}
+                >
                   Clear
                 </button>
-                <button type="button" className="btn btn-primary" onClick={onPickSet}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={onPickSet}
+                >
                   Pick Set
                 </button>
               </div>

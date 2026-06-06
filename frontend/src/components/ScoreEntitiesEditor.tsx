@@ -162,14 +162,18 @@ export default function ScoreEntitiesEditor({
 
           <Card
             variant="entity"
-            style={{ "--port-color": e.portColor || "transparent" } as CSSProperties}
+            style={
+              { "--port-color": e.portColor || "transparent" } as CSSProperties
+            }
           >
             <CardHeader
               eyebrow={`${role} ${i + 1}`}
               title={
-                e.players[0]?.name?.trim()
-                  ? e.players[0].name
-                  : <span className="entity-name-placeholder">Unnamed</span>
+                e.players[0]?.name?.trim() ? (
+                  e.players[0].name
+                ) : (
+                  <span className="entity-name-placeholder">Unnamed</span>
+                )
               }
               swatch={e.portColor || "transparent"}
               actions={
@@ -214,7 +218,10 @@ export default function ScoreEntitiesEditor({
               </div>
               <div className="entity-meter">
                 <span className="entity-meter-label">
-                  Score <span className="entity-meter-value">{e.currentScore}/{pipCount}</span>
+                  Score{" "}
+                  <span className="entity-meter-value">
+                    {e.currentScore}/{pipCount}
+                  </span>
                 </span>
                 <div className="pips" role="group" aria-label="Score">
                   {Array.from({ length: pipCount }, (_, idx) => idx + 1).map(
@@ -286,7 +293,9 @@ export default function ScoreEntitiesEditor({
                         placeholder="Prefix / Team tag"
                         value={p.prefix ?? ""}
                         onChange={(ev) =>
-                          setPlayer(i, pi, { prefix: ev.target.value || undefined })
+                          setPlayer(i, pi, {
+                            prefix: ev.target.value || undefined,
+                          })
                         }
                       />
                     </div>
@@ -311,7 +320,9 @@ export default function ScoreEntitiesEditor({
                         <span className="entity-portrait-empty">
                           <span className="entity-portrait-empty-icon">+</span>
                           <span>
-                            {p.character ? (char?.name ?? p.character) : "Choose character"}
+                            {p.character
+                              ? (char?.name ?? p.character)
+                              : "Choose character"}
                           </span>
                         </span>
                       )}
@@ -366,7 +377,11 @@ export default function ScoreEntitiesEditor({
       ))}
 
       {canResize && (
-        <button type="button" className="btn-add entity-add-card" onClick={addEntity}>
+        <button
+          type="button"
+          className="btn-add entity-add-card"
+          onClick={addEntity}
+        >
           + {role}
         </button>
       )}

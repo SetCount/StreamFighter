@@ -1,78 +1,89 @@
 /* SetPicker — table of selectable start.gg sets inside a modal. */
 
 .set-picker {
-    width: min(96vw, 880px);
+  width: min(96vw, 880px);
 }
 
 .set-picker-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .set-picker-filter {
-    flex: 1 1 auto;
+  flex: 1 1 auto;
 }
 .set-picker-toggle {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-soft);
-    font-size: var(--font-sm);
-    white-space: nowrap;
-    cursor: pointer;
-    margin: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-soft);
+  font-size: var(--font-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  margin: 0;
 }
-.set-picker-toggle input { width: auto; min-height: 0; }
+.set-picker-toggle input {
+  width: auto;
+  min-height: 0;
+}
 
 .set-list {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 .set-row {
-    display: grid;
-    grid-template-columns: minmax(80px, 1fr) minmax(80px, 1fr) 2fr auto;
-    gap: 12px;
-    align-items: baseline;
-    background: var(--bg-sunken);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 9px 12px;
-    color: var(--text-soft);
-    font-size: var(--font-sm);
-    text-align: left;
-    cursor: pointer;
-    min-height: 0;
-    transition: border-color 80ms ease, background 80ms ease;
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) minmax(80px, 1fr) 2fr auto;
+  gap: 12px;
+  align-items: baseline;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  color: var(--text-soft);
+  font-size: var(--font-sm);
+  text-align: left;
+  cursor: pointer;
+  min-height: 0;
+  transition:
+    border-color 80ms ease,
+    background 80ms ease;
 }
 .set-row:hover {
-    border-color: var(--accent);
-    color: var(--text);
-    background: var(--bg-card);
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--bg-card);
 }
 .set-event,
 .set-round,
 .set-entrants {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.set-event { color: var(--text-muted); }
-.set-entrants { color: var(--text); }
+.set-event {
+  color: var(--text-muted);
+}
+.set-entrants {
+  color: var(--text);
+}
 
 .set-state {
-    font-size: var(--font-xs);
-    padding: 2px 8px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 600;
+  font-size: var(--font-xs);
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
 }
 .set-state.state-2 {
-    color: var(--ok);
-    border-color: color-mix(in oklab, var(--ok) 50%, transparent);
+  color: var(--ok);
+  border-color: color-mix(in oklab, var(--ok) 50%, transparent);
 }
-.set-state.state-3 { color: var(--text-muted); }
+.set-state.state-3 {
+  color: var(--text-muted);
+}

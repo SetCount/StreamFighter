@@ -2,108 +2,137 @@
  * Base — reset + native form element baseline
  * ============================================================ */
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html, body, #root, #app {
-    margin: 0;
+html,
+body,
+#root,
+#app {
+  margin: 0;
 }
 
 body {
-    background: var(--bg-page);
-    color: var(--text);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    font-size: var(--font-base);
-    line-height: 1.4;
+  background: var(--bg-page);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-size: var(--font-base);
+  line-height: 1.4;
 }
 
 /* Form labels: stack a small caption over the input. Component-level
    layouts can opt into a row variant via .label-row. */
 label {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: var(--font-sm);
-    color: var(--text-soft);
-    font-weight: 400;
-    min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--font-sm);
+  color: var(--text-soft);
+  font-weight: 400;
+  min-width: 0;
 }
-label + label { margin-top: 0; }
+label + label {
+  margin-top: 0;
+}
 
-input, select, textarea {
-    width: 100%;
-    min-height: 2.2em;
-    padding: 0.4em 0.6em;
-    font-size: var(--font-base);
-    color: var(--text);
-    background: var(--bg-input);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    transition: border-color 80ms ease, box-shadow 80ms ease;
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 2.2em;
+  padding: 0.4em 0.6em;
+  font-size: var(--font-base);
+  color: var(--text);
+  background: var(--bg-input);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition:
+    border-color 80ms ease,
+    box-shadow 80ms ease;
 }
-input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent-soft);
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
-input::placeholder { color: var(--text-muted); }
+input::placeholder {
+  color: var(--text-muted);
+}
 
 /* Native checkbox keeps its UA chrome (color-scheme: dark covers it),
    but we tint accent-color so checked state matches our palette. */
-input[type="checkbox"], input[type="radio"] {
-    accent-color: var(--accent);
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
 }
 
 /* Native color input keeps the swatch tidy. */
 input[type="color"] {
-    padding: 2px;
-    width: 36px;
-    height: 32px;
-    min-height: 0;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
+  padding: 2px;
+  width: 36px;
+  height: 32px;
+  min-height: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
 }
 
 /* Sliders take the accent tint. */
 input[type="range"] {
-    width: 100%;
-    accent-color: var(--accent);
-    min-height: 1.6em;
-    padding: 0;
-    background: transparent;
-    border: none;
+  width: 100%;
+  accent-color: var(--accent);
+  min-height: 1.6em;
+  padding: 0;
+  background: transparent;
+  border: none;
 }
-input[type="range"]:focus { box-shadow: none; }
+input[type="range"]:focus {
+  box-shadow: none;
+}
 
 /* Loading splash before state/config resolve. */
 .loading {
-    padding: 60px;
-    text-align: center;
-    color: var(--text-muted);
+  padding: 60px;
+  text-align: center;
+  color: var(--text-muted);
 }
 
 /* Generic empty/hint paragraphs used inside cards and dialogs. */
 .empty {
-    color: var(--text-muted);
-    font-size: var(--font-sm);
-    padding: 6px 0;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  padding: 6px 0;
 }
 .hint {
-    color: var(--text-muted);
-    font-size: var(--font-sm);
-    line-height: 1.4;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  line-height: 1.4;
 }
 
 /* Status colors. */
-.error-msg { color: var(--err); }
-.ok-msg    { color: var(--ok); }
-.warn-msg  { color: var(--warn); }
+.error-msg {
+  color: var(--err);
+}
+.ok-msg {
+  color: var(--ok);
+}
+.warn-msg {
+  color: var(--warn);
+}
 
 /* Inline monospace tag (used in helper text). */
 code {
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    font-size: 0.92em;
-    background: var(--bg-sunken);
-    color: var(--text-soft);
-    padding: 1px 5px;
-    border-radius: var(--radius-sm);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.92em;
+  background: var(--bg-sunken);
+  color: var(--text-soft);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
 }

@@ -44,7 +44,10 @@ function groupByGame(
   games: GamePack[],
   currentGameId: string,
 ): GameGroup[] {
-  const byGame = new Map<string, { preset: PlayerPreset; globalIndex: number }[]>();
+  const byGame = new Map<
+    string,
+    { preset: PlayerPreset; globalIndex: number }[]
+  >();
   for (let i = 0; i < players.length; i++) {
     const gid = players[i].gameId ?? "";
     let arr = byGame.get(gid);
@@ -250,10 +253,17 @@ export default function PresetsEditor({
                     const costumes = char?.costumes ?? [];
                     const thumbSrc = p.character
                       ? p.costume && p.costume > 0
-                        ? stockURL(assetsBase, group.gameId, p.character, p.costume)
+                        ? stockURL(
+                            assetsBase,
+                            group.gameId,
+                            p.character,
+                            p.costume,
+                          )
                         : selectURL(assetsBase, group.gameId, p.character)
                       : null;
-                    const meta = [p.pronouns, p.prefix].filter(Boolean).join(" · ");
+                    const meta = [p.pronouns, p.prefix]
+                      .filter(Boolean)
+                      .join(" · ");
                     return (
                       <Card
                         key={k}
@@ -280,16 +290,23 @@ export default function PresetsEditor({
                         >
                           <div className="preset-thumb">
                             {thumbSrc ? (
-                              <img src={thumbSrc} alt={char?.name ?? p.character} />
+                              <img
+                                src={thumbSrc}
+                                alt={char?.name ?? p.character}
+                              />
                             ) : (
                               <div className="preset-thumb-empty" />
                             )}
                           </div>
                           <div className="preset-name-col">
-                            <span className={`preset-name${!p.name ? " empty" : ""}`}>
+                            <span
+                              className={`preset-name${!p.name ? " empty" : ""}`}
+                            >
                               {p.name || "New preset"}
                             </span>
-                            {meta && <span className="preset-meta">{meta}</span>}
+                            {meta && (
+                              <span className="preset-meta">{meta}</span>
+                            )}
                           </div>
                           {p.portColor && (
                             <span
@@ -344,7 +361,9 @@ export default function PresetsEditor({
                                   placeholder="Sponsor / Team"
                                   value={p.prefix ?? ""}
                                   onChange={(ev) =>
-                                    setPlayer(i, { prefix: ev.target.value || undefined })
+                                    setPlayer(i, {
+                                      prefix: ev.target.value || undefined,
+                                    })
                                   }
                                 />
                               </label>
@@ -368,7 +387,9 @@ export default function PresetsEditor({
                                 />
                               ) : (
                                 <span className="entity-portrait-empty">
-                                  <span className="entity-portrait-empty-icon">+</span>
+                                  <span className="entity-portrait-empty-icon">
+                                    +
+                                  </span>
                                   <span>
                                     {p.character
                                       ? (char?.name ?? p.character)
@@ -436,7 +457,9 @@ export default function PresetsEditor({
                                     aria-checked={p.portColor === c}
                                     aria-label={c}
                                     style={{ background: c }}
-                                    onClick={() => setPlayer(i, { portColor: c })}
+                                    onClick={() =>
+                                      setPlayer(i, { portColor: c })
+                                    }
                                   />
                                 ))}
                               </div>
@@ -462,7 +485,9 @@ export default function PresetsEditor({
                                 />
                               </label>
                               <label className="settings-field">
-                                <span className="settings-label">Start.gg user ID</span>
+                                <span className="settings-label">
+                                  Start.gg user ID
+                                </span>
                                 <input
                                   type="number"
                                   placeholder="0"
@@ -515,8 +540,10 @@ export default function PresetsEditor({
               const k = cKey(c, i);
               const isOpen = expandedC.has(k);
               const isFlashed = flashed.has(k);
-              const handlesMeta = [c.pronouns, ...c.socials
-                .map((s) => s.handle)]
+              const handlesMeta = [
+                c.pronouns,
+                ...c.socials.map((s) => s.handle),
+              ]
                 .filter(Boolean)
                 .join(" · ");
               return (
@@ -581,7 +608,9 @@ export default function PresetsEditor({
                             placeholder="they/them"
                             value={c.pronouns ?? ""}
                             onChange={(ev) =>
-                              setCaster(i, { pronouns: ev.target.value || undefined })
+                              setCaster(i, {
+                                pronouns: ev.target.value || undefined,
+                              })
                             }
                           />
                         </label>

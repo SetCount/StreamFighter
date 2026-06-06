@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  GREETING: Hello, world!
+
+tasks:
+  dev:
+    desc: Runs the dev command w/ tags based on my systems
+    cmds:
+      - wails dev -tags webkit2_41
+
+  format:
+    desc: Run formatter across files
+    cmds:
+      - bunx prettier ./frontend/src --write
+        gofmt -w . ./internal
+  default:
+    desc: Print a greeting message
+    cmds:
+      - echo "{{.GREETING}}"
+    silent: true

@@ -1,55 +1,59 @@
 /* SocialsEditor — list of (platform icon picker, handle input, delete) rows. */
 
 .socials {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .social-row {
-    display: flex;
-    gap: 6px;
-    align-items: center;
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 .social-handle {
-    flex: 1;
-    min-width: 0;
-    font-size: var(--font-sm);
-    min-height: 1.9em;
-    padding: 0.3em 0.5em;
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-sm);
+  min-height: 1.9em;
+  padding: 0.3em 0.5em;
 }
 
 .social-pick {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    flex: 0 0 auto;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 2px;
-    background: var(--bg-sunken);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 2px;
+  background: var(--bg-sunken);
 }
 .social-pick-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.8em;
-    height: 1.8em;
-    padding: 0;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: var(--font-md);
-    min-height: 0;
-    transition: background 80ms ease, color 80ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8em;
+  height: 1.8em;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-md);
+  min-height: 0;
+  transition:
+    background 80ms ease,
+    color 80ms ease;
 }
-.social-pick-btn:hover { color: var(--text); }
+.social-pick-btn:hover {
+  color: var(--text);
+}
 .social-pick-btn[aria-checked="true"] {
-    background: var(--accent);
-    color: var(--ctp-crust);
+  background: var(--accent);
+  color: var(--ctp-crust);
 }
 
 .socials-add {
-    align-self: flex-start;
+  align-self: flex-start;
 }

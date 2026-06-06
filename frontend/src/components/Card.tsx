@@ -17,8 +17,15 @@ const VARIANT_CLASS: Record<Variant, string> = {
   flat: "card--flat",
 };
 
-export function Card({ variant = "default", className, style, children }: Props) {
-  const cls = ["card", VARIANT_CLASS[variant], className].filter(Boolean).join(" ");
+export function Card({
+  variant = "default",
+  className,
+  style,
+  children,
+}: Props) {
+  const cls = ["card", VARIANT_CLASS[variant], className]
+    .filter(Boolean)
+    .join(" ");
   return (
     <section className={cls} style={style}>
       {children}
@@ -34,7 +41,13 @@ type CardHeaderProps = {
   swatch?: string;
 };
 
-export function CardHeader({ eyebrow, title, subtitle, actions, swatch }: CardHeaderProps) {
+export function CardHeader({
+  eyebrow,
+  title,
+  subtitle,
+  actions,
+  swatch,
+}: CardHeaderProps) {
   return (
     <header className="card-header">
       <div>
@@ -59,7 +72,12 @@ type CardSectionProps = {
   className?: string;
 };
 
-export function CardSection({ title, hint, children, className }: CardSectionProps) {
+export function CardSection({
+  title,
+  hint,
+  children,
+  className,
+}: CardSectionProps) {
   const cls = ["card-section", className].filter(Boolean).join(" ");
   return (
     <div className={cls}>

@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Icon } from "./icons";
 import {
   GetState,
@@ -85,7 +91,10 @@ function App() {
   const [playerPresets, setPlayerPresets] = useState<PlayerPreset[]>([]);
   const [casterPresets, setCasterPresets] = useState<CasterPreset[]>([]);
   const [layoutRegistry, setLayoutRegistry] = useState<LayoutRegistry>({});
-  const [hotkeyConfig, setHotkeyConfig] = useState<HotkeyConfig>({ enabled: false, bindings: {} });
+  const [hotkeyConfig, setHotkeyConfig] = useState<HotkeyConfig>({
+    enabled: false,
+    bindings: {},
+  });
   const [activeTab, setActiveTab] = useState<TabId>("player");
 
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -96,10 +105,13 @@ function App() {
   const pickerUrlRef = useRef("");
 
   const [disambigOpen, setDisambigOpen] = useState(false);
-  const [disambigAmbiguities, setDisambigAmbiguities] = useState<Ambiguity[]>([]);
+  const [disambigAmbiguities, setDisambigAmbiguities] = useState<Ambiguity[]>(
+    [],
+  );
   const disambigSetRef = useRef<StartggSet | null>(null);
 
-  const flash = (kind: ToastKind, message: string) => setToast({ kind, message });
+  const flash = (kind: ToastKind, message: string) =>
+    setToast({ kind, message });
 
   useEffect(() => {
     if (!toast) return;
@@ -133,7 +145,9 @@ function App() {
         setToken((sec as any)?.startggToken ?? "");
         setPlayerPresets((pp ?? []) as unknown as PlayerPreset[]);
         setCasterPresets((cp ?? []) as unknown as CasterPreset[]);
-        setHotkeyConfig((hk as unknown as HotkeyConfig) ?? { enabled: false, bindings: {} });
+        setHotkeyConfig(
+          (hk as unknown as HotkeyConfig) ?? { enabled: false, bindings: {} },
+        );
       })
       .catch((e) => flash("err", "Failed to load: " + e));
   }, []);
@@ -179,7 +193,18 @@ function App() {
       if (e.shiftKey) parts.push("Shift");
       if (e.metaKey) parts.push("Meta");
       const key = e.code;
-      if (!["ControlLeft", "ControlRight", "AltLeft", "AltRight", "ShiftLeft", "ShiftRight", "MetaLeft", "MetaRight"].includes(key)) {
+      if (
+        ![
+          "ControlLeft",
+          "ControlRight",
+          "AltLeft",
+          "AltRight",
+          "ShiftLeft",
+          "ShiftRight",
+          "MetaLeft",
+          "MetaRight",
+        ].includes(key)
+      ) {
         let name = key;
         if (key.startsWith("Key")) name = key.slice(3);
         else if (key.startsWith("Digit")) name = key.slice(5);
@@ -193,7 +218,12 @@ function App() {
       const cfg = hotkeyRef.current;
       if (!cfg.enabled) return;
       const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT") return;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT"
+      )
+        return;
       if (target.isContentEditable) return;
 
       const combo = formatCombo(e);
@@ -267,16 +297,16 @@ function App() {
     setSt((prev) =>
       prev
         ? {
-          ...prev,
-          scoreEntities: prev.scoreEntities.map((e) => ({
-            ...e,
-            players: e.players.map((p) => ({
-              ...p,
-              character: "",
-              costume: 0,
+            ...prev,
+            scoreEntities: prev.scoreEntities.map((e) => ({
+              ...e,
+              players: e.players.map((p) => ({
+                ...p,
+                character: "",
+                costume: 0,
+              })),
             })),
-          })),
-        }
+          }
         : prev,
     );
   };
@@ -358,7 +388,14 @@ function App() {
     const s = disambigSetRef.current;
     if (s) {
       setSt(
-        applyStartggSet(state, pickerTournament, s, playerPresets, portPalette, overrides),
+        applyStartggSet(
+          state,
+          pickerTournament,
+          s,
+          playerPresets,
+          portPalette,
+          overrides,
+        ),
       );
     }
     setDisambigOpen(false);
@@ -382,7 +419,10 @@ function App() {
   };
 
   const onAddPlayerPreset = () => {
-    setPlayerPresets([...playerPresets, { id: "", name: "", gameId: config.game || undefined }]);
+    setPlayerPresets([
+      ...playerPresets,
+      { id: "", name: "", gameId: config.game || undefined },
+    ]);
   };
   const onSavePlayerPresetRow = async (p: PlayerPreset) => {
     try {
@@ -441,15 +481,17 @@ function App() {
 
   const onSavePlayerAsPreset = (player: Player, portColor: string) => {
     if (!player.name) return;
-    const existing = playerPresets.find(p => {
-      const idMatch = player.startggPlayerId && p.startggPlayerId === player.startggPlayerId;
+    const existing = playerPresets.find((p) => {
+      const idMatch =
+        player.startggPlayerId && p.startggPlayerId === player.startggPlayerId;
       const nameMatch = p.name.toLowerCase() === player.name.toLowerCase();
       if (!idMatch && !nameMatch) return false;
-      if (player.character) return p.character === player.character || !p.character;
+      if (player.character)
+        return p.character === player.character || !p.character;
       return true;
     });
     void onSavePlayerPresetRow({
-      id: existing?.id ?? '',
+      id: existing?.id ?? "",
       name: player.name,
       pronouns: player.pronouns,
       prefix: player.prefix,
@@ -464,11 +506,11 @@ function App() {
 
   const onSaveCasterAsPreset = (caster: Caster) => {
     if (!caster.name) return;
-    const existing = casterPresets.find(p =>
-      p.name.toLowerCase() === caster.name.toLowerCase()
+    const existing = casterPresets.find(
+      (p) => p.name.toLowerCase() === caster.name.toLowerCase(),
     );
     void onSaveCasterPresetRow({
-      id: existing?.id ?? '',
+      id: existing?.id ?? "",
       name: caster.name,
       pronouns: caster.pronouns,
       socials: caster.socials ?? [],
@@ -518,7 +560,7 @@ function App() {
       <aside className="sidebar">
         <div className="sidebar-brand">
           <span className="sidebar-brand-eyebrow">
-            {activePack ? activePack.shortName ?? activePack.name : "No game"}
+            {activePack ? (activePack.shortName ?? activePack.name) : "No game"}
           </span>
           <span className="sidebar-brand-name">StreamFighter</span>
         </div>
@@ -534,7 +576,12 @@ function App() {
                   onClick={() => setActiveTab(t.id)}
                   title={t.label}
                 >
-                  <Icon name={t.icon} width={18} height={18} className="nav-icon" />
+                  <Icon
+                    name={t.icon}
+                    width={18}
+                    height={18}
+                    className="nav-icon"
+                  />
                   <span className="nav-label">{t.label}</span>
                 </button>
               </li>
@@ -545,7 +592,11 @@ function App() {
         <div className="sidebar-footer">
           <div className={statusClass}>{statusBody}</div>
 
-          <div className="sidebar-game-picker" role="radiogroup" aria-label="Game pack">
+          <div
+            className="sidebar-game-picker"
+            role="radiogroup"
+            aria-label="Game pack"
+          >
             <span className="sidebar-footer-label">Game pack</span>
             <button
               type="button"
@@ -691,7 +742,7 @@ function App() {
               onCommit={(hk) => {
                 setHotkeyConfig(hk);
                 SetHotkeyConfig(hk as any).catch((e) =>
-                  flash("err", "Error saving hotkeys: " + e)
+                  flash("err", "Error saving hotkeys: " + e),
                 );
               }}
             />
@@ -713,7 +764,11 @@ function App() {
       </div>
 
       {toast && (
-        <div className={`toast is-${toast.kind}`} role="status" aria-live="polite">
+        <div
+          className={`toast is-${toast.kind}`}
+          role="status"
+          aria-live="polite"
+        >
           {toast.message}
         </div>
       )}

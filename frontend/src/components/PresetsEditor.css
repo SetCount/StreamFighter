@@ -1,125 +1,136 @@
 /* PresetsEditor — two-column page layout + preset accordion cards. */
 
 .presets-columns {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    align-items: start;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
 }
 @media (max-width: 960px) {
-    .presets-columns { grid-template-columns: 1fr; }
+  .presets-columns {
+    grid-template-columns: 1fr;
+  }
 }
 
 .preset-game-group + .preset-game-group {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 .preset-game-heading {
-    font-size: var(--font-xs);
-    font-weight: 700;
-    color: var(--text-muted);
-    padding: 6px 2px 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+  font-size: var(--font-xs);
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 6px 2px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .preset-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .preset-card {
-    transition: border-color 80ms ease, background 80ms ease;
+  transition:
+    border-color 80ms ease,
+    background 80ms ease;
 }
 .preset-card.is-open {
-    background: var(--bg-card);
+  background: var(--bg-card);
 }
 .preset-card .preset-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
 }
 .preset-card .preset-header:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-radius: var(--radius);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius);
 }
 
 .preset-thumb {
-    width: 28px;
-    height: 28px;
-    flex: 0 0 28px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--line);
-    background: var(--bg-sunken);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--bg-sunken);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .preset-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    image-rendering: pixelated;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
 }
-.preset-thumb-empty { width: 100%; height: 100%; }
+.preset-thumb-empty {
+  width: 100%;
+  height: 100%;
+}
 
 .preset-name-col {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 .preset-name {
-    font-size: var(--font-sm);
-    font-weight: 500;
-    color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.preset-name.empty { color: var(--text-muted); font-style: italic; font-weight: 400; }
+.preset-name.empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-weight: 400;
+}
 .preset-meta {
-    font-size: var(--font-xs);
-    color: var(--text-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .color-dot {
-    width: 11px;
-    height: 11px;
-    border-radius: 50%;
-    border: 1px solid var(--line);
-    flex: 0 0 11px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  flex: 0 0 11px;
 }
 .expand-toggle {
-    font-size: var(--font-xs);
-    color: var(--text-muted);
-    flex: 0 0 auto;
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  flex: 0 0 auto;
 }
 
 .preset-body {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-top: 10px;
-    margin-top: 4px;
-    border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+  margin-top: 4px;
+  border-top: 1px solid var(--line);
 }
 
 .preset-extras-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 .preset-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }

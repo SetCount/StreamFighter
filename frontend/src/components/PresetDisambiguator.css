@@ -1,54 +1,57 @@
 /* PresetDisambiguator — modal that resolves multi-preset matches. */
 
 .disambiguator {
-    width: min(96vw, 540px);
+  width: min(96vw, 540px);
 }
 
 .disambiguator-player {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
 }
 .disambiguator-player:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
 }
 .disambiguator-tag {
-    font-weight: 600;
-    color: var(--text);
+  font-weight: 600;
+  color: var(--text);
 }
 .disambiguator-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .disambiguator-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: var(--bg-sunken);
-    color: var(--text-soft);
-    cursor: pointer;
-    font-size: var(--font-sm);
-    min-height: 0;
-    transition: border-color 80ms ease, background 80ms ease, color 80ms ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-sunken);
+  color: var(--text-soft);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  min-height: 0;
+  transition:
+    border-color 80ms ease,
+    background 80ms ease,
+    color 80ms ease;
 }
 .disambiguator-option:hover {
-    border-color: var(--line-hover);
-    color: var(--text);
+  border-color: var(--line-hover);
+  color: var(--text);
 }
 .disambiguator-option.selected {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-    color: var(--text);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
 }
 .disambiguator-icon {
-    width: 26px;
-    height: 26px;
-    object-fit: contain;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
 }
