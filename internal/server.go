@@ -54,13 +54,13 @@ func (h *sseHub) broadcast(msg []byte) {
 // overlayServer wraps the SSE hub with the HTTP routes the OBS browser
 // source connects to.
 type overlayServer struct {
-	hub             *sseHub
-	srv             *http.Server
-	getState        func() StreamState
-	getOverlayPath  func() string
-	getGamesDir     func() string
-	getSponsorsDir  func() string
-	getAppearance   func() OverlayAppearance
+	hub            *sseHub
+	srv            *http.Server
+	getState       func() StreamState
+	getOverlayPath func() string
+	getGamesDir    func() string
+	getSponsorsDir func() string
+	getAppearance  func() OverlayAppearance
 }
 
 func newOverlayServer(

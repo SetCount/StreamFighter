@@ -10,10 +10,10 @@ import (
 
 // Hotkey action IDs — keep in sync with HOTKEY_ACTIONS in HotkeysEditor.tsx.
 const (
-	ActionScoreE1Inc  = "score_e1_inc"
-	ActionScoreE1Dec  = "score_e1_dec"
-	ActionScoreE2Inc  = "score_e2_inc"
-	ActionScoreE2Dec  = "score_e2_dec"
+	ActionScoreE1Inc   = "score_e1_inc"
+	ActionScoreE1Dec   = "score_e1_dec"
+	ActionScoreE2Inc   = "score_e2_inc"
+	ActionScoreE2Dec   = "score_e2_dec"
 	ActionSwapEntities = "swap_entities"
 	ActionClear        = "clear"
 )
@@ -100,7 +100,7 @@ func (a *App) ExecuteHotkeyAction(actionID string) {
 	state := a.state
 	a.mu.Unlock()
 
-	saveState(state)
+	saveState(state, statePath())
 	_ = a.Update()
 	a.emitStateChanged()
 }

@@ -14,15 +14,11 @@ import (
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const configPath = "streamfighter.config.json"
-
-const secretsPath = "streamfighter.secrets.json"
-
-const hotkeyConfigPath = "streamfighter.hotkeys.json"
-
-const statePath = "streamfighter.state.json"
-
-const layoutRegistryPath = "layouts.json"
+func configPath() string         { return filepath.Join(ConfigDir(), "streamfighter.config.json") }
+func secretsPath() string        { return filepath.Join(ConfigDir(), "streamfighter.secrets.json") }
+func hotkeyConfigPath() string   { return filepath.Join(ConfigDir(), "streamfighter.hotkeys.json") }
+func statePath() string          { return filepath.Join(DataDir(), "streamfighter.state.json") }
+func layoutRegistryPath() string { return filepath.Join(DataDir(), "layouts.json") }
 
 // LayoutRegistry maps aspect ratio strings to their compatible layout IDs.
 type LayoutRegistry map[string][]string
@@ -45,12 +41,13 @@ type App struct {
 }
 
 func NewApp(overlayFS fs.FS) *App {
+	ensureConfigDir()
 	return &App{
 		overlayFS:     overlayFS,
-		state:         loadState(),
-		config:        loadConfig(),
-		secrets:       loadSecrets(),
-		hotkeyConfig:  loadHotkeyConfig(),
+		state:         loadState(statePath()),
+		config:        loadConfig(configPath()),
+		secrets:       loadSecrets(secretsPath()),
+		hotkeyConfig:  loadHotkeyConfig(hotkeyConfigPath()),
 		playerPresets: loadPlayerPresets(),
 		casterPresets: loadCasterPresets(),
 		fileManifest:  map[string]struct{}{},
@@ -61,9 +58,9 @@ func NewApp(overlayFS fs.FS) *App {
 // back to defaultConfig() when the file is missing or malformed.
 // Unmarshaling over a pre-populated struct gives forward-compat: fields
 // added since the file was written keep their default values.
-func loadConfig() OutputConfig {
+func loadConfig(path string) OutputConfig {
 	cfg := defaultConfig()
-	raw, err := os.ReadFile(configPath)
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			fmt.Fprintf(os.Stderr, "load config: %v\n", err)
@@ -77,22 +74,31 @@ func loadConfig() OutputConfig {
 	return cfg
 }
 
+// ensureAppDirs creates ConfigDir and DataDir on startup.
+func ensureConfigDir() {
+	ensureAppDirs()
+}
+
 // saveConfig writes the OutputConfig to configPath. Errors are logged
 // to stderr; we never fail SetConfig over a bad write.
-func saveConfig(cfg OutputConfig) {
+func saveConfig(cfg OutputConfig, path string) {
 	b, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "save config: %v\n", err)
 		return
 	}
-	if err := os.WriteFile(configPath, b, 0o644); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		fmt.Fprintf(os.Stderr, "save config: mkdir: %v\n", err)
+		return
+	}
+	if err := os.WriteFile(path, b, 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "save config: %v\n", err)
 	}
 }
 
-func loadState() StreamState {
+func loadState(path string) StreamState {
 	s := defaultState()
-	raw, err := os.ReadFile(statePath)
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			fmt.Fprintf(os.Stderr, "load state: %v\n", err)
@@ -106,20 +112,20 @@ func loadState() StreamState {
 	return s
 }
 
-func saveState(s StreamState) {
+func saveState(s StreamState, path string) {
 	b, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "save state: %v\n", err)
 		return
 	}
-	if err := os.WriteFile(statePath, b, 0o644); err != nil {
+	if err := os.WriteFile(path, b, 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "save state: %v\n", err)
 	}
 }
 
-func loadSecrets() Secrets {
+func loadSecrets(path string) Secrets {
 	var s Secrets
-	raw, err := os.ReadFile(secretsPath)
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			fmt.Fprintf(os.Stderr, "load secrets: %v\n", err)
@@ -133,20 +139,24 @@ func loadSecrets() Secrets {
 	return s
 }
 
-func saveSecrets(s Secrets) {
+func saveSecrets(s Secrets, path string) {
 	b, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "save secrets: %v\n", err)
 		return
 	}
-	if err := os.WriteFile(secretsPath, b, 0o600); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		fmt.Fprintf(os.Stderr, "save secrets: mkdir: %v\n", err)
+		return
+	}
+	if err := os.WriteFile(path, b, 0o600); err != nil {
 		fmt.Fprintf(os.Stderr, "save secrets: %v\n", err)
 	}
 }
 
-func loadHotkeyConfig() HotkeyConfig {
+func loadHotkeyConfig(path string) HotkeyConfig {
 	cfg := HotkeyConfig{Bindings: map[string]string{}}
-	raw, err := os.ReadFile(hotkeyConfigPath)
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			fmt.Fprintf(os.Stderr, "load hotkey config: %v\n", err)
@@ -163,13 +173,17 @@ func loadHotkeyConfig() HotkeyConfig {
 	return cfg
 }
 
-func saveHotkeyConfig(cfg HotkeyConfig) {
+func saveHotkeyConfig(cfg HotkeyConfig, path string) {
 	b, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "save hotkey config: %v\n", err)
 		return
 	}
-	if err := os.WriteFile(hotkeyConfigPath, b, 0o644); err != nil {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		fmt.Fprintf(os.Stderr, "save hotkey config: mkdir: %v\n", err)
+		return
+	}
+	if err := os.WriteFile(path, b, 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "save hotkey config: %v\n", err)
 	}
 }
@@ -196,7 +210,7 @@ func (a *App) Startup(ctx context.Context) {
 		fmt.Println("seed overlay dir:", err)
 	}
 	a.games = loadGames(a.config.GamesDir)
-	a.layoutRegistry = loadLayoutRegistry(layoutRegistryPath)
+	a.layoutRegistry = loadLayoutRegistry(layoutRegistryPath())
 	a.startServer()
 	a.hotkeys = newHotkeyManager(a)
 	a.hotkeys.start()
@@ -257,7 +271,7 @@ func (a *App) SetState(s StreamState) {
 	a.mu.Lock()
 	a.state = s
 	a.mu.Unlock()
-	saveState(s)
+	saveState(s, statePath())
 }
 
 // ClearState resets the stream state to defaults and persists the change.
@@ -266,7 +280,7 @@ func (a *App) ClearState() StreamState {
 	a.mu.Lock()
 	a.state = s
 	a.mu.Unlock()
-	saveState(s)
+	saveState(s, statePath())
 	return s
 }
 
@@ -284,7 +298,7 @@ func (a *App) SetConfig(c OutputConfig) {
 	a.mu.Lock()
 	a.config = c
 	a.mu.Unlock()
-	saveConfig(c)
+	saveConfig(c, configPath())
 	// Push appearance changes to connected overlays immediately.
 	if c.EnableServer && a.server != nil {
 		if msg, err := json.Marshal(OverlayMessage{State: a.GetState(), Appearance: a.effectiveAppearance()}); err == nil {
@@ -387,7 +401,7 @@ func (a *App) SetSecrets(s Secrets) {
 	a.mu.Lock()
 	a.secrets = s
 	a.mu.Unlock()
-	saveSecrets(s)
+	saveSecrets(s, secretsPath())
 }
 
 // GetHotkeyConfig returns the current hotkey configuration.
@@ -406,7 +420,7 @@ func (a *App) SetHotkeyConfig(cfg HotkeyConfig) {
 	a.mu.Lock()
 	a.hotkeyConfig = cfg
 	a.mu.Unlock()
-	saveHotkeyConfig(cfg)
+	saveHotkeyConfig(cfg, hotkeyConfigPath())
 	if a.hotkeys != nil {
 		a.hotkeys.rebind()
 	}
@@ -657,9 +671,9 @@ func defaultState() StreamState {
 func defaultConfig() OutputConfig {
 	return OutputConfig{
 		OutputDir:       "obs-output",
-		OverlayPath:     "overlay/index.html",
-		GamesDir:        "games",
-		SponsorsDir:     "sponsors",
+		OverlayPath:     filepath.Join(DataDir(), "overlay", "index.html"),
+		GamesDir:        filepath.Join(DataDir(), "games"),
+		SponsorsDir:     filepath.Join(DataDir(), "sponsors"),
 		HTTPPort:        35920,
 		WriteFieldFiles: true,
 		WriteJSON:       true,
@@ -681,4 +695,3 @@ func defaultConfig() OutputConfig {
 		},
 	}
 }
-

@@ -6,12 +6,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 const (
-	playersPath = "players.json"
-	castersPath = "casters.json"
+	playersFile = "players.json"
+	castersFile = "casters.json"
 )
+
+func playersPath() string { return filepath.Join(DataDir(), playersFile) }
+func castersPath() string { return filepath.Join(DataDir(), castersFile) }
 
 // newPresetID returns a stable random hex string used as a preset's ID.
 // IDs are app-assigned on first save so users can copy-paste rows in
@@ -26,7 +30,7 @@ func newPresetID() string {
 
 func loadPlayerPresets() []PlayerPreset {
 	out := []PlayerPreset{}
-	raw, err := os.ReadFile(playersPath)
+	raw, err := os.ReadFile(playersPath())
 	if err != nil {
 		if !os.IsNotExist(err) {
 			fmt.Fprintf(os.Stderr, "load players.json: %v\n", err)
@@ -45,12 +49,12 @@ func savePlayerPresets(p []PlayerPreset) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(playersPath, b, 0o644)
+	return os.WriteFile(playersPath(), b, 0o644)
 }
 
 func loadCasterPresets() []CasterPreset {
 	out := []CasterPreset{}
-	raw, err := os.ReadFile(castersPath)
+	raw, err := os.ReadFile(castersPath())
 	if err != nil {
 		if !os.IsNotExist(err) {
 			fmt.Fprintf(os.Stderr, "load casters.json: %v\n", err)
@@ -69,5 +73,5 @@ func saveCasterPresets(c []CasterPreset) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(castersPath, b, 0o644)
+	return os.WriteFile(castersPath(), b, 0o644)
 }

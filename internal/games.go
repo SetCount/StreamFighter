@@ -16,11 +16,11 @@ import (
 // referenced by ID are served by the overlay HTTP server at
 // /games/<id>/characters/<charId>/{select,portrait_NN,stock_NN}.png.
 type GamePack struct {
-	ID          string      `json:"id"`
-	Name        string      `json:"name"`
-	ShortName   string      `json:"shortName"`
-	AspectRatios []string   `json:"aspectRatios,omitempty"`
-	Characters  []Character `json:"characters"`
+	ID           string      `json:"id"`
+	Name         string      `json:"name"`
+	ShortName    string      `json:"shortName"`
+	AspectRatios []string    `json:"aspectRatios,omitempty"`
+	Characters   []Character `json:"characters"`
 	// CharacterLayout mirrors the in-game CSS row layout: each inner
 	// slice is one row of character IDs, rendered horizontally centered
 	// in CharacterPicker. Optional; when empty the picker falls back to
