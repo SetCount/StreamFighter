@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { Character, GamePack } from "../types";
 import { selectURL } from "../assets";
+import "./CharacterPicker.css";
 
 type Props = {
   open: boolean;

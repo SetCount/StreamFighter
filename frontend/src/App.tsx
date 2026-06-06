@@ -17,6 +17,8 @@ import {
   AssetsBaseURL,
   Update,
   ListGames,
+  ReloadGames,
+  OpenGamesDir,
   GetLayoutRegistry,
   GetSecrets,
   SetSecrets,
@@ -311,6 +313,21 @@ function App() {
     );
   };
 
+  const onOpenGamesDir = () => {
+    OpenGamesDir().catch((e) =>
+      flash("err", "Couldn't open games folder: " + e),
+    );
+  };
+
+  const onReloadGames = () => {
+    ReloadGames()
+      .then((g) => {
+        setGames((g ?? []) as unknown as GamePack[]);
+        flash("ok", "Refreshed game packs");
+      })
+      .catch((e) => flash("err", "Couldn't refresh packs: " + e));
+  };
+
   const portPalette = portPaletteFor(findPack(games, config.game));
 
   const onSetInfoChange = (si: SetInfo) => {
@@ -592,12 +609,33 @@ function App() {
         <div className="sidebar-footer">
           <div className={statusClass}>{statusBody}</div>
 
+          <div className="sidebar-game-header">
+            <span className="sidebar-footer-label">Game pack</span>
+            <div className="sidebar-game-actions">
+              <button
+                type="button"
+                className="sidebar-game-action"
+                title="Open games folder"
+                onClick={onOpenGamesDir}
+              >
+                <Icon name="folder" width={14} height={14} />
+              </button>
+              <button
+                type="button"
+                className="sidebar-game-action"
+                title="Refresh game packs"
+                onClick={onReloadGames}
+              >
+                <Icon name="refresh" width={14} height={14} />
+              </button>
+            </div>
+          </div>
+
           <div
             className="sidebar-game-picker"
             role="radiogroup"
             aria-label="Game pack"
           >
-            <span className="sidebar-footer-label">Game pack</span>
             <button
               type="button"
               className={`sidebar-game-option${config.game === "" ? " is-active" : ""}`}

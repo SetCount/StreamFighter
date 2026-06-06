@@ -134,6 +134,35 @@
   letter-spacing: 0.07em;
 }
 
+.sidebar-game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.sidebar-game-actions {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.sidebar-game-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.sidebar-game-action:hover {
+  color: var(--accent);
+  background: color-mix(in oklab, var(--ctp-text) 8%, transparent);
+}
+
 .sidebar-game-picker {
   display: flex;
   flex-direction: column;
@@ -260,6 +289,10 @@
   }
   .sidebar-game-picker .sidebar-footer-label {
     display: none;
+  }
+
+  .sidebar-game-header {
+    justify-content: center;
   }
 }
 

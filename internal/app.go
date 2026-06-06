@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -385,6 +387,38 @@ func (a *App) ReloadGames() []GamePack {
 	a.games = packs
 	a.mu.Unlock()
 	return packs
+}
+
+// OpenGamesDir opens the configured games directory in the OS file
+// manager so the user can drop in art (or symlink a pack) without
+// hunting for the path. The directory is created first if missing.
+func (a *App) OpenGamesDir() error {
+	a.mu.RLock()
+	dir := a.config.GamesDir
+	a.mu.RUnlock()
+	if dir == "" {
+		return errors.New("no games directory configured")
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("create games dir: %w", err)
+	}
+	return openInFileManager(dir)
+}
+
+// openInFileManager launches the platform's file browser at path. We
+// fire-and-forget (Start, not Run) since explorer.exe in particular
+// returns a non-zero exit code even on success.
+func openInFileManager(path string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "darwin":
+		cmd = exec.Command("open", path)
+	case "windows":
+		cmd = exec.Command("explorer", path)
+	default:
+		cmd = exec.Command("xdg-open", path)
+	}
+	return cmd.Start()
 }
 
 // GetSecrets returns the current secrets to the frontend. The token

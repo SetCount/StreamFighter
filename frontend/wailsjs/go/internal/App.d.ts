@@ -36,6 +36,8 @@ export function ListGames():Promise<Array<internal.GamePack>>;
 
 export function ListPlayerPresets():Promise<Array<internal.PlayerPreset>>;
 
+export function OpenGamesDir():Promise<void>;
+
 export function ReloadGames():Promise<Array<internal.GamePack>>;
 
 export function ResizeWindow(arg1:number,arg2:number):Promise<void>;

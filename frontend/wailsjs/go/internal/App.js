@@ -70,6 +70,10 @@ export function ListPlayerPresets() {
   return window['go']['internal']['App']['ListPlayerPresets']();
 }
 
+export function OpenGamesDir() {
+  return window['go']['internal']['App']['OpenGamesDir']();
+}
+
 export function ReloadGames() {
   return window['go']['internal']['App']['ReloadGames']();
 }

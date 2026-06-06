@@ -12,18 +12,18 @@ import (
 func ConfigDir() string {
 	d, err := os.UserConfigDir()
 	if err != nil {
-		return "."
+		d = "."
 	}
 	return filepath.Join(d, "StreamFighter")
 }
 
 // DataDir returns the XDG data directory for StreamFighter application data.
-// On Linux this respects $XDG_DATA_HOME (default ~/.local/share);
+// On Linux this respects $XDG_CONFIG_HOME (default ~/.local/share);
 // on macOS ~/Library/Application Support; on Windows %AppData%.
 func DataDir() string {
 	d, err := os.UserConfigDir()
 	if err != nil {
-		return "."
+		d = "."
 	}
 	return filepath.Join(d, "StreamFighter")
 }

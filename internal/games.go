@@ -80,10 +80,11 @@ func loadGames(dir string) []GamePack {
 	}
 	packs := make([]GamePack, 0, len(entries))
 	for _, e := range entries {
-		if !e.IsDir() {
+		full := filepath.Join(dir, e.Name())
+		if !isDir(full) {
 			continue
 		}
-		pack, err := loadGamePack(filepath.Join(dir, e.Name()), e.Name())
+		pack, err := loadGamePack(full, e.Name())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "load game pack %s: %v\n", e.Name(), err)
 			continue
@@ -122,10 +123,11 @@ func loadGamePack(dir, id string) (GamePack, error) {
 		return GamePack{}, fmt.Errorf("read characters: %w", err)
 	}
 	for _, ce := range charEntries {
-		if !ce.IsDir() {
+		full := filepath.Join(charsDir, ce.Name())
+		if !isDir(full) {
 			continue
 		}
-		char, ok := loadCharacter(filepath.Join(charsDir, ce.Name()), ce.Name(), m.CharacterNames)
+		char, ok := loadCharacter(full, ce.Name(), m.CharacterNames)
 		if !ok {
 			continue
 		}
@@ -171,6 +173,15 @@ func loadCharacter(dir, id string, nameOverrides map[string]string) (Character, 
 		return char.Costumes[i].Index < char.Costumes[j].Index
 	})
 	return char, true
+}
+
+// isDir reports whether path is a directory, following symlinks. os.Stat
+// resolves the link target (unlike a DirEntry's cached Lstat info), so a
+// pack directory — or an individual character directory — can be a
+// symlink to a tree that lives elsewhere on disk.
+func isDir(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && fi.IsDir()
 }
 
 // humanizeID turns "captain_falcon" into "Captain Falcon". Used as the
