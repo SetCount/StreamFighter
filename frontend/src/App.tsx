@@ -56,7 +56,6 @@ import { portPaletteFor } from "./portColors";
 import SetInfoEditor from "./components/SetInfoEditor";
 import ScoreEntitiesEditor from "./components/ScoreEntitiesEditor";
 import CastersEditor from "./components/CastersEditor";
-import OutputSettings from "./components/OutputSettings";
 import SystemSettings from "./components/SystemSettings";
 import OverlayEditor from "./components/OverlayEditor";
 import PresetsEditor from "./components/PresetsEditor";
@@ -66,13 +65,12 @@ import PresetDisambiguator from "./components/PresetDisambiguator";
 import { BrowserOpenURL, EventsOn } from "../wailsjs/runtime/runtime";
 import "./App.css";
 
-type TabId = "player" | "presets" | "overlay" | "output" | "hotkeys" | "system";
+type TabId = "player" | "presets" | "overlay" | "hotkeys" | "system";
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: "player", label: "Player Info", icon: "player" },
   { id: "presets", label: "Presets", icon: "presets" },
   { id: "overlay", label: "Overlay", icon: "overlay" },
-  { id: "output", label: "Output", icon: "output" },
   { id: "hotkeys", label: "Hotkeys", icon: "hotkeys" },
   { id: "system", label: "System", icon: "system" },
 ];
@@ -758,16 +756,6 @@ function App() {
               gameId={config.game}
               games={games}
               layoutRegistry={layoutRegistry}
-            />
-          </main>
-        )}
-
-        {activeTab === "output" && (
-          <main className="content" role="tabpanel">
-            <OutputSettings
-              value={config}
-              onChange={setCfg}
-              onCommit={commitConfig}
             />
           </main>
         )}
