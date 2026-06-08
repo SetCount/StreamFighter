@@ -48,8 +48,7 @@ in the `internal/` package**, and the Wails bindings are generated under
     `SetSecrets`, `GetHotkeyConfig`, `SetHotkeyConfig`,
     `ExecuteHotkeyAction`, `ListPlayerPresets`, `SavePlayerPreset`,
     `DeletePlayerPreset`, `ListCasterPresets`, `SaveCasterPreset`,
-    `DeleteCasterPreset`, `FetchStartggSets`, `FetchStartggTournament`,
-    `ResizeWindow`.
+    `DeleteCasterPreset`, `FetchStartggSets`, `FetchStartggTournament`.
   - The `overlay/` directory is `go:embed`'d in `main.go` and passed in
     as `overlayFS` — used as a **seed only**. On startup
     `ensureOverlayDir` walks the embed and writes any missing files to
@@ -79,9 +78,11 @@ in the `internal/` package**, and the Wails bindings are generated under
     supported ratio when unset/invalid, and snaps `Layout` to the first
     entry in the layout registry for that aspect when invalid. Every SSE
     broadcast and `/overlay/appearance.json` response goes through it.
-  - Window sizing: `ResizeWindow(w, h)` calls into the Wails runtime.
-    The frontend drives it from a `ResizeObserver` (see App.tsx), not
-    from a fixed format→height table.
+  - Window sizing: the window opens at a fixed 1200×1000 (min 900×640,
+    user-resizable; see `main.go`) and the app shell scrolls its
+    content panel internally instead of resizing. There is no
+    window-resize binding — the old `ResizeWindow` method and its
+    frontend hook were removed.
 - `internal/paths.go` — `ConfigDir()` / `DataDir()` (both
   `os.UserConfigDir()/StreamFighter` today; the names anticipate a
   future split) and `ensureAppDirs()` (mkdir on startup).
@@ -292,10 +293,11 @@ games/<gameId>/
     (Ctrl/Alt/Shift/Meta + `e.code`), ignores typing in
     inputs/textareas/selects, and calls `ExecuteHotkeyAction` when the
     combo matches a binding and `hotkeyConfig.enabled`.
-  - **Window auto-resize**: `syncWindowSize` measures the app element
-    and calls `ResizeWindow(1280, clampedHeight)` (height clamped
-    500..`availHeight`), wired to a `ResizeObserver` + `useLayoutEffect`
-    so the window grows/shrinks as content changes.
+  - **Fixed window**: the window opens at a fixed 1200×1000 (set in
+    `main.go`); `.app` fills `100vh` and only the `.content` panel
+    scrolls (`styles/shell.css`), so long lists scroll instead of
+    growing the window. The old `useWindowResize` /`ResizeObserver`
+    hook has been removed.
   - `commitConfig(next)` is the shared auto-save path: `setCfg` +
     `SetConfig`, surfacing a "port/server toggle changed → restart"
     notice when those fields change.
@@ -483,10 +485,15 @@ Defaults: HTTP port `35920` → game overlay
   the `Card` / `CardHeader` / `CardSection` components, not bare
   fieldsets. (This reverses the older fieldset-everywhere convention —
   the `.card` system is now the standard.)
-- **Native form controls preferred.** `:root { color-scheme: dark }`
-  makes WebKit/GTK render selects, scrollbars, dialog backdrops, and
-  checkboxes in dark mode. Add layout-only CSS; don't override
-  `background`/`border`/`color` on form elements without a real reason.
+- **Custom-drawn form controls.** Checkboxes, radios, range sliders,
+  and color swatches are fully restyled with `appearance: none` and
+  fixed pixel sizing in `styles/base.css`, so they render identically
+  regardless of the host's GTK theme or default font size (the old
+  native chrome scaled with system settings and looked foreign next to
+  the styled app). `:root { color-scheme: dark }` still keeps
+  scrollbars, dialog backdrops, and the OS color-picker popup dark.
+  Number-input spinners are hidden; `datalist` autocompletes keep their
+  native popup (the input itself is styled).
 - **Fluid type scale.** `--font-xs/sm/md/base/lg` as `clamp(...)`.
   Inputs grow with the font.
 - **Color tokens** (`--bg-page`, `--bg-bar`, `--line`, `--text-muted`,
@@ -513,8 +520,10 @@ Defaults: HTTP port `35920` → game overlay
 - **Auto-update**: every `StreamState` change auto-pushes to OBS after a
   300ms debounce (App.tsx `useEffect`), skipping the initial load and
   Go-originated echoes. No manual Update button.
-- **Window auto-resize**: the window height tracks content via a
-  `ResizeObserver` calling `ResizeWindow` (width fixed 1280).
+- **Fixed window**: opens at 1200×1000 (min 900×640, resizable). The
+  shell owns the viewport (`.app` is `100vh`) and the `.content` panel
+  scrolls internally; long preset lists scroll rather than resize the
+  window.
 
 ## Presets & StartGG integration
 

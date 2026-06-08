@@ -15,8 +15,6 @@ import (
 
 	"StreamFighter/internal/gamepacks"
 	"StreamFighter/internal/startgg"
-
-	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 func configPath() string         { return filepath.Join(ConfigDir(), "streamfighter.config.json") }
@@ -574,10 +572,6 @@ var portColors = [4]string{
 	"#5f8fc4",
 	"#cdb466",
 	"#7ab07a",
-}
-
-func (a *App) ResizeWindow(width, height int) {
-	wailsruntime.WindowSetSize(a.ctx, width, height)
 }
 
 func defaultState() StreamState {

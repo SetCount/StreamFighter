@@ -45,11 +45,6 @@
   color: var(--text-soft);
   font-size: var(--font-sm);
 }
-.checkbox-row input {
-  width: auto;
-  min-height: 0;
-}
-
 .checkbox-stack {
   display: flex;
   flex-direction: column;

@@ -1,5 +1,10 @@
 /* ============================================================
- * Base — reset + native form element baseline
+ * Base — reset + custom-drawn form controls
+ *
+ * Form controls are fully restyled (appearance: none) so they
+ * render identically regardless of the host's GTK theme or default
+ * font size, instead of inheriting native widget chrome that scales
+ * with system settings and looks foreign next to the styled app.
  * ============================================================ */
 
 * {
@@ -11,6 +16,14 @@ body,
 #root,
 #app {
   margin: 0;
+}
+
+/* Full-height chain so the app shell can own the viewport and scroll
+   its content panel internally rather than growing the window. */
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
@@ -67,34 +80,145 @@ input::placeholder {
   color: var(--text-muted);
 }
 
-/* Native checkbox keeps its UA chrome (color-scheme: dark covers it),
-   but we tint accent-color so checked state matches our palette. */
-input[type="checkbox"],
-input[type="radio"] {
-  accent-color: var(--accent);
+/* Hide the number-input spin buttons — values here are always typed,
+   and the spinners are the one scrap of widget chrome WebKit/GTK still
+   draws on an otherwise-styled field. */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-/* Native color input keeps the swatch tidy. */
-input[type="color"] {
-  padding: 2px;
-  width: 36px;
-  height: 32px;
+/* ---------- Checkbox + radio (drawn, not native) --------------------- */
+
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
   min-height: 0;
+  padding: 0;
+  background: var(--bg-input);
+  border: 1px solid var(--line-hover);
+  cursor: pointer;
+  transition:
+    background 80ms ease,
+    border-color 80ms ease;
+}
+input[type="checkbox"] {
+  border-radius: var(--radius-sm);
+}
+input[type="radio"] {
+  border-radius: 50%;
+}
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+  border-color: var(--text-muted);
+}
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+input[type="checkbox"]:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2311111b' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+input[type="radio"]:checked {
+  background-image: radial-gradient(
+    circle,
+    var(--ctp-crust) 0 30%,
+    transparent 34%
+  );
+}
+
+/* ---------- Color picker (drawn trigger, native OS popup) ------------ */
+
+input[type="color"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 36px;
+  height: 30px;
+  min-height: 0;
+  padding: 3px;
+  background: var(--bg-input);
+  border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
+input[type="color"]:hover {
+  border-color: var(--line-hover);
+}
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
 
-/* Sliders take the accent tint. */
+/* ---------- Range slider (drawn track + thumb) ----------------------- */
+
 input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
   width: 100%;
-  accent-color: var(--accent);
-  min-height: 1.6em;
+  height: 16px;
+  min-height: 0;
   padding: 0;
   background: transparent;
   border: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line);
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow:
+    0 0 0 2px var(--bg-card),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+}
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg-card);
 }
 input[type="range"]:focus {
+  outline: none;
   box-shadow: none;
+}
+input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow:
+    0 0 0 2px var(--bg-card),
+    0 0 0 4px var(--accent-soft);
 }
 
 /* Loading splash before state/config resolve. */

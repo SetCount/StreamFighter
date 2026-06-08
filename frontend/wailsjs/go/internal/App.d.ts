@@ -46,8 +46,6 @@ export function OpenGamesDir():Promise<void>;
 
 export function ReloadGames():Promise<Array<gamepacks.Pack>>;
 
-export function ResizeWindow(arg1:number,arg2:number):Promise<void>;
-
 export function SaveCasterPreset(arg1:internal.CasterPreset):Promise<internal.CasterPreset>;
 
 export function SavePlayerPreset(arg1:internal.PlayerPreset):Promise<internal.PlayerPreset>;

@@ -57,7 +57,6 @@ import SetPicker from "./components/SetPicker";
 import PresetDisambiguator from "./components/PresetDisambiguator";
 import { Sidebar } from "./components/Sidebar";
 import { BrowserOpenURL } from "../wailsjs/runtime/runtime";
-import { useWindowResize } from "./hooks/useWindowResize";
 import { useHotkeyListener } from "./hooks/useHotkeyListener";
 import { useAutoSave } from "./hooks/useAutoSave";
 import "./App.css";
@@ -161,9 +160,6 @@ function App() {
 
   // Hotkey listener
   useHotkeyListener(hotkeyConfig);
-
-  // Window resize
-  const appRef = useWindowResize();
 
   if (!state || !config) {
     return <div className="loading">Loading…</div>;
@@ -439,7 +435,7 @@ function App() {
   const activeTabMeta = TABS.find((t) => t.id === activeTab)!;
 
   return (
-    <div className="app" ref={appRef}>
+    <div className="app">
       <Sidebar
         activePack={activePack}
         configGame={config.game}

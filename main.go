@@ -20,9 +20,11 @@ func main() {
 	app := internal.NewApp(overlayFS)
 
 	err := wails.Run(&options.App{
-		Title:  "StreamFighter",
-		Width:  1280,
-		Height: 800,
+		Title:     "StreamFighter",
+		Width:     1200,
+		Height:    1000,
+		MinWidth:  900,
+		MinHeight: 640,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
