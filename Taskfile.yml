@@ -25,7 +25,7 @@ tasks:
   format:
     desc: Run formatter across files
     cmds:
-      - bunx prettier ./frontend/src --write
+      - npm --prefix frontend run format
       - gofmt -w . ./internal
   default:
     desc: Print a greeting message
