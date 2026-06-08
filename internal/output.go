@@ -6,14 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"StreamFighter/internal/gamepacks"
 )
 
-// flattenFields produces the set of per-field files written for OBS Text
-// sources. Keys are filenames (relative to OutputDir), values are contents.
-// gameID names the active pack (from OutputConfig.Game); packs is
-// consulted to resolve character IDs into display names.
-func flattenFields(s StreamState, gameID string, packs []GamePack) map[string]string {
-	pack := findGamePack(packs, gameID)
+func flattenFields(s StreamState, gameID string, packs []gamepacks.Pack) map[string]string {
+	pack := gamepacks.FindPack(packs, gameID)
 	gameName := gameID
 	if pack != nil {
 		gameName = pack.Name
@@ -44,18 +42,14 @@ func flattenFields(s StreamState, gameID string, packs []GamePack) map[string]st
 			out[pp+"_name.txt"] = p.Name
 			out[pp+"_pronouns.txt"] = p.Pronouns
 			out[pp+"_prefix.txt"] = p.Prefix
-			out[pp+"_character.txt"] = characterDisplayName(pack, p.Character)
+			out[pp+"_character.txt"] = gamepacks.CharacterDisplayName(pack, p.Character)
 			out[pp+"_costume.txt"] = strconv.Itoa(p.Costume)
 		}
 	}
 	return out
 }
 
-// writeFieldFiles writes the flattened state to dir, removing any files this
-// app wrote on a previous call that are no longer present in the new set.
-// previous is the manifest from the last write; the returned map is the
-// caller's new manifest.
-func writeFieldFiles(dir string, s StreamState, gameID string, packs []GamePack, previous map[string]struct{}) (map[string]struct{}, error) {
+func writeFieldFiles(dir string, s StreamState, gameID string, packs []gamepacks.Pack, previous map[string]struct{}) (map[string]struct{}, error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return previous, err
 	}
@@ -77,7 +71,6 @@ func writeFieldFiles(dir string, s StreamState, gameID string, packs []GamePack,
 	return written, nil
 }
 
-// writeStateJSON writes the full state as a single JSON file.
 func writeStateJSON(dir string, s StreamState) error {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err

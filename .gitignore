@@ -6,3 +6,6 @@ frontend/dist
 /games
 /streamfighter.secrets.json
 /streamfighter.state.json
+/streamfighter.config.json
+/players.json
+/casters.json

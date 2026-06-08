@@ -1,21 +1,19 @@
 import {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
 import { Icon } from "./icons";
 import {
   GetState,
-  SetState,
-  ClearState,
   GetConfig,
+  ClearState,
   SetConfig,
+  Update,
   GameOverlayURL,
   BetweenOverlayURL,
   AssetsBaseURL,
-  Update,
   ListGames,
   ReloadGames,
   OpenGamesDir,
@@ -24,7 +22,6 @@ import {
   SetSecrets,
   GetHotkeyConfig,
   SetHotkeyConfig,
-  ExecuteHotkeyAction,
   ListPlayerPresets,
   SavePlayerPreset,
   DeletePlayerPreset,
@@ -33,7 +30,6 @@ import {
   DeleteCasterPreset,
   FetchStartggSets,
   FetchStartggTournament,
-  ResizeWindow,
 } from "../wailsjs/go/internal/App";
 import type {
   StreamState,
@@ -62,12 +58,16 @@ import PresetsEditor from "./components/PresetsEditor";
 import HotkeysEditor from "./components/HotkeysEditor";
 import SetPicker from "./components/SetPicker";
 import PresetDisambiguator from "./components/PresetDisambiguator";
-import { BrowserOpenURL, EventsOn } from "../wailsjs/runtime/runtime";
+import { Sidebar } from "./components/Sidebar";
+import { BrowserOpenURL } from "../wailsjs/runtime/runtime";
+import { useWindowResize } from "./hooks/useWindowResize";
+import { useHotkeyListener } from "./hooks/useHotkeyListener";
+import { useAutoSave } from "./hooks/useAutoSave";
 import "./App.css";
 
 type TabId = "player" | "presets" | "overlay" | "hotkeys" | "system";
 
-const TABS: { id: TabId; label: string; icon: string }[] = [
+export const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: "player", label: "Player Info", icon: "player" },
   { id: "presets", label: "Presets", icon: "presets" },
   { id: "overlay", label: "Overlay", icon: "overlay" },
@@ -85,7 +85,6 @@ function App() {
   const [betweenUrl, setBetweenUrl] = useState("");
   const [assetsBase, setAssetsBase] = useState("");
   const [games, setGames] = useState<GamePack[]>([]);
-  const [toast, setToast] = useState<Toast>(null);
   const [restartNotice, setRestartNotice] = useState(false);
   const [token, setToken] = useState("");
   const [playerPresets, setPlayerPresets] = useState<PlayerPreset[]>([]);
@@ -105,20 +104,19 @@ function App() {
   const pickerUrlRef = useRef("");
 
   const [disambigOpen, setDisambigOpen] = useState(false);
-  const [disambigAmbiguities, setDisambigAmbiguities] = useState<Ambiguity[]>(
-    [],
-  );
+  const [disambigAmbiguities, setDisambigAmbiguities] = useState<Ambiguity[]>([]);
   const disambigSetRef = useRef<StartggSet | null>(null);
 
-  const flash = (kind: ToastKind, message: string) =>
-    setToast({ kind, message });
+  const { flash, toast, setToast, useAutoSaveEffect, useGoStateSync } = useAutoSave();
 
+  // Toast auto-dismiss
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3000);
     return () => clearTimeout(t);
   }, [toast]);
 
+  // Load initial data
   useEffect(() => {
     Promise.all([
       GetState(),
@@ -152,120 +150,17 @@ function App() {
       .catch((e) => flash("err", "Failed to load: " + e));
   }, []);
 
-  const loadedRef = useRef(false);
-  const fromGoRef = useRef(false);
-  useEffect(() => {
-    if (!state) return;
-    if (!loadedRef.current) {
-      loadedRef.current = true;
-      return;
-    }
-    if (fromGoRef.current) {
-      fromGoRef.current = false;
-      return;
-    }
-    const timer = setTimeout(async () => {
-      try {
-        await SetState(state as any);
-        await Update();
-      } catch (e: any) {
-        flash("err", "Error: " + e);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [state]);
+  // Auto-save state changes
+  useAutoSaveEffect(state);
 
-  useEffect(() => {
-    const cancel = EventsOn("state:changed", (newState: StreamState) => {
-      fromGoRef.current = true;
-      setSt(newState as unknown as StreamState);
-    });
-    return cancel;
-  }, []);
+  // Sync Go-side state changes
+  useGoStateSync(setSt);
 
-  const hotkeyRef = useRef(hotkeyConfig);
-  hotkeyRef.current = hotkeyConfig;
-  useEffect(() => {
-    const formatCombo = (e: KeyboardEvent): string => {
-      const parts: string[] = [];
-      if (e.ctrlKey) parts.push("Ctrl");
-      if (e.altKey) parts.push("Alt");
-      if (e.shiftKey) parts.push("Shift");
-      if (e.metaKey) parts.push("Meta");
-      const key = e.code;
-      if (
-        ![
-          "ControlLeft",
-          "ControlRight",
-          "AltLeft",
-          "AltRight",
-          "ShiftLeft",
-          "ShiftRight",
-          "MetaLeft",
-          "MetaRight",
-        ].includes(key)
-      ) {
-        let name = key;
-        if (key.startsWith("Key")) name = key.slice(3);
-        else if (key.startsWith("Digit")) name = key.slice(5);
-        else if (key.startsWith("Numpad")) name = "Num" + key.slice(6);
-        parts.push(name);
-      }
-      return parts.join("+");
-    };
+  // Hotkey listener
+  useHotkeyListener(hotkeyConfig);
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      const cfg = hotkeyRef.current;
-      if (!cfg.enabled) return;
-      const target = e.target as HTMLElement;
-      if (
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
-        target.tagName === "SELECT"
-      )
-        return;
-      if (target.isContentEditable) return;
-
-      const combo = formatCombo(e);
-      if (!combo) return;
-
-      for (const [action, binding] of Object.entries(cfg.bindings)) {
-        if (binding === combo) {
-          e.preventDefault();
-          ExecuteHotkeyAction(action);
-          return;
-        }
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
-
-  const appRef = useRef<HTMLDivElement>(null);
-  const lastWindowH = useRef(0);
-
-  const syncWindowSize = useCallback(() => {
-    const appEl = appRef.current;
-    if (!appEl) return;
-    const h = Math.ceil(appEl.offsetHeight);
-    const max = window.screen.availHeight;
-    const clamped = Math.min(Math.max(h, 500), max);
-    if (Math.abs(clamped - lastWindowH.current) > 2) {
-      lastWindowH.current = clamped;
-      ResizeWindow(1280, clamped);
-    }
-  }, []);
-
-  useLayoutEffect(syncWindowSize);
-
-  useEffect(() => {
-    const appEl = appRef.current;
-    if (!appEl) return;
-    const ro = new ResizeObserver(syncWindowSize);
-    ro.observe(appEl);
-    return () => ro.disconnect();
-  }, [!!state, syncWindowSize]);
+  // Window resize
+  const appRef = useWindowResize();
 
   if (!state || !config) {
     return <div className="loading">Loading…</div>;
@@ -356,8 +251,7 @@ function App() {
           : prev,
       );
     } catch {
-      // Stay quiet — the user might still be typing the URL, or the
-      // token might not be set yet. Pick Set will surface the error.
+      // Stay quiet — the user might still be typing the URL
     }
   };
 
@@ -384,6 +278,7 @@ function App() {
     if (pickerSets.length > 0 && pickerUrlRef.current === url) return;
     await doPickerFetch(url);
   };
+
   const onSelectSet = (s: StartggSet) => {
     const ambiguities = collectAmbiguities(s, playerPresets);
     if (ambiguities.length > 0) {
@@ -507,11 +402,11 @@ function App() {
     });
     void onSavePlayerPresetRow({
       id: existing?.id ?? "",
+      gameId: existing?.gameId || config.game || undefined,
       name: player.name,
       pronouns: player.pronouns,
       prefix: player.prefix,
       aliases: existing?.aliases ?? [],
-      gameId: existing?.gameId || config.game || undefined,
       character: player.character || undefined,
       costume: player.costume > 0 ? player.costume : undefined,
       startggPlayerId: player.startggPlayerId,
@@ -540,124 +435,21 @@ function App() {
   const activePack = findPack(games, config.game);
   const activeTabMeta = TABS.find((t) => t.id === activeTab)!;
 
-  // ----- Sidebar status pill state ----------------------------------------
-  // Steady state: server enabled/disabled. Layered: restart notice when
-  // port/enable-server changed since the last save.
-  let statusClass = "sidebar-status";
-  let statusBody: React.ReactNode;
-  if (restartNotice) {
-    statusClass += " is-warn";
-    statusBody = (
-      <>
-        <strong>Restart needed</strong>
-        <span>Port or server toggle changed.</span>
-      </>
-    );
-  } else if (!config.enableServer) {
-    statusClass += " is-warn";
-    statusBody = (
-      <>
-        <strong>Server off</strong>
-        <span>Overlay browser source won't connect.</span>
-      </>
-    );
-  } else {
-    statusBody = (
-      <>
-        <strong>Server running</strong>
-        <span>Port {config.httpPort}</span>
-      </>
-    );
-  }
-
   return (
     <div className="app" ref={appRef}>
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <span className="sidebar-brand-eyebrow">
-            {activePack ? (activePack.shortName ?? activePack.name) : "No game"}
-          </span>
-          <span className="sidebar-brand-name">StreamFighter</span>
-        </div>
-
-        <nav aria-label="Section">
-          <ul className="sidebar-nav">
-            {TABS.map((t) => (
-              <li key={t.id}>
-                <button
-                  type="button"
-                  className="nav-item"
-                  aria-current={activeTab === t.id ? "page" : undefined}
-                  onClick={() => setActiveTab(t.id)}
-                  title={t.label}
-                >
-                  <Icon
-                    name={t.icon}
-                    width={18}
-                    height={18}
-                    className="nav-icon"
-                  />
-                  <span className="nav-label">{t.label}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <div className="sidebar-footer">
-          <div className={statusClass}>{statusBody}</div>
-
-          <div className="sidebar-game-header">
-            <span className="sidebar-footer-label">Game pack</span>
-            <div className="sidebar-game-actions">
-              <button
-                type="button"
-                className="sidebar-game-action"
-                title="Open games folder"
-                onClick={onOpenGamesDir}
-              >
-                <Icon name="folder" width={14} height={14} />
-              </button>
-              <button
-                type="button"
-                className="sidebar-game-action"
-                title="Refresh game packs"
-                onClick={onReloadGames}
-              >
-                <Icon name="refresh" width={14} height={14} />
-              </button>
-            </div>
-          </div>
-
-          <div
-            className="sidebar-game-picker"
-            role="radiogroup"
-            aria-label="Game pack"
-          >
-            <button
-              type="button"
-              className={`sidebar-game-option${config.game === "" ? " is-active" : ""}`}
-              role="radio"
-              aria-checked={config.game === ""}
-              onClick={() => onPickGame("")}
-            >
-              No game
-            </button>
-            {games.map((g) => (
-              <button
-                key={g.id}
-                type="button"
-                className={`sidebar-game-option${config.game === g.id ? " is-active" : ""}`}
-                role="radio"
-                aria-checked={config.game === g.id}
-                onClick={() => onPickGame(g.id)}
-              >
-                {g.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      </aside>
+      <Sidebar
+        activePack={activePack}
+        configGame={config.game}
+        activeTab={activeTab}
+        games={games}
+        restartNotice={restartNotice}
+        configEnableServer={config.enableServer}
+        configHttpPort={config.httpPort}
+        onTabClick={(id) => setActiveTab(id as TabId)}
+        onPickGame={onPickGame}
+        onOpenGamesDir={onOpenGamesDir}
+        onReloadGames={onReloadGames}
+      />
 
       <div className="main">
         <header className="appbar">
@@ -790,11 +582,7 @@ function App() {
       </div>
 
       {toast && (
-        <div
-          className={`toast is-${toast.kind}`}
-          role="status"
-          aria-live="polite"
-        >
+        <div className={`toast is-${toast.kind}`} role="status" aria-live="polite">
           {toast.message}
         </div>
       )}

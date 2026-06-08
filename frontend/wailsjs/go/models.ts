@@ -1,3 +1,99 @@
+export namespace gamepacks {
+	
+	export class Costume {
+	    index: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Costume(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.index = source["index"];
+	    }
+	}
+	export class Character {
+	    id: string;
+	    name: string;
+	    costumes: Costume[];
+	
+	    static createFrom(source: any = {}) {
+	        return new Character(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.costumes = this.convertValues(source["costumes"], Costume);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class Pack {
+	    id: string;
+	    name: string;
+	    shortName: string;
+	    aspectRatios?: string[];
+	    characterLayout?: string[][];
+	    portColors?: string[];
+	    teamColors?: string[];
+	    characters: Character[];
+	
+	    static createFrom(source: any = {}) {
+	        return new Pack(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.shortName = source["shortName"];
+	        this.aspectRatios = source["aspectRatios"];
+	        this.characterLayout = source["characterLayout"];
+	        this.portColors = source["portColors"];
+	        this.teamColors = source["teamColors"];
+	        this.characters = this.convertValues(source["characters"], Character);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace internal {
 	
 	export class Social {
@@ -64,97 +160,6 @@ export namespace internal {
 	        this.name = source["name"];
 	        this.pronouns = source["pronouns"];
 	        this.socials = this.convertValues(source["socials"], Social);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class Costume {
-	    index: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new Costume(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.index = source["index"];
-	    }
-	}
-	export class Character {
-	    id: string;
-	    name: string;
-	    costumes: Costume[];
-	
-	    static createFrom(source: any = {}) {
-	        return new Character(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.costumes = this.convertValues(source["costumes"], Costume);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class GamePack {
-	    id: string;
-	    name: string;
-	    shortName: string;
-	    aspectRatios?: string[];
-	    characters: Character[];
-	    characterLayout?: string[][];
-	    portColors?: string[];
-	    teamColors?: string[];
-	
-	    static createFrom(source: any = {}) {
-	        return new GamePack(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.shortName = source["shortName"];
-	        this.aspectRatios = source["aspectRatios"];
-	        this.characters = this.convertValues(source["characters"], Character);
-	        this.characterLayout = source["characterLayout"];
-	        this.portColors = source["portColors"];
-	        this.teamColors = source["teamColors"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -397,142 +402,6 @@ export namespace internal {
 	    }
 	}
 	
-	export class StartggPlayer {
-	    id: number;
-	    gamerTag: string;
-	    prefix?: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new StartggPlayer(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.gamerTag = source["gamerTag"];
-	        this.prefix = source["prefix"];
-	    }
-	}
-	export class StartggEntrant {
-	    name: string;
-	    players: StartggPlayer[];
-	
-	    static createFrom(source: any = {}) {
-	        return new StartggEntrant(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.players = this.convertValues(source["players"], StartggPlayer);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
-	export class StartggSet {
-	    id: string;
-	    fullRoundText: string;
-	    eventName: string;
-	    state: number;
-	    totalGames: number;
-	    entrants: StartggEntrant[];
-	
-	    static createFrom(source: any = {}) {
-	        return new StartggSet(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.fullRoundText = source["fullRoundText"];
-	        this.eventName = source["eventName"];
-	        this.state = source["state"];
-	        this.totalGames = source["totalGames"];
-	        this.entrants = this.convertValues(source["entrants"], StartggEntrant);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class StartggTournament {
-	    name: string;
-	    slug: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new StartggTournament(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.slug = source["slug"];
-	    }
-	}
-	export class StartggSetsResult {
-	    tournament: StartggTournament;
-	    sets: StartggSet[];
-	
-	    static createFrom(source: any = {}) {
-	        return new StartggSetsResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.tournament = this.convertValues(source["tournament"], StartggTournament);
-	        this.sets = this.convertValues(source["sets"], StartggSet);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	
 	export class StreamState {
 	    setInfo: SetInfo;
 	    casters: Caster[];
@@ -547,6 +416,146 @@ export namespace internal {
 	        this.setInfo = this.convertValues(source["setInfo"], SetInfo);
 	        this.casters = this.convertValues(source["casters"], Caster);
 	        this.scoreEntities = this.convertValues(source["scoreEntities"], ScoreEntity);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
+export namespace startgg {
+	
+	export class Player {
+	    id: number;
+	    gamerTag: string;
+	    prefix?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Player(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.gamerTag = source["gamerTag"];
+	        this.prefix = source["prefix"];
+	    }
+	}
+	export class Entrant {
+	    name: string;
+	    players: Player[];
+	
+	    static createFrom(source: any = {}) {
+	        return new Entrant(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.players = this.convertValues(source["players"], Player);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class Set {
+	    id: string;
+	    fullRoundText: string;
+	    eventName: string;
+	    state: number;
+	    totalGames: number;
+	    entrants: Entrant[];
+	
+	    static createFrom(source: any = {}) {
+	        return new Set(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.fullRoundText = source["fullRoundText"];
+	        this.eventName = source["eventName"];
+	        this.state = source["state"];
+	        this.totalGames = source["totalGames"];
+	        this.entrants = this.convertValues(source["entrants"], Entrant);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class Tournament {
+	    name: string;
+	    slug: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Tournament(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.slug = source["slug"];
+	    }
+	}
+	export class SetsResult {
+	    tournament: Tournament;
+	    sets: Set[];
+	
+	    static createFrom(source: any = {}) {
+	        return new SetsResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.tournament = this.convertValues(source["tournament"], Tournament);
+	        this.sets = this.convertValues(source["sets"], Set);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

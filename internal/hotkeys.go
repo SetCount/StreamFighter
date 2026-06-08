@@ -100,7 +100,7 @@ func (a *App) ExecuteHotkeyAction(actionID string) {
 	state := a.state
 	a.mu.Unlock()
 
-	saveState(state, statePath())
+	saveJSON(0o644, statePath(), state)
 	_ = a.Update()
 	a.emitStateChanged()
 }

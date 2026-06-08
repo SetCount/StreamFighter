@@ -13,6 +13,9 @@ import (
 	"sync"
 	"time"
 
+	"StreamFighter/internal/gamepacks"
+	"StreamFighter/internal/startgg"
+
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -35,7 +38,7 @@ type App struct {
 	hotkeyConfig   HotkeyConfig
 	server         *overlayServer
 	hotkeys        *hotkeyManager
-	games          []GamePack
+	packs          []gamepacks.Pack
 	layoutRegistry LayoutRegistry
 	playerPresets  []PlayerPreset
 	casterPresets  []CasterPreset
@@ -46,23 +49,21 @@ func NewApp(overlayFS fs.FS) *App {
 	ensureConfigDir()
 	return &App{
 		overlayFS:     overlayFS,
-		state:         loadState(statePath()),
-		config:        loadConfig(configPath()),
-		secrets:       loadSecrets(secretsPath()),
-		hotkeyConfig:  loadHotkeyConfig(hotkeyConfigPath()),
+		state:         loadJSON(statePath(), defaultState),
+		config:        loadConfig(),
+		secrets:       loadJSON(secretsPath(), func() Secrets { return Secrets{} }),
+		hotkeyConfig:  loadHotkeyConfig(),
 		playerPresets: loadPlayerPresets(),
 		casterPresets: loadCasterPresets(),
 		fileManifest:  map[string]struct{}{},
 	}
 }
 
-// loadConfig returns the persisted OutputConfig from configPath, falling
-// back to defaultConfig() when the file is missing or malformed.
-// Unmarshaling over a pre-populated struct gives forward-compat: fields
-// added since the file was written keep their default values.
-func loadConfig(path string) OutputConfig {
+// --- Persist helpers that use the generic loadJSON/saveJSON ---
+
+func loadConfig() OutputConfig {
 	cfg := defaultConfig()
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(configPath())
 	if err != nil {
 		if !os.IsNotExist(err) {
 			fmt.Fprintf(os.Stderr, "load config: %v\n", err)
@@ -76,89 +77,41 @@ func loadConfig(path string) OutputConfig {
 	return cfg
 }
 
-// ensureAppDirs creates ConfigDir and DataDir on startup.
-func ensureConfigDir() {
-	ensureAppDirs()
-}
-
-// saveConfig writes the OutputConfig to configPath. Errors are logged
-// to stderr; we never fail SetConfig over a bad write.
 func saveConfig(cfg OutputConfig, path string) {
-	b, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "save config: %v\n", err)
-		return
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		fmt.Fprintf(os.Stderr, "save config: mkdir: %v\n", err)
-		return
-	}
-	if err := os.WriteFile(path, b, 0o644); err != nil {
-		fmt.Fprintf(os.Stderr, "save config: %v\n", err)
+	saveJSON(0o644, path, cfg)
+}
+
+func defaultConfig() OutputConfig {
+	return OutputConfig{
+		OutputDir:       "obs-output",
+		OverlayPath:     filepath.Join(DataDir(), "overlay", "index.html"),
+		GamesDir:        filepath.Join(DataDir(), "games"),
+		SponsorsDir:     filepath.Join(DataDir(), "sponsors"),
+		HTTPPort:        35920,
+		WriteFieldFiles: true,
+		WriteJSON:       true,
+		EnableServer:    true,
+		Appearance: OverlayAppearance{
+			Layout:          "dual",
+			GameAspect:      "4:3",
+			Accent:          "#e8711a",
+			SidebarBg:       "#18100a",
+			SidebarWidth:    240,
+			CamHeight:       300,
+			NameFont:        `"Arial Black", Impact, "Arial Narrow", sans-serif`,
+			NameFontSize:    30,
+			RoundFontSize:   30,
+			SponsorInterval: 5,
+			SponsorWidth:    200,
+			SponsorHeight:   0,
+			SponsorPadding:  16,
+		},
 	}
 }
 
-func loadState(path string) StreamState {
-	s := defaultState()
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "load state: %v\n", err)
-		}
-		return s
-	}
-	if err := json.Unmarshal(raw, &s); err != nil {
-		fmt.Fprintf(os.Stderr, "load state: %v (using defaults)\n", err)
-		return defaultState()
-	}
-	return s
-}
-
-func saveState(s StreamState, path string) {
-	b, err := json.MarshalIndent(s, "", "  ")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "save state: %v\n", err)
-		return
-	}
-	if err := os.WriteFile(path, b, 0o644); err != nil {
-		fmt.Fprintf(os.Stderr, "save state: %v\n", err)
-	}
-}
-
-func loadSecrets(path string) Secrets {
-	var s Secrets
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "load secrets: %v\n", err)
-		}
-		return s
-	}
-	if err := json.Unmarshal(raw, &s); err != nil {
-		fmt.Fprintf(os.Stderr, "load secrets: %v (using empty)\n", err)
-		return Secrets{}
-	}
-	return s
-}
-
-func saveSecrets(s Secrets, path string) {
-	b, err := json.MarshalIndent(s, "", "  ")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "save secrets: %v\n", err)
-		return
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		fmt.Fprintf(os.Stderr, "save secrets: mkdir: %v\n", err)
-		return
-	}
-	if err := os.WriteFile(path, b, 0o600); err != nil {
-		fmt.Fprintf(os.Stderr, "save secrets: %v\n", err)
-	}
-}
-
-func loadHotkeyConfig(path string) HotkeyConfig {
+func loadHotkeyConfig() HotkeyConfig {
 	cfg := HotkeyConfig{Bindings: map[string]string{}}
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(hotkeyConfigPath())
 	if err != nil {
 		if !os.IsNotExist(err) {
 			fmt.Fprintf(os.Stderr, "load hotkey config: %v\n", err)
@@ -175,44 +128,17 @@ func loadHotkeyConfig(path string) HotkeyConfig {
 	return cfg
 }
 
-func saveHotkeyConfig(cfg HotkeyConfig, path string) {
-	b, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "save hotkey config: %v\n", err)
-		return
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		fmt.Fprintf(os.Stderr, "save hotkey config: mkdir: %v\n", err)
-		return
-	}
-	if err := os.WriteFile(path, b, 0o644); err != nil {
-		fmt.Fprintf(os.Stderr, "save hotkey config: %v\n", err)
-	}
-}
+func ensureConfigDir() { ensureAppDirs() }
 
-func loadLayoutRegistry(path string) LayoutRegistry {
-	reg := make(LayoutRegistry)
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "load layout registry: %v\n", err)
-		}
-		return reg
-	}
-	if err := json.Unmarshal(raw, &reg); err != nil {
-		fmt.Fprintf(os.Stderr, "load layout registry: %v\n", err)
-		return make(LayoutRegistry)
-	}
-	return reg
-}
+// --- App lifecycle ---
 
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 	if err := a.ensureOverlayDir(a.config.OverlayPath); err != nil {
 		fmt.Println("seed overlay dir:", err)
 	}
-	a.games = loadGames(a.config.GamesDir)
-	a.layoutRegistry = loadLayoutRegistry(layoutRegistryPath())
+	a.packs = gamepacks.Load(a.config.GamesDir)
+	a.layoutRegistry = loadJSON(layoutRegistryPath(), func() LayoutRegistry { return LayoutRegistry{} })
 	a.startServer()
 	a.hotkeys = newHotkeyManager(a)
 	a.hotkeys.start()
@@ -260,48 +186,43 @@ func (a *App) Shutdown(_ context.Context) {
 	_ = a.server.shutdown(ctx)
 }
 
-// GetState returns the current stream state to the frontend.
+// --- State ---
+
 func (a *App) GetState() StreamState {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return a.state
 }
 
-// SetState replaces the in-memory state from the frontend and persists
-// it to disk so it survives restarts.
 func (a *App) SetState(s StreamState) {
 	a.mu.Lock()
 	a.state = s
 	a.mu.Unlock()
-	saveState(s, statePath())
+	saveJSON(0o644, statePath(), s)
 }
 
-// ClearState resets the stream state to defaults and persists the change.
 func (a *App) ClearState() StreamState {
 	s := defaultState()
 	a.mu.Lock()
 	a.state = s
 	a.mu.Unlock()
-	saveState(s, statePath())
+	saveJSON(0o644, statePath(), s)
 	return s
 }
 
-// GetConfig returns the current output configuration.
+// --- Config ---
+
 func (a *App) GetConfig() OutputConfig {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return a.config
 }
 
-// SetConfig replaces the output configuration and persists it to
-// configPath. Changing HTTPPort or EnableServer takes effect on the
-// next app start.
 func (a *App) SetConfig(c OutputConfig) {
 	a.mu.Lock()
 	a.config = c
 	a.mu.Unlock()
 	saveConfig(c, configPath())
-	// Push appearance changes to connected overlays immediately.
 	if c.EnableServer && a.server != nil {
 		if msg, err := json.Marshal(OverlayMessage{State: a.GetState(), Appearance: a.effectiveAppearance()}); err == nil {
 			a.server.hub.broadcast(msg)
@@ -309,16 +230,12 @@ func (a *App) SetConfig(c OutputConfig) {
 	}
 }
 
-// effectiveAppearance returns the persisted appearance with GameAspect
-// validated against the active game pack's supported ratios, and Layout
-// validated against the layout registry. Ensures the overlay always
-// receives a coherent aspect+layout pair.
 func (a *App) effectiveAppearance() OverlayAppearance {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	app := a.config.Appearance
 	app.GameID = a.config.Game
-	if pack := findGamePack(a.games, a.config.Game); pack != nil && len(pack.AspectRatios) > 0 {
+	if pack := gamepacks.FindPack(a.packs, a.config.Game); pack != nil && len(pack.AspectRatios) > 0 {
 		if app.GameAspect == "" || !contains(pack.AspectRatios, app.GameAspect) {
 			app.GameAspect = pack.AspectRatios[0]
 		}
@@ -340,58 +257,51 @@ func contains(slice []string, val string) bool {
 	return false
 }
 
-// GameOverlayURL is the address for the in-game OBS browser source.
+// --- URLs ---
+
 func (a *App) GameOverlayURL() string {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return fmt.Sprintf("http://localhost:%d/game", a.config.HTTPPort)
 }
 
-// BetweenOverlayURL is the address for the between-games OBS browser source.
 func (a *App) BetweenOverlayURL() string {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return fmt.Sprintf("http://localhost:%d/between", a.config.HTTPPort)
 }
 
-// AssetsBaseURL is the prefix the frontend (and OBS overlay) prepends to
-// game-pack image paths, e.g. `${base}/melee/characters/fox/select.png`.
 func (a *App) AssetsBaseURL() string {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return fmt.Sprintf("http://localhost:%d/games", a.config.HTTPPort)
 }
 
-// ListGames returns the currently-loaded game packs.
-func (a *App) ListGames() []GamePack {
+// --- Game packs ---
+
+func (a *App) ListGames() []gamepacks.Pack {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
-	return a.games
+	return a.packs
 }
 
-// GetLayoutRegistry returns the aspect-ratio-to-layouts mapping.
 func (a *App) GetLayoutRegistry() LayoutRegistry {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return a.layoutRegistry
 }
 
-// ReloadGames re-scans GamesDir. Call after dropping new art into a
-// pack so the UI picks it up without an app restart.
-func (a *App) ReloadGames() []GamePack {
+func (a *App) ReloadGames() []gamepacks.Pack {
 	a.mu.RLock()
 	dir := a.config.GamesDir
 	a.mu.RUnlock()
-	packs := loadGames(dir)
+	packs := gamepacks.Load(dir)
 	a.mu.Lock()
-	a.games = packs
+	a.packs = packs
 	a.mu.Unlock()
 	return packs
 }
 
-// OpenGamesDir opens the configured games directory in the OS file
-// manager so the user can drop in art (or symlink a pack) without
-// hunting for the path. The directory is created first if missing.
 func (a *App) OpenGamesDir() error {
 	a.mu.RLock()
 	dir := a.config.GamesDir
@@ -405,9 +315,6 @@ func (a *App) OpenGamesDir() error {
 	return openInFileManager(dir)
 }
 
-// openInFileManager launches the platform's file browser at path. We
-// fire-and-forget (Start, not Run) since explorer.exe in particular
-// returns a non-zero exit code even on success.
 func openInFileManager(path string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
@@ -421,32 +328,29 @@ func openInFileManager(path string) error {
 	return cmd.Start()
 }
 
-// GetSecrets returns the current secrets to the frontend. The token
-// field is sent in the clear; the dialog input should mask it.
+// --- Secrets ---
+
 func (a *App) GetSecrets() Secrets {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return a.secrets
 }
 
-// SetSecrets updates the in-memory secrets and persists them to
-// secretsPath. Empty token clears the file's value.
 func (a *App) SetSecrets(s Secrets) {
 	a.mu.Lock()
 	a.secrets = s
 	a.mu.Unlock()
-	saveSecrets(s, secretsPath())
+	saveJSON(0o600, secretsPath(), s)
 }
 
-// GetHotkeyConfig returns the current hotkey configuration.
+// --- Hotkey config ---
+
 func (a *App) GetHotkeyConfig() HotkeyConfig {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	return a.hotkeyConfig
 }
 
-// SetHotkeyConfig replaces the hotkey config, persists it, and
-// re-registers any active global hotkeys.
 func (a *App) SetHotkeyConfig(cfg HotkeyConfig) {
 	if cfg.Bindings == nil {
 		cfg.Bindings = map[string]string{}
@@ -454,14 +358,14 @@ func (a *App) SetHotkeyConfig(cfg HotkeyConfig) {
 	a.mu.Lock()
 	a.hotkeyConfig = cfg
 	a.mu.Unlock()
-	saveHotkeyConfig(cfg, hotkeyConfigPath())
+	saveJSON(0o644, hotkeyConfigPath(), cfg)
 	if a.hotkeys != nil {
 		a.hotkeys.rebind()
 	}
 }
 
-// ListPlayerPresets reloads from players.json on every call so a
-// hand-edit of the file shows up immediately on the next refresh.
+// --- Player presets ---
+
 func (a *App) ListPlayerPresets() []PlayerPreset {
 	p := loadPlayerPresets()
 	a.mu.Lock()
@@ -470,9 +374,6 @@ func (a *App) ListPlayerPresets() []PlayerPreset {
 	return p
 }
 
-// SavePlayerPreset upserts by ID, assigning a new ID when blank, and
-// returns the saved preset (with the assigned ID) so the frontend can
-// adopt it for subsequent edits.
 func (a *App) SavePlayerPreset(p PlayerPreset) (PlayerPreset, error) {
 	if p.ID == "" {
 		p.ID = newPresetID()
@@ -498,7 +399,6 @@ func (a *App) SavePlayerPreset(p PlayerPreset) (PlayerPreset, error) {
 	return p, nil
 }
 
-// DeletePlayerPreset removes by ID. Missing IDs are a no-op.
 func (a *App) DeletePlayerPreset(id string) error {
 	list := loadPlayerPresets()
 	out := list[:0]
@@ -516,7 +416,8 @@ func (a *App) DeletePlayerPreset(id string) error {
 	return nil
 }
 
-// ListCasterPresets reloads from casters.json on every call.
+// --- Caster presets ---
+
 func (a *App) ListCasterPresets() []CasterPreset {
 	c := loadCasterPresets()
 	a.mu.Lock()
@@ -525,7 +426,6 @@ func (a *App) ListCasterPresets() []CasterPreset {
 	return c
 }
 
-// SaveCasterPreset upserts by ID, assigning a new ID when blank.
 func (a *App) SaveCasterPreset(c CasterPreset) (CasterPreset, error) {
 	if c.ID == "" {
 		c.ID = newPresetID()
@@ -551,53 +451,6 @@ func (a *App) SaveCasterPreset(c CasterPreset) (CasterPreset, error) {
 	return c, nil
 }
 
-// FetchStartggSets pulls the tournament's recent sets from start.gg
-// using the saved API token. The frontend uses the result to populate
-// the Pick Set dialog.
-func (a *App) FetchStartggSets(rawURL string) (StartggSetsResult, error) {
-	a.mu.RLock()
-	token := a.secrets.StartggToken
-	a.mu.RUnlock()
-	if token == "" {
-		return StartggSetsResult{}, errors.New("no start.gg token configured (Settings → StartGG token)")
-	}
-	slug, err := ParseTournamentSlug(rawURL)
-	if err != nil {
-		return StartggSetsResult{}, err
-	}
-	parent := a.ctx
-	if parent == nil {
-		parent = context.Background()
-	}
-	ctx, cancel := context.WithTimeout(parent, 15*time.Second)
-	defer cancel()
-	return newStartggClient(token).FetchTournamentSets(ctx, slug, 64)
-}
-
-// FetchStartggTournament pulls just the tournament's name + slug. Wired
-// to the URL-blur auto-populate in the Tournament card so we don't pay
-// the full FetchStartggSets cost just to fill in the name field.
-func (a *App) FetchStartggTournament(rawURL string) (StartggTournament, error) {
-	a.mu.RLock()
-	token := a.secrets.StartggToken
-	a.mu.RUnlock()
-	if token == "" {
-		return StartggTournament{}, errors.New("no start.gg token configured (Settings → StartGG token)")
-	}
-	slug, err := ParseTournamentSlug(rawURL)
-	if err != nil {
-		return StartggTournament{}, err
-	}
-	parent := a.ctx
-	if parent == nil {
-		parent = context.Background()
-	}
-	ctx, cancel := context.WithTimeout(parent, 10*time.Second)
-	defer cancel()
-	return newStartggClient(token).FetchTournament(ctx, slug)
-}
-
-// DeleteCasterPreset removes by ID. Missing IDs are a no-op.
 func (a *App) DeleteCasterPreset(id string) error {
 	list := loadCasterPresets()
 	out := list[:0]
@@ -615,18 +468,59 @@ func (a *App) DeleteCasterPreset(id string) error {
 	return nil
 }
 
-// Update writes the current state out through every enabled channel:
-// per-field text files, a JSON snapshot, and an SSE broadcast.
+// --- start.gg ---
+
+func (a *App) FetchStartggSets(rawURL string) (startgg.SetsResult, error) {
+	a.mu.RLock()
+	token := a.secrets.StartggToken
+	a.mu.RUnlock()
+	if token == "" {
+		return startgg.SetsResult{}, errors.New("no start.gg token configured (Settings → StartGG token)")
+	}
+	slug, err := startgg.ParseTournamentSlug(rawURL)
+	if err != nil {
+		return startgg.SetsResult{}, err
+	}
+	parent := a.ctx
+	if parent == nil {
+		parent = context.Background()
+	}
+	ctx, cancel := context.WithTimeout(parent, 15*time.Second)
+	defer cancel()
+	return startgg.NewClient(token).FetchSets(ctx, slug, 64)
+}
+
+func (a *App) FetchStartggTournament(rawURL string) (startgg.Tournament, error) {
+	a.mu.RLock()
+	token := a.secrets.StartggToken
+	a.mu.RUnlock()
+	if token == "" {
+		return startgg.Tournament{}, errors.New("no start.gg token configured (Settings → StartGG token)")
+	}
+	slug, err := startgg.ParseTournamentSlug(rawURL)
+	if err != nil {
+		return startgg.Tournament{}, err
+	}
+	parent := a.ctx
+	if parent == nil {
+		parent = context.Background()
+	}
+	ctx, cancel := context.WithTimeout(parent, 10*time.Second)
+	defer cancel()
+	return startgg.NewClient(token).FetchTournament(ctx, slug)
+}
+
+// --- Update ---
+
 func (a *App) Update() error {
-	a.mu.Lock()
+	a.mu.RLock()
 	state := a.state
 	cfg := a.config
 	manifest := a.fileManifest
-	packs := a.games
-	a.mu.Unlock()
+	a.mu.RUnlock()
 
 	if cfg.WriteFieldFiles {
-		next, err := writeFieldFiles(cfg.OutputDir, state, cfg.Game, packs, manifest)
+		next, err := writeFieldFiles(cfg.OutputDir, state, cfg.Game, a.packs, manifest)
 		if err != nil {
 			return fmt.Errorf("field files: %w", err)
 		}
@@ -673,17 +567,15 @@ func (a *App) startServer() {
 	a.server.start()
 }
 
-// Muted port palette in Melee P1/P2/P3/P4 order. Mirrors
-// frontend/src/portColors.ts — keep them in sync when adjusting.
+// --- Window & defaults ---
+
 var portColors = [4]string{
-	"#c96a6a", // P1 red
-	"#5f8fc4", // P2 blue
-	"#cdb466", // P3 yellow
-	"#7ab07a", // P4 green
+	"#c96a6a",
+	"#5f8fc4",
+	"#cdb466",
+	"#7ab07a",
 }
 
-// ResizeWindow sets the native window dimensions. Called from the frontend
-// when the match format changes (1v1 → 600 tall, 2v2 → 1100 tall).
 func (a *App) ResizeWindow(width, height int) {
 	wailsruntime.WindowSetSize(a.ctx, width, height)
 }
@@ -698,34 +590,6 @@ func defaultState() StreamState {
 		ScoreEntities: []ScoreEntity{
 			{Players: []Player{{}}, PortColor: portColors[0]},
 			{Players: []Player{{}}, PortColor: portColors[1]},
-		},
-	}
-}
-
-func defaultConfig() OutputConfig {
-	return OutputConfig{
-		OutputDir:       "obs-output",
-		OverlayPath:     filepath.Join(DataDir(), "overlay", "index.html"),
-		GamesDir:        filepath.Join(DataDir(), "games"),
-		SponsorsDir:     filepath.Join(DataDir(), "sponsors"),
-		HTTPPort:        35920,
-		WriteFieldFiles: true,
-		WriteJSON:       true,
-		EnableServer:    true,
-		Appearance: OverlayAppearance{
-			Layout:          "dual",
-			GameAspect:      "4:3",
-			Accent:          "#e8711a",
-			SidebarBg:       "#18100a",
-			SidebarWidth:    240,
-			CamHeight:       300,
-			NameFont:        `"Arial Black", Impact, "Arial Narrow", sans-serif`,
-			NameFontSize:    30,
-			RoundFontSize:   30,
-			SponsorInterval: 5,
-			SponsorWidth:    200,
-			SponsorHeight:   0,
-			SponsorPadding:  16,
 		},
 	}
 }

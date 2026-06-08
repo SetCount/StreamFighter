@@ -3,9 +3,6 @@ package internal
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
-	"fmt"
-	"os"
 	"path/filepath"
 )
 
@@ -17,9 +14,6 @@ const (
 func playersPath() string { return filepath.Join(DataDir(), playersFile) }
 func castersPath() string { return filepath.Join(DataDir(), castersFile) }
 
-// newPresetID returns a stable random hex string used as a preset's ID.
-// IDs are app-assigned on first save so users can copy-paste rows in
-// the JSON files without ID collisions.
 func newPresetID() string {
 	var b [8]byte
 	if _, err := rand.Read(b[:]); err != nil {
@@ -29,49 +23,19 @@ func newPresetID() string {
 }
 
 func loadPlayerPresets() []PlayerPreset {
-	out := []PlayerPreset{}
-	raw, err := os.ReadFile(playersPath())
-	if err != nil {
-		if !os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "load players.json: %v\n", err)
-		}
-		return out
-	}
-	if err := json.Unmarshal(raw, &out); err != nil {
-		fmt.Fprintf(os.Stderr, "load players.json: %v (returning empty list)\n", err)
-		return []PlayerPreset{}
-	}
-	return out
+	return loadJSON(playersPath(), func() []PlayerPreset { return []PlayerPreset{} })
 }
 
 func savePlayerPresets(p []PlayerPreset) error {
-	b, err := json.MarshalIndent(p, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(playersPath(), b, 0o644)
+	saveJSON(0o644, playersPath(), p)
+	return nil
 }
 
 func loadCasterPresets() []CasterPreset {
-	out := []CasterPreset{}
-	raw, err := os.ReadFile(castersPath())
-	if err != nil {
-		if !os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "load casters.json: %v\n", err)
-		}
-		return out
-	}
-	if err := json.Unmarshal(raw, &out); err != nil {
-		fmt.Fprintf(os.Stderr, "load casters.json: %v (returning empty list)\n", err)
-		return []CasterPreset{}
-	}
-	return out
+	return loadJSON(castersPath(), func() []CasterPreset { return []CasterPreset{} })
 }
 
 func saveCasterPresets(c []CasterPreset) error {
-	b, err := json.MarshalIndent(c, "", "  ")
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(castersPath(), b, 0o644)
+	saveJSON(0o644, castersPath(), c)
+	return nil
 }
