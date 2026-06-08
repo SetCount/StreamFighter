@@ -7,9 +7,20 @@ vars:
 
 tasks:
   dev:
-    desc: Runs the dev command w/ tags based on my systems
+    desc: Run live-reload dev mode
+    vars:
+      GIT_TAG:
+        sh: git describe --tags --always 2>/dev/null || echo dev
     cmds:
-      - wails dev -tags webkit2_41
+      - wails dev -tags webkit2_41 -ldflags "-X 'StreamFighter/internal.Version={{.GIT_TAG}}'"
+
+  build:
+    desc: Build production binary
+    vars:
+      GIT_TAG:
+        sh: git describe --tags --always 2>/dev/null || echo dev
+    cmds:
+      - wails build -tags webkit2_41 -ldflags "-X 'StreamFighter/internal.Version={{.GIT_TAG}}'"
 
   format:
     desc: Run formatter across files

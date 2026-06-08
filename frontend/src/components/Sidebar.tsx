@@ -1,4 +1,4 @@
-import type { GamePack } from "../types";
+import type { GamePack, UpdateInfo } from "../types";
 import { Icon } from "../icons";
 
 type TabId = "player" | "presets" | "overlay" | "hotkeys" | "system";
@@ -16,6 +16,7 @@ interface SidebarProps {
   configGame: string;
   activeTab: string;
   games: GamePack[];
+  updateInfo: UpdateInfo | null;
   restartNotice: boolean;
   configEnableServer: boolean;
   configHttpPort: number;
@@ -30,6 +31,7 @@ export function Sidebar({
   configGame,
   activeTab,
   games,
+  updateInfo,
   restartNotice,
   configEnableServer,
   configHttpPort,
@@ -95,6 +97,24 @@ export function Sidebar({
 
       <div className="sidebar-footer">
         <div className={statusClass}>{statusBody}</div>
+
+        {updateInfo?.outdated && (
+          <a
+            href={updateInfo.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sidebar-update"
+            title={`Download ${updateInfo.latest}`}
+          >
+            <Icon name="open" width={14} height={14} />
+            <span>Update available: {updateInfo.latest}</span>
+          </a>
+        )}
+
+        <div className="sidebar-version">
+          v{updateInfo?.current ?? "0.0.0"}
+        </div>
+
         <div className="sidebar-game-header">
           <span className="sidebar-footer-label">Game pack</span>
           <div className="sidebar-game-actions">

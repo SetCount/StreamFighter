@@ -10,6 +10,10 @@ export function BetweenOverlayURL() {
   return window['go']['internal']['App']['BetweenOverlayURL']();
 }
 
+export function CheckUpdate() {
+  return window['go']['internal']['App']['CheckUpdate']();
+}
+
 export function ClearState() {
   return window['go']['internal']['App']['ClearState']();
 }
@@ -56,6 +60,10 @@ export function GetSecrets() {
 
 export function GetState() {
   return window['go']['internal']['App']['GetState']();
+}
+
+export function GetVersion() {
+  return window['go']['internal']['App']['GetVersion']();
 }
 
 export function ListCasterPresets() {

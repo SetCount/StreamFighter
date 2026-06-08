@@ -8,6 +8,8 @@ export function AssetsBaseURL():Promise<string>;
 
 export function BetweenOverlayURL():Promise<string>;
 
+export function CheckUpdate():Promise<internal.UpdateInfo>;
+
 export function ClearState():Promise<internal.StreamState>;
 
 export function DeleteCasterPreset(arg1:string):Promise<void>;
@@ -31,6 +33,8 @@ export function GetLayoutRegistry():Promise<internal.LayoutRegistry>;
 export function GetSecrets():Promise<internal.Secrets>;
 
 export function GetState():Promise<internal.StreamState>;
+
+export function GetVersion():Promise<string>;
 
 export function ListCasterPresets():Promise<Array<internal.CasterPreset>>;
 

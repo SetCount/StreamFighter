@@ -173,3 +173,10 @@ export type HotkeyConfig = {
   enabled: boolean;
   bindings: Record<string, string>;
 };
+
+export type UpdateInfo = {
+  current: string;
+  latest: string;
+  url: string;
+  outdated: boolean;
+};

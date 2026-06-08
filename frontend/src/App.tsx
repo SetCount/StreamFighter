@@ -30,6 +30,7 @@ import {
   DeleteCasterPreset,
   FetchStartggSets,
   FetchStartggTournament,
+  CheckUpdate,
 } from "../wailsjs/go/internal/App";
 import type {
   StreamState,
@@ -43,6 +44,7 @@ import type {
   CasterPreset,
   StartggSet,
   HotkeyConfig,
+  UpdateInfo,
 } from "./types";
 import { reshapeForFormat, canResize, clampScores } from "./reshape";
 import { applyStartggSet, collectAmbiguities } from "./startgg";
@@ -95,6 +97,7 @@ function App() {
     bindings: {},
   });
   const [activeTab, setActiveTab] = useState<TabId>("player");
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerSets, setPickerSets] = useState<StartggSet[]>([]);
@@ -130,8 +133,9 @@ function App() {
       ListPlayerPresets(),
       ListCasterPresets(),
       GetHotkeyConfig(),
+      CheckUpdate(),
     ])
-      .then(([s, c, gu, bu, a, g, lr, sec, pp, cp, hk]) => {
+      .then(([s, c, gu, bu, a, g, lr, sec, pp, cp, hk, up]) => {
         const st = s as unknown as StreamState;
         setSt(st);
         setCfg(c as unknown as OutputConfig);
@@ -146,6 +150,7 @@ function App() {
         setHotkeyConfig(
           (hk as unknown as HotkeyConfig) ?? { enabled: false, bindings: {} },
         );
+        setUpdateInfo(up as unknown as UpdateInfo);
       })
       .catch((e) => flash("err", "Failed to load: " + e));
   }, []);
@@ -442,6 +447,7 @@ function App() {
         configGame={config.game}
         activeTab={activeTab}
         games={games}
+        updateInfo={updateInfo}
         restartNotice={restartNotice}
         configEnableServer={config.enableServer}
         configHttpPort={config.httpPort}
