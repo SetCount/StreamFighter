@@ -18,26 +18,37 @@ Grab the latest build for your OS from the
 - **Windows** — `StreamFighter.exe`
 - **Linux** — `StreamFighter`
 
-The app creates a few files next to wherever you run it from
-(`streamfighter.config.json`, an `obs-output/` folder, etc.), so it's tidiest
-to drop the binary in its own folder.
+StreamFighter keeps its settings, presets, hotkeys, saved match state, and
+game packs in a per-user folder managed by your OS:
+
+- **Windows** — `%AppData%\StreamFighter`
+- **macOS** — `~/Library/Application Support/StreamFighter`
+- **Linux** — `~/.config/StreamFighter` (respects `$XDG_CONFIG_HOME`)
+
+The only thing written next to the binary is the `obs-output/` folder of
+plain-text source files (see step 3), so where you launch from only matters if
+you use those.
 
 ### 2. Add character art (game packs)
 
-StreamFighter ships with the Melee and Project+ skeletons but **does not
-include character art**. To get portraits and stock icons, drop your own images
-into the game pack folders:
+StreamFighter **does not include character art**. Each game is a folder inside
+the app's `games/` directory (under the per-user folder above). The quickest
+way to get there is the **Open games folder** button in the app's sidebar —
+after dropping in art, hit the refresh button next to it so the app re-scans.
+
+Each game folder holds a `game.json` manifest plus a `characters/` tree:
 
 ```
-games/<game>/characters/<character>/
-  select.png        # character-select button
-  portrait_01.png   # one pair per costume (01, 02, ...)
-  stock_01.png
+<game>/
+  game.json                       # character names + select-screen layout
+  characters/<character>/
+    select.png                    # character-select button
+    portrait_01.png               # one pair per costume (01, 02, ...)
+    stock_01.png
 ```
 
 A costume only shows up once both its `portrait_NN.png` and `stock_NN.png`
-exist. The `games/melee/game.json` file already lists the character names and
-layout — you just supply the images.
+exist. You supply the `game.json` and the images.
 
 ### 3. Point OBS at the overlays
 
@@ -55,26 +66,32 @@ into the `obs-output/` folder (e.g. `entity_1_player_1_name.txt`). Point OBS
 
 ## Using the app
 
-The window has three tabs across the top:
+The window has a sidebar with five sections:
 
-- **Player Info** — the main screen. Set the tournament name, round, format
-  (1v1 / 2v2 / FFA), and best-of, then fill in players: name, character
-  (click the portrait to pick), costume, and score. Click the score pips to
-  advance or roll back a score. Casters go in the panel on the right.
+- **Player Info** — the main screen. Set the tournament name, round, format,
+  and best-of, then fill in players: name, character (click the portrait to
+  pick), costume, and score. Click the score pips to advance or roll back a
+  score. Casters go in the panel on the right.
 - **Presets** — save players and casters you use often, so you can re-apply
   them by name later. Player presets can store aliases, a character, color, and
   a start.gg ID.
-- **Settings** — paths, ports, server toggles, and your start.gg API token.
+- **Overlay** — the look of the browser-source overlay: layout, colors, fonts,
+  camera sizing, and the sponsor rotator.
+- **Hotkeys** — keyboard shortcuts for scoring and other common actions (active
+  while the StreamFighter window is focused).
+- **System** — paths, ports, server toggle, file output, and your start.gg API
+  token.
 
-The active **game** is chosen from the dropdown in the top bar.
+The active **game pack** is chosen in the sidebar footer, next to the buttons
+that open the game-packs folder and refresh after you add art.
 
 Everything auto-saves and auto-pushes to OBS as you change it — there's no
 "Update" button to remember.
 
 ### Pulling sets from start.gg (optional)
 
-1. In **Settings**, paste your start.gg API token.
-2. On the **Player Info** tab, paste a tournament URL
+1. In **System**, paste your start.gg API token.
+2. On the **Player Info** section, paste a tournament URL
    (`https://www.start.gg/tournament/<slug>`) into the Tournament field — the
    name auto-fills.
 3. Click **Pick Set** to browse recent sets and load one. Players, round,
@@ -82,10 +99,11 @@ Everything auto-saves and auto-pushes to OBS as you change it — there's no
 
 ## A few things to know
 
-- Changing the **HTTP port**, **server on/off**, or **games folder** in Settings
-  requires restarting the app to take effect.
+- Changing the **HTTP port**, **server on/off**, or **games folder** in System
+  requires restarting the app to take effect. (Dropping in new art doesn't —
+  use the refresh button by the game picker.)
 - Character art is served by the built-in web server. If you turn the server
-  off in Settings, portraits and stock icons go blank until you restart with it
+  off in System, portraits and stock icons go blank until you restart with it
   back on.
 
 ## Building from source

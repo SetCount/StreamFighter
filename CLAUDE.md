@@ -6,102 +6,180 @@ right now; intended to expand to other games.
 
 ## Build & dev
 
-- `wails dev -tags webkit2_41` — live-reload dev
+- `wails dev -tags webkit2_41` — live-reload dev (or `task dev`, which
+  wraps the same command).
 - `wails build -tags webkit2_41` — full pipeline: regen bindings, build
-  frontend, link Go binary
-- `wails generate module` — regen TS bindings only, after Go API changes
-- `go build ./...` — fast Go-only sanity check (skips cgo link, no GUI)
-- `cd frontend && npx tsc --noEmit` — frontend type check
+  frontend, link Go binary.
+- `wails generate module` — regen TS bindings only, after Go API changes.
+- `go build ./...` — fast Go-only sanity check (skips cgo link, no GUI).
+- `cd frontend && npx tsc --noEmit` — frontend type check.
+- `task format` — `prettier` over `frontend/src` + `gofmt` over the Go
+  packages.
 
 The `webkit2_41` tag is required on this system: Fedora ships
 webkit2gtk-4.1 only, not the -4.0 that Wails defaults to. `go build` of
 just the Go packages works without it (no cgo link), but anything that
 links the Wails runtime needs it.
 
+CI (`.github/workflows/wails.yml`) builds cross-platform and cuts a
+GitHub release.
+
 ## Architecture
 
-### Backend (Go, repo root)
-- `main.go` — Wails options, window size, embedded frontend dist,
-  `OnStartup` / `OnShutdown` hooks.
-- `app.go` — `App` struct owns:
+### Backend (Go, `internal/` package)
+
+`main.go` (package `main`, repo root) is a thin shell: it `go:embed`s
+`frontend/dist` and `overlay/`, constructs `internal.NewApp(overlayFS)`,
+and runs Wails with the window options. **All real backend logic lives
+in the `internal/` package**, and the Wails bindings are generated under
+`frontend/wailsjs/go/internal/App` (note: `internal/App`, not the old
+`main.App`).
+
+- `internal/app.go` — `App` struct owns:
   - `state StreamState`, `config OutputConfig`, `secrets Secrets`,
-    `*overlayServer`, `games []GamePack`, `playerPresets`,
-    `casterPresets`, in-memory file manifest, `sync.RWMutex`.
+    `hotkeyConfig HotkeyConfig`, `*overlayServer`, `*hotkeyManager`,
+    `games []GamePack`, `layoutRegistry LayoutRegistry`,
+    `playerPresets`, `casterPresets`, in-memory file manifest,
+    `sync.RWMutex`.
   - Bound methods exposed to the frontend: `GetState`, `SetState`,
     `ClearState`, `GetConfig`, `SetConfig`, `GameOverlayURL`,
     `BetweenOverlayURL`, `AssetsBaseURL`, `ListGames`, `ReloadGames`,
-    `Update`, `GetSecrets`, `SetSecrets`, `ListPlayerPresets`,
-    `SavePlayerPreset`, `DeletePlayerPreset`, `ListCasterPresets`,
-    `SaveCasterPreset`, `DeleteCasterPreset`, `FetchStartggSets`,
-    `FetchStartggTournament`, `ResizeWindow`.
-  - The `overlay/` directory is `go:embed`'d as `overlayFS` — used as
-    a **seed only**. On startup `ensureOverlayDir` walks the embed and
-    writes any missing files to the configured `OverlayPath`'s parent
-    directory.
-  - `OutputConfig` is persisted to a cwd-relative
-    `streamfighter.config.json` on every `SetConfig`. `loadConfig` merges
-    the file over `defaultConfig()` so newly-added fields keep their
-    defaults until the user saves again.
-  - `Secrets` is persisted separately to `streamfighter.secrets.json`
-    (gitignored, mode 0600). Holds the start.gg API token. Same
-    forward-compat unmarshal pattern as `loadConfig`.
-- `models.go` — domain types and enums: `SetInfo`, `Caster`, `Player`,
-  `ScoreEntity`, `StreamState`, `OutputConfig`, `OverlayAppearance`,
-  `OverlayMessage`, `PlayerPreset`, `CasterPreset`, `Secrets`, plus
-  `Format`, `BestOf`, `SocialIcon`.
-  `Caster.Pronouns` is an optional free-text field (e.g. "he/him").
-  `Player.Character` holds a character ID; `Player.Costume` is a 1-based
-  costume index (0 = unset). `Player.StartggPlayerID` (0 = unset) links
-  a player to a stable start.gg user account so future Pull-from-StartGG
-  passes can reapply the same preset even if the gamer tag changes.
-  `OutputConfig.StartggTournamentURL` persists the most-recently-pulled
-  tournament URL across runs.
-- `presets.go` — file-backed preset store. `loadPlayerPresets()` /
-  `savePlayerPresets()` against `players.json`, same shape for casters
-  in `casters.json`. Both files are flat JSON arrays, hand-editable.
-  IDs are 8-byte hex from `crypto/rand`, assigned on first save. The
-  `List*` Wails methods reload from disk on every call so a hand-edit
-  shows up on the next refresh.
-- `startgg.go` — start.gg GraphQL client (stdlib `net/http` only, no
-  external deps). `ParseTournamentSlug` extracts the slug from any
+    `OpenGamesDir`, `GetLayoutRegistry`, `Update`, `GetSecrets`,
+    `SetSecrets`, `GetHotkeyConfig`, `SetHotkeyConfig`,
+    `ExecuteHotkeyAction`, `ListPlayerPresets`, `SavePlayerPreset`,
+    `DeletePlayerPreset`, `ListCasterPresets`, `SaveCasterPreset`,
+    `DeleteCasterPreset`, `FetchStartggSets`, `FetchStartggTournament`,
+    `ResizeWindow`.
+  - The `overlay/` directory is `go:embed`'d in `main.go` and passed in
+    as `overlayFS` — used as a **seed only**. On startup
+    `ensureOverlayDir` walks the embed and writes any missing files to
+    the configured `OverlayPath`'s parent directory.
+  - **Persistence locations** (see `paths.go`): config, secrets, and
+    hotkeys live in `ConfigDir()`; state, `layouts.json`, the preset
+    JSON files, and the default overlay/games/sponsors directories live
+    in `DataDir()`. Both currently resolve to
+    `os.UserConfigDir()/StreamFighter` (`~/.config/StreamFighter` on
+    Linux). `defaultConfig()` seeds `OverlayPath`, `GamesDir`, and
+    `SponsorsDir` under `DataDir()`; `OutputDir` defaults to a plain
+    cwd-relative `obs-output`.
+  - `OutputConfig` → `streamfighter.config.json`, persisted on every
+    `SetConfig`. `loadConfig` merges the file over `defaultConfig()` so
+    newly-added fields keep their defaults until the user saves again.
+    `SetConfig` also re-broadcasts appearance to connected overlays so
+    visual changes land without a refresh.
+  - `Secrets` → `streamfighter.secrets.json` (gitignored, mode 0600).
+    Holds the start.gg API token.
+  - `StreamState` → `streamfighter.state.json`. `SetState`/`ClearState`
+    persist it, and `NewApp` loads it on boot, so the match survives
+    restarts. `ClearState` resets to `defaultState()`.
+  - `HotkeyConfig` → `streamfighter.hotkeys.json`.
+  - `effectiveAppearance()` is the single source of truth for what
+    overlays receive: it stamps the active `GameID` onto the persisted
+    `OverlayAppearance`, snaps `GameAspect` to the pack's first
+    supported ratio when unset/invalid, and snaps `Layout` to the first
+    entry in the layout registry for that aspect when invalid. Every SSE
+    broadcast and `/overlay/appearance.json` response goes through it.
+  - Window sizing: `ResizeWindow(w, h)` calls into the Wails runtime.
+    The frontend drives it from a `ResizeObserver` (see App.tsx), not
+    from a fixed format→height table.
+- `internal/paths.go` — `ConfigDir()` / `DataDir()` (both
+  `os.UserConfigDir()/StreamFighter` today; the names anticipate a
+  future split) and `ensureAppDirs()` (mkdir on startup).
+- `internal/models.go` — domain types and enums: `SetInfo`, `Caster`,
+  `Player`, `ScoreEntity`, `StreamState`, `OutputConfig`,
+  `OverlayMessage`, `OverlayAppearance`, `PlayerPreset`, `CasterPreset`,
+  `Secrets`, `HotkeyConfig`, plus `Format`, `BestOf`, `SocialIcon`,
+  `Social`.
+  - `Caster.Pronouns` is optional free text (e.g. "he/him").
+  - `Player.Character` holds a character ID; `Player.Costume` is a
+    1-based costume index (0 = unset); `Player.Pronouns`/`Prefix` are
+    optional. `Player.StartggPlayerID` (0 = unset) links a player to a
+    stable start.gg account so future pulls reapply the same preset even
+    if the gamer tag changes.
+  - `OutputConfig.StartggTournamentURL` persists the last-pulled
+    tournament URL; `OutputConfig.SponsorsDir` and the embedded
+    `OverlayAppearance` round out the rig config.
+  - `OverlayAppearance` now carries `Layout`, `GameID`, `GameAspect`,
+    `Accent`, `SidebarBg`, `SidebarWidth`, `CamHeight`, `NameFont`,
+    `NameFontSize`, `RoundFontSize`, `LogoURL`, and the `Sponsor*`
+    fields (`SponsorInterval`/`Width`/`Height`/`Padding`).
+  - `HotkeyConfig` is `{ enabled bool, bindings map[actionID]combo }`.
+- `internal/hotkeys.go` — `hotkeyManager` plus the action-ID constants
+  (`ActionScoreE1Inc`, `…E1Dec`, `…E2Inc`, `…E2Dec`,
+  `ActionSwapEntities`, `ActionClear` — **keep in sync with
+  `HOTKEY_ACTIONS` in `HotkeysEditor.tsx`**). `ExecuteHotkeyAction`
+  mutates state under the lock (score adjust / swap / clear), persists,
+  runs `Update()`, then emits a `state:changed` Wails event so the
+  frontend re-syncs. **OS-level global capture is stubbed** — the
+  manager logs and stores bindings but doesn't yet register with the OS
+  (candidate lib noted inline: `golang.design/x/hotkey`). Today hotkeys
+  only fire from the frontend's in-window key listener.
+- `internal/presets.go` — file-backed preset store under `DataDir()`.
+  `loadPlayerPresets()`/`savePlayerPresets()` against `players.json`,
+  same shape for casters in `casters.json`. Flat JSON arrays,
+  hand-editable. IDs are 8-byte hex from `crypto/rand`, assigned on
+  first save. The `List*` Wails methods reload from disk on every call.
+- `internal/startgg.go` — start.gg GraphQL client (stdlib `net/http`
+  only). `ParseTournamentSlug` extracts the slug from any
   `start.gg/tournament/<slug>[/...]` URL or accepts a bare slug.
   `FetchTournamentSets` pulls events × recent sets in one query and
   flattens slots → entrants → players for the picker UI.
-  `FetchTournament` pulls just `name` + `slug` — wired to URL-blur in
-  the Tournament card so the name auto-populates without paying for
-  the full sets query. Both methods funnel through a private `post`
-  helper that owns the auth/JSON/status boilerplate.
-- `games.go` — game-pack loader. `GamePack`/`Character`/`Costume` types
-  plus `loadGames(dir)`, which walks the configured games directory and
-  skips malformed packs with a stderr warning. Display names default to
-  `humanizeID()` of the dir name and can be overridden by
-  `characterNames` in `game.json`.
-- `output.go` — `flattenFields(s, packs)` produces the per-field file
-  map and resolves character IDs to display names via the loaded packs;
-  `writeFieldFiles` writes and prunes stale files via a passed-in
-  manifest; `writeStateJSON` writes the snapshot.
-- `server.go` — stdlib `net/http` SSE hub (`sseHub`) plus `overlayServer`.
-  HTML routes share a `serveHTMLFile` helper (read-from-disk,
-  `Cache-Control: no-store`). Routes:
+  `FetchTournament` pulls just `name` + `slug` for the URL-blur
+  auto-populate. Both funnel through a private `post` helper.
+- `internal/games.go` — game-pack loader. `GamePack`/`Character`/
+  `Costume` types plus `loadGames(dir)`, `loadGamePack`,
+  `loadCharacter`, and helpers `findGamePack`, `characterDisplayName`,
+  `humanizeID`, `normalizeAspectRatios`. Walks the games directory and
+  skips malformed packs with a stderr warning. `isDir` resolves
+  symlinks (via `os.Stat`), so a pack — or an individual character dir —
+  can be a symlink to art living elsewhere.
+- `internal/output.go` — `flattenFields(s, gameID, packs)` produces the
+  per-field file map and resolves character IDs to display names via the
+  loaded packs; `writeFieldFiles` writes and prunes stale files via a
+  passed-in manifest; `writeStateJSON` writes the snapshot.
+- `internal/server.go` — stdlib `net/http` SSE hub (`sseHub`) plus
+  `overlayServer`. HTML routes share a `serveHTMLFile` helper
+  (read-from-disk, `Cache-Control: no-store`). Routes:
   - `GET /game` — serves `OverlayPath` (the in-game overlay).
   - `GET /between` — serves `between.html` from the same directory.
   - `GET /overlay/...` — static file server for CSS, JS, and other
     assets in the overlay directory.
-  - `GET /overlay/appearance.json` — current `OverlayAppearance`
-    (includes `gameId`).
+  - `GET /overlay/appearance.json` — `effectiveAppearance()` (includes
+    `gameId`, `layout`, `gameAspect`), `Access-Control-Allow-Origin: *`.
   - `GET /state.json` — current `StreamState` snapshot for first-paint.
-  - `GET /events` — SSE stream; new clients get current state + appearance
-    immediately, then every `Update()` broadcasts both.
+  - `GET /events` — SSE stream; new clients get current state +
+    appearance immediately, then every `Update()` (and `SetConfig`)
+    broadcasts an `OverlayMessage`.
   - `GET /games/...` — static file server rooted at `GamesDir`, with
-    `Access-Control-Allow-Origin: *` so the Wails frontend (different
-    origin) and the OBS browser source can both `<img>`-load assets.
-  - `GET /sponsors.json` — JSON array of image filenames in `SponsorsDir`.
+    `Access-Control-Allow-Origin: *`.
+  - `GET /sponsors.json` — JSON array of image filenames in `SponsorsDir`
+    (re-read per request; png/jpg/jpeg/gif/webp/svg).
   - `GET /sponsors/...` — static file server for sponsor images.
+
+### Layout registry (`layouts.json`)
+
+`DataDir()/layouts.json` maps an aspect-ratio string to the list of
+overlay layout IDs valid for it, e.g.:
+
+```json
+{
+  "73:60": ["dual", "single"],
+  "19:15": ["dual", "single"],
+  "4:3":   ["dual", "single"],
+  "16:9":  ["widescreen"]
+}
+```
+
+Loaded on startup into `App.layoutRegistry`, exposed to the frontend via
+`GetLayoutRegistry`, and used by `effectiveAppearance` to keep
+aspect+layout coherent. A game pack advertises which aspect ratios it
+supports (`aspectRatios` in `game.json`); the registry says which
+layouts each of those ratios can drive.
 
 ### Game packs (`games/<gameId>/`)
 
-Each pack is a directory under `OutputConfig.GamesDir` (default
-`games/`, cwd-relative). The directory name **is** the game ID.
+Each pack is a directory under `OutputConfig.GamesDir` (defaults to
+`DataDir()/games`). The directory name **is** the game ID.
 
 ```
 games/<gameId>/
@@ -115,11 +193,14 @@ games/<gameId>/
       stock_02.png
 ```
 
-`game.json` is small and stable:
+`game.json`:
 ```json
 {
   "name": "Super Smash Bros. Melee",
   "shortName": "Melee",
+  "aspectRatios": ["73:60", "4:3", "16:9"],
+  "portColors": ["#c96a6a", "#5f8fc4", "#cdb466", "#7ab07a"],
+  "teamColors": ["#c96a6a", "#5f8fc4"],
   "characterNames": {
     "mr_game_and_watch": "Mr. Game & Watch",
     "dr_mario": "Dr. Mario"
@@ -138,142 +219,164 @@ games/<gameId>/
 - Character display names default to `humanizeID(charId)` (snake_case →
   Title Case) and only need an entry in `characterNames` when that
   doesn't produce the right text (`Mr. Game & Watch`, `R.O.B.`).
-- `characterLayout` is optional. When present, each inner array is one
-  row of the character-select screen, rendered horizontally centered in
-  `CharacterPicker`. IDs that don't match an on-disk character are
-  silently skipped; characters present on disk but missing from every
-  row are appended as a trailing row. When omitted or empty, the picker
-  falls back to a single auto-fill grid of all characters.
-- We deliberately **do not** ship character art. `games/melee/` and
-  `games/pplus/` only contain `game.json` skeletons; users drop their
-  own portraits/stocks into the `characters/<id>/<NN>/` tree.
-- The frontend composes asset URLs as
+- `aspectRatios` lists the ratios the pack ships overlays for; legacy
+  singular `aspectRatio` is still accepted (`normalizeAspectRatios`).
+  The first entry is the default when appearance is unset.
+- `portColors` / `teamColors` are optional per-pack palettes. `portColors`
+  drives 1v1/FFA entity colors and the preset swatches; `teamColors`
+  drives 2v2. Both fall back to the legacy 4-color palette when omitted.
+- `characterLayout` is optional. Each inner array is one row of the
+  character-select screen, rendered horizontally centered in
+  `CharacterPicker`. IDs not present on disk are skipped; characters on
+  disk but missing from every row are appended as a trailing row. When
+  omitted, the picker falls back to a single auto-fill grid.
+- We deliberately **do not** ship character art. Users drop their own
+  portraits/stocks into the `characters/<id>/` tree (or symlink a pack
+  in). The frontend composes asset URLs as
   `${AssetsBaseURL()}/<gameId>/characters/<charId>/select.png` and
-  `${AssetsBaseURL()}/<gameId>/characters/<charId>/{portrait,stock}_<NN>.png`.
+  `.../{portrait,stock}_<NN>.png`.
 
 ### Frontend (React + TypeScript, `frontend/src/`)
-- `App.tsx` — state coordination, dialog refs, top-level layout. Owns
-  the picker dialog state and preset lists (loaded once on startup,
-  refreshed by row save/delete). Navigation is a three-tab strip below
-  the topbar: **Player Info** / **Presets** / **Settings**, driven by
-  `activeTab` state. The Player Info tab is the default: a flex column
-  inside `.content` with `<SetInfoEditor>` as a full-width bar over
-  `.layout-grid` (2-col grid: entities left `1fr`, casters right
-  `minmax(360px, 460px)`). The Presets tab renders `<PresetsEditor>`
-  directly in `.content` (no dialog). The Settings tab renders
-  `<ConfigEditor>` + `<OverlayEditor>` directly in `.content`.
-  `commitConfig(next)` is the shared auto-save path: it `setCfg`s and
-  calls `SetConfig`, surfacing a "port/server changes need restart"
-  notice in the status bar when those specific fields change. The Game
-  select in the topbar uses the same path.
+
+- `App.tsx` — state coordination, dialog refs, top-level **app-shell
+  layout**. The shell is a left **sidebar** + a `.main` column:
+  - **Sidebar**: brand block (eyebrow shows the active pack's short
+    name), a vertical `.sidebar-nav` of five sections, and a footer with
+    a server-status pill, the **game-pack picker** (a `radiogroup` of
+    buttons — "No game" plus one per pack — with open-folder and refresh
+    icon-buttons), driven by `OpenGamesDir` / `ReloadGames` /
+    `onPickGame`.
+  - **Main**: an `.appbar` (active-section title + URL chips for the
+    Game and Between overlay URLs, each with copy / open-in-browser
+    actions) over a `.content` tabpanel.
+  - Five sections (`TabId`): **player**, **presets**, **overlay**,
+    **hotkeys**, **system**. `activeTab` state selects which renders.
+  - Loads state/config/urls/games/layout-registry/secrets/presets/
+    hotkeys once on startup via a single `Promise.all`.
+  - **Auto-push**: a `useEffect` on `state` debounces 300ms then
+    `SetState` + `Update`. It skips the initial load (`loadedRef`) and
+    skips echoes of Go-originated changes (`fromGoRef`).
+  - **Go→frontend sync**: `EventsOn("state:changed", …)` adopts state
+    mutated on the Go side (e.g. hotkey actions) and sets `fromGoRef` so
+    the auto-push effect doesn't bounce it back.
+  - **In-window hotkeys**: a `keydown` listener formats the combo
+    (Ctrl/Alt/Shift/Meta + `e.code`), ignores typing in
+    inputs/textareas/selects, and calls `ExecuteHotkeyAction` when the
+    combo matches a binding and `hotkeyConfig.enabled`.
+  - **Window auto-resize**: `syncWindowSize` measures the app element
+    and calls `ResizeWindow(1280, clampedHeight)` (height clamped
+    500..`availHeight`), wired to a `ResizeObserver` + `useLayoutEffect`
+    so the window grows/shrinks as content changes.
+  - `commitConfig(next)` is the shared auto-save path: `setCfg` +
+    `SetConfig`, surfacing a "port/server toggle changed → restart"
+    notice when those fields change.
+  - **start.gg flow**: `onPickSet` → `FetchStartggSets` → `SetPicker`.
+    On select, `collectAmbiguities` checks for players matching multiple
+    presets; if any, it opens `PresetDisambiguator` to let the user
+    choose per-player before `applyStartggSet` runs (with an `overrides`
+    map).
 - `types.ts` — **plain interfaces** mirroring the Wails-generated
-  classes. Components use these everywhere. The generated
-  `main.StreamState` etc. are classes with a `convertValues` method that
-  breaks spread/literal updates — we cast with `as any` only at the
-  `SetState` / `SetConfig` API boundary. Keep this file in sync when
-  adding fields to Go models — `Player.startggPlayerId`,
-  `OutputConfig.startggTournamentUrl`, `PlayerPreset`, `CasterPreset`,
-  `Secrets`, and the `Startgg*` types all live here.
+  classes. Components use these everywhere; we cast with `as any` only
+  at the `SetState`/`SetConfig` API boundary. Keep in sync with
+  `models.go`/`games.go` — includes `OverlayAppearance` (with
+  `DEFAULT_APPEARANCE`), `PlayerPreset`, `CasterPreset`, `Secrets`,
+  `GamePack`/`Character`/`Costume`, `LayoutRegistry`, `HotkeyConfig`,
+  and the `Startgg*` types.
 - `reshape.ts` — `reshapeForFormat`, `clampScores`, `winCount`,
   `canResize`. Coerces score entities when format / bestOf changes.
-- `startgg.ts` — `applyStartggSet(prev, tournamentName, set, presets)`
-  rebuilds `StreamState` after a Pick Set. Match priority: startgg ID
-  → name (case-insensitive) → alias → blank player carrying gamerTag
-  + startggPlayerId. Format inferred from entrant shape; BestOf comes
-  from `set.totalGames` when it's a recognized 3/5/7, otherwise prev
-  is preserved (start.gg only populates `totalGames` when the
-  tournament configures per-round bestOf).
-- `portColors.ts` — shared `PORT_COLORS` palette used by the entity
-  editor, reshape defaults, and preset color swatches.
+- `startgg.ts` — `applyStartggSet(prev, tournamentName, set, presets,
+  portPalette, overrides?)` rebuilds `StreamState` after a Pick Set.
+  `matchAllPresets` (startgg ID → name → alias) and `collectAmbiguities`
+  surface multi-match cases for the disambiguator; `matchPreset` honors
+  an `overrides` map keyed by start.gg player ID. Format inferred from
+  entrant shape; BestOf from `set.totalGames` when 3/5/7 else preserved.
+  `setStateLabel` maps state codes (1 Created, 2 Ongoing, 3 Completed,
+  6 Called, 7 Ready).
+- `portColors.ts` — `PORT_COLORS` legacy fallback palette plus
+  `portPaletteFor(pack)` (pack `portColors` or fallback) and
+  `paletteFor(pack, format)` (2v2 → pack `teamColors`, else port
+  palette). Mirrored by `portColors` in `app.go`.
+- `icons.tsx` — `ICONS` map + `Icon` component. Social glyphs
+  (twitter/bluesky/twitch/discord) plus UI glyphs (copy, open, swap,
+  player, presets, overlay, hotkeys, system, folder, refresh, chevron,
+  …). Social glyphs are duplicated in `overlay/components/shared.js` —
+  separate runtimes, keep in sync.
+- `assets.ts` — `selectURL`, `portraitURL`, `stockURL`, `findPack`,
+  `findCharacter`. Asset URLs are composed against `AssetsBaseURL()` at
+  load time, so disabling `EnableServer` (or moving `HTTPPort` without a
+  restart) breaks images — expected.
 - `components/`
-  - `SetInfoEditor` — renders a `.set-info-bar` flex-row holding two
-    side-by-side `.set-info-card` fieldsets that flex-share the bar
-    width (each `flex: 1 1 0; min-width: 280px`, wrap-stack on narrow
-    viewports). First fieldset (`<legend>Tournament</legend>`):
-    tournament name input on top, then a `.startgg-row` with just the
-    StartGG URL input. The URL persists via `SetConfig` on blur, and
-    on blur App also calls `FetchStartggTournament` to auto-populate
-    the name field (silent on failure — Pick Set surfaces real
-    errors). Second fieldset (`<legend>Set Info</legend>`): Round
-    label input, segmented Bo3/5/7, segmented 1v1/2v2/FFA, and the
-    Pick Set button (lives here because it rebuilds set content, not
-    tournament identity). Game selection lives in the topbar, not
-    here — it's a property of the rig that rarely changes mid-session.
-  - `ScoreEntitiesEditor` — **returns a Fragment** of
-    `<fieldset class="entity-card">` elements (no outer wrapper). Each
-    legend carries a `.legend-swatch` colored from `--port-color` plus
-    the format-aware title (Player/Team/Entity) and a remove × button
-    (`.legend-action`). Pip score control reads `--port-color` from the
-    fieldset's inline style. Per-player UI: name input on top, a
-    clickable `.player-portrait` showing
-    `portrait_<NN>.png` (or a placeholder), and a `.stock-row`
-    radiogroup of `stock_<NN>.png` tiles below. Clicking the portrait
-    opens the `CharacterPicker` dialog; clicking a stock swaps the
-    player's costume index. Selected stock border uses `--port-color`.
-    Owns the `pickerFor: { ei, pi } | null` state that drives the
-    picker; on character change the first available costume index is
-    auto-selected.
-  - `CharacterPicker` — modal `<dialog class="character-picker">` with a
-    `.character-grid` of `.character-tile` buttons (one per character in
-    the active pack, plus a "None" tile at the start). Tiles render the
-    character's `select.png`. Falls back to friendly empty/no-pack
-    messages when the active pack has no characters loaded.
-  - `assets.ts` — small helper module exporting `selectURL`,
-    `portraitURL`, `stockURL`, `findPack`, `findCharacter`. Asset URLs
-    are composed against the value returned by `AssetsBaseURL()` at
-    load time, so flipping `EnableServer` off (or moving HTTPPort
-    without a restart) breaks images — that's expected.
-  - `CastersEditor` — outer `<fieldset><legend>Casters</legend>` with a
-    single-column list of plain `<div class="caster">` rows separated by
-    a top divider (same lightweight pattern as `.player` rows in the
-    entity editor — nested fieldsets stacked too much UA chrome and
-    padding for the narrow column). `+ Caster` is an `add-row` button at
-    the bottom, matching `+ Player` / `+ Social`. The name input has a
-    `<datalist>`-driven dropdown of caster preset names; an exact-match
-    type or selection replaces name, pronouns, and socials from the
-    preset.
-  - `SocialsEditor` — small reusable list-of-handles control. Owns
-    `SOCIAL_PLATFORMS` (Twitter/Bluesky/Twitch/Discord glyph paths).
-    Used by both `CastersEditor` and the caster preset rows in
-    `PresetsEditor`.
-  - `ConfigEditor` — `<fieldset>` rendered directly in `.content` on
-    the Settings tab. Holds the StartGG token (password input,
-    persisted on blur via `SetSecrets` to
-    `streamfighter.secrets.json`), paths, port, and server toggles
-    only — Game selection is in the topbar (also auto-saves). Takes
-    `value` + `onChange` (local-only) + `onCommit` (writes to disk
-    via App's `commitConfig`). Text/number inputs wire `onChange` to
-    `set(...)` and `onBlur` to `commit()`; checkboxes/selects wire
-    `onChange` to `commit({...})` directly so they persist on first
-    click. There is no Save button — stream state auto-pushes to OBS
-    on every change (debounced 300ms), never config. Per-field width
-    hints (`.fw-num`, `.fw-mid`, `.fw-path`, `.fw-long`, `.fw-slider`,
-    `.fw-color`, `.span-full`) let each label size to its content
-    rather than getting stretched into a uniform track; the
-    `.config-editor .grid` / `.overlay-editor .grid` overrides in
-    `App.css` swap the base grid for a flex-wrap row to honor them.
-  - `OverlayEditor` — sibling of `ConfigEditor` on the Settings tab.
-    Same `value`/`onChange`/`onCommit` contract, scoped to
-    `OverlayAppearance`. Sliders also call `commit()` on
-    `onMouseUp`/`onTouchEnd`/`onKeyUp` so a drag persists when the
-    pointer releases without needing to tab away.
-  - `PresetsEditor` — rendered directly in `.content` on the Presets
-    tab (no longer a `<dialog>`). Two `<fieldset>` sections (Player
-    Presets, Caster Presets) with explicit Save buttons per row —
-    auto-save would race with hand-edits to the JSON files. Player
-    rows have name + aliases + StartGG ID + character (via
-    `CharacterPicker`) + color swatches (with a "no preference" clear
-    option).
-  - `SetPicker` — modal `<dialog class="set-picker">` opened from
-    SetInfoEditor's Pick Set button. Substring filter across event,
-    round, and entrant tags, plus a "Hide completed" checkbox (default
-    on, drops `state === 3` rows) since unplayed sets are the streaming
-    target. Each row shows event · round · entrants · state badge.
-    Mirrors the `CharacterPicker` ref/effect pattern.
-  - `Segmented` — generic radio quickbutton row, active state via
+  - `Card` (`Card.tsx`) — the **universal grouping primitive**.
+    `<section class="card">` with variants (`accent`, `entity`,
+    `compact`, `flat`) plus `CardHeader` (eyebrow / title / subtitle /
+    actions / swatch) and `CardSection` (title / hint / children). This
+    replaced the old fieldset-everywhere convention; settings, editors,
+    and modals are built from Cards.
+  - `SetInfoEditor` — an accent `Card` with a collapse toggle. Body is
+    two columns: StartGG URL + tournament Name on the left; Round label,
+    `Segmented` Best-Of and Format, and Clear / Pick Set buttons on the
+    right. (The Best-Of control currently offers Bo3/Bo5 and Format
+    offers 1v1/2v2 — Bo7 and FFA are commented out in the options arrays
+    though the models still support them.) URL persists via `SetConfig`
+    on blur, and blur also calls `FetchStartggTournament` to
+    auto-populate the name (silent on failure).
+  - `ScoreEntitiesEditor` — a `Card` per entity. Header legend carries a
+    `--port-color` swatch, the format-aware role (Player/Team/Entity),
+    and a remove button. Per-player UI: name input, a clickable
+    `.player-portrait` (opens `CharacterPicker`), and a `.stock-row`
+    radiogroup of costume tiles. Palette comes from
+    `paletteFor(pack, format)`. Owns `pickerFor: { ei, pi } | null`.
+    Can save a player straight to a preset (`onSavePlayerAsPreset`).
+  - `CharacterPicker` — modal `<dialog>` with a `.character-grid` honoring
+    the pack's `characterLayout`, plus a "None" tile. Tiles render
+    `select.png`.
+  - `CastersEditor` — a `Card` with a single-column list of `.caster-row`
+    divs and a `+ Caster` add button. Name input has a `<datalist>` of
+    caster preset names; an exact match replaces name/pronouns/socials.
+    Can save a caster to a preset (`onSaveCasterAsPreset`).
+  - `SocialsEditor` — reusable list-of-handles control; owns
+    `SOCIAL_PLATFORMS`. Used by `CastersEditor` and the caster preset
+    rows.
+  - `SystemSettings` — the **System** section (formerly `ConfigEditor`).
+    Stacked Cards: Server (enable + port), Paths (overlay / games /
+    sponsors), File output (output dir + write toggles), Integrations
+    (start.gg token → `SetSecrets`). `value`/`onChange` (local) +
+    `onCommit` (writes via `commitConfig`). Text/number inputs commit on
+    blur; checkboxes commit on change. No Save button.
+  - `OverlayEditor` — the **Overlay** section, scoped to
+    `OverlayAppearance`. Cards for appearance (Layout: aspect-ratio +
+    layout `Segmented`, shown only when more than one option exists;
+    Colors; Typography; Cameras; Brand) and the Sponsor rotator
+    (interval / width / height / padding). Sliders debounce their
+    commit (~200ms after the last input). Takes `gameId`, `games`, and
+    `layoutRegistry` to drive the aspect/layout choices.
+  - `HotkeysEditor` — the **Hotkeys** section. An enable toggle plus
+    grouped action rows; clicking a binding records the next key combo
+    (`keydown` capture, ignores modifier-only). `HOTKEY_ACTIONS` must
+    match the action-ID constants in `hotkeys.go`. Flags conflicting
+    bindings. A footer notes that global (out-of-focus) hotkeys are not
+    yet wired.
+  - `PresetsEditor` — the **Presets** section. Player and Caster Cards
+    with explicit per-row Save buttons (auto-save would race hand-edits
+    to the JSON files). Player rows: name + aliases + StartGG ID +
+    character (via `CharacterPicker`) + color swatches.
+  - `SetPicker` — modal `<dialog>` from Pick Set. Substring filter
+    across event/round/entrants plus a "Hide completed" checkbox
+    (default on, drops `state === 3`). Each row shows event · round ·
+    entrants · state badge.
+  - `PresetDisambiguator` — modal `<dialog>` shown when a pulled set has
+    players matching more than one preset. Lets the user pick the
+    intended preset per ambiguous player; returns an `overrides` map
+    keyed by start.gg player ID that `applyStartggSet` honors.
+  - `Segmented` — generic radio quickbutton row, active via
     `aria-pressed`.
+- `App.css` is now just an **import hub** for `styles/{tokens, base,
+  shell, cards, buttons, forms, modals}.css`. Per-component styles live
+  next to their component (`SetInfoEditor.css`, `OverlayEditor.css`,
+  `SettingsForms.css`, etc.) and are imported from the `.tsx`.
 - `wailsjs/` — Wails-generated bindings. **Do not edit.** Regenerated by
-  `wails generate module` / `wails build` / `wails dev`.
+  `wails generate module` / `wails build` / `wails dev`. Bound methods
+  are under `wailsjs/go/internal/App`.
 
 ### Overlay (Preact + HTM, `overlay/`)
 
@@ -281,162 +384,145 @@ Browser-source overlays served by the built-in HTTP server. No build
 step — scripts use `https://esm.sh` imports for Preact/HTM.
 
 **CSS split:**
-- `shared.css` — reset, design tokens (`--accent`, `--name-font`, etc.),
-  win pips, caster block, tournament name, set info, brand logo. Every
-  overlay should include this.
+- `shared.css` — reset, design tokens (`--accent`, `--name-font`,
+  `--game-aspect`, etc.), win pips, caster block, tournament name, set
+  info, brand logo. Every overlay includes this.
 - `dual.css` — dual-sidebar layout (cam + name + score per side).
 - `single.css` — single-sidebar layout (scoreboard rows, one cam).
+- `widescreen.css` — 16:9 bottom-bar layout.
 - `between.css` — between-games scene (topbar matchup, caster banners).
 
 **Component library (`components/shared.js`):**
 - `useStreamState()` — connects to `/state.json` + `/events` SSE,
-  fetches `/overlay/appearance.json`. Returns `{ state, appearance }`.
-- `useEntity(entity)` — extracts `{ name, prefix, pronouns, score,
-  color }` from a `ScoreEntity` with sensible fallbacks.
-- `SetInfo` — round label + "BEST OF N".
-- `WinPips` — score pips colored by port color.
-- `FitText` — auto-shrinking text that scales down when it overflows.
-- `CasterList` — full caster block with social icons.
-- `TournamentName` — uppercased tournament name.
-- `BrandLogo` — logo image or fallback SVG.
-- `Icon` — social platform SVG glyphs (twitter, bluesky, twitch, discord).
-- `applyAppearance(a)` — sets CSS custom properties from appearance data.
-- `html` — HTM tagged template bound to Preact's `h`.
+  fetches `/overlay/appearance.json`, applies appearance, returns
+  `{ state, appearance }`.
+- `useEntity(entity)` — `{ name, prefix, pronouns, score, color }` from
+  a `ScoreEntity` with fallbacks.
+- `WinPips`, `FitText`, `SetInfo`, `CasterList`, `TournamentName`,
+  `BrandLogo`, `Icon`, `applyAppearance(a)` (sets CSS custom props,
+  including `--game-aspect` parsed from `gameAspect`, and
+  `body.dataset.layout`), and the `html` HTM tag.
 
-**Layouts:**
-- `app.js` / `index.html` — in-game overlay, switches between
-  `DualLayout` and `SingleLayout` based on `appearance.layout`.
-- `between.js` / `between.html` — between-games scene.
+**Layouts (`components/`):**
+- `dual-layout.js` (`DualLayout`), `single-layout.js` (`SingleLayout`),
+  `widescreen-layout.js` (`WidescreenLayout`) — each its own module.
+- `sponsor-rotator.js` (`SponsorRotator`) — fetches `/sponsors.json` and
+  cross-fades through the images on `sponsorInterval`; supports a fixed
+  bottom-right placement or an `inline` mode embedded in a sidebar.
 
-**`OverlayAppearance.gameId`:** The SSE payload and
-`/overlay/appearance.json` include `gameId` (the active game pack ID),
-so overlays can dynamically compose character art URLs:
-`/games/${appearance.gameId}/characters/<charId>/portrait_01.png`.
+**Entry points:**
+- `app.js` / `index.html` — in-game overlay; picks `WidescreenLayout` /
+  `SingleLayout` / `DualLayout` from `appearance.layout`.
+- `between.js` / `between.html` — between-games scene (topbar matchup,
+  cam placeholder, caster banners, sponsor rotator).
+- `_template.html` / `_template.js` — minimal working overlay to copy
+  from.
 
-**Template files (`_template.html` / `_template.js`):** Minimal working
-overlay demonstrating how to connect to the server, use shared
-components, and render player data. Copy and rename to start a custom
-overlay.
+**`OverlayAppearance` carries `gameId`**, so overlays can compose
+character art URLs against `/games/${gameId}/characters/<charId>/…`.
 
-**Icon duplication:** `ICONS` (social SVG paths) are defined in both
-`overlay/components/shared.js` and `frontend/src/icons.tsx`. These are
-separate runtimes (browser-source Preact vs. Wails React) so the
-duplication is intentional — keep them in sync when adding platforms.
+**Icon duplication:** social-platform SVG paths live in both
+`overlay/components/shared.js` (`ICONS`) and `frontend/src/icons.tsx`.
+Separate runtimes — keep them in sync when adding platforms.
 
 ## Output channels
 
 All toggleable in `OutputConfig`:
 - **Per-field text files** in `OutputDir` (default `obs-output`). One
-  `.txt` per leaf, e.g. `entity_1_player_1_name.txt`. OBS Text sources
-  read these directly. Stale files (entities/casters that shrank) are
-  pruned via the in-memory manifest. Player character IDs are resolved
-  to display names against the loaded `GamePack` before writing —
-  `entity_1_player_1_character.txt` contains `"Captain Falcon"`, not
-  `"captain_falcon"`. `entity_1_player_1_costume.txt` is the costume
-  index as a string (`0` = unset). A `game.txt` carries the active game
-  pack's display name.
+  `.txt` per leaf, e.g. `entity_1_player_1_name.txt`. Stale files are
+  pruned via the in-memory manifest. Character IDs resolve to display
+  names before writing (`…_character.txt` = `"Captain Falcon"`);
+  `…_costume.txt` is the index; `game.txt` is the active pack's display
+  name.
 - **`state.json` snapshot** in the same dir.
-- **SSE broadcast** at `/events` for browser-source overlays.
-  Deliberately one-way — WebSocket would have been the bidirectional
-  alternative; SSE keeps us on stdlib.
+- **SSE broadcast** at `/events` (`OverlayMessage` = state + appearance)
+  for browser-source overlays. One-way by design (SSE keeps us on
+  stdlib).
 
-Defaults: HTTP port `35920` → game overlay URL
-`http://localhost:35920/game`, between-games overlay URL
-`http://localhost:35920/between`. `OverlayPath` is cwd-relative
-(`overlay/index.html`), so the overlay directory lands wherever the
-binary launches from.
+Defaults: HTTP port `35920` → game overlay
+`http://localhost:35920/game`, between overlay
+`http://localhost:35920/between`.
 
 ## UX conventions
 
+- **Card-based grouping.** Panels, editors, and modals are built from
+  the `Card` / `CardHeader` / `CardSection` components, not bare
+  fieldsets. (This reverses the older fieldset-everywhere convention —
+  the `.card` system is now the standard.)
 - **Native form controls preferred.** `:root { color-scheme: dark }`
   makes WebKit/GTK render selects, scrollbars, dialog backdrops, and
-  checkboxes in dark mode. We add layout-only CSS (sizing, gap,
-  alignment) — don't override `background`/`border`/`color` on form
-  elements unless there's a real reason.
-- **Native section grouping via `<fieldset>` / `<legend>`.** Every
-  panel/card in the app is a fieldset; the UA stylesheet draws the
-  border and legend tab. There is no `.card` / `.card-head` class — do
-  not add one back. Layout-only rules (`fieldset { min-width: 0 }`,
-  `legend { display: flex }`) are in `App.css`. Same rule applies to
-  fieldsets as to other native form controls: don't override their
-  `background` / `border` / `color`.
-- **Fluid type scale.** `--font-xs/sm/md/base/lg` defined as
-  `clamp(min, calc(Nvw + Mpx), max)`. Inputs use `min-height: 2.2em` and
-  `padding: 0.4em 0.6em` so they grow with the font.
+  checkboxes in dark mode. Add layout-only CSS; don't override
+  `background`/`border`/`color` on form elements without a real reason.
+- **Fluid type scale.** `--font-xs/sm/md/base/lg` as `clamp(...)`.
+  Inputs grow with the font.
 - **Color tokens** (`--bg-page`, `--bg-bar`, `--line`, `--text-muted`,
-  `--accent`, etc.) live at `:root` in `App.css`. The palette is
-  Adwaita-style neutral grays so the bits we *do* paint (topbar,
-  segmented control, dashed add-row buttons) sit next to native fieldset
-  chrome without clashing. Add new colors here, not inline.
+  `--accent`, etc.) live in `styles/tokens.css`. Add new colors there,
+  not inline. The palette is Adwaita-style neutral gray.
 - **Score**: pip buttons, `ceil(bestOf/2)` count. Click an empty pip to
-  advance to it; click a filled pip to roll back to one less. Filled
-  pips inherit the entity's `--port-color`.
-- **Best Of / Format / future radio choices**: use `<Segmented>`.
-- **Port/team color**: RGBY only for now (Melee). `PORT_COLORS` lives
-  in `frontend/src/portColors.ts` (and a mirrored `portColors` in
-  `app.go`). When expanding to other games, gate the palette on
-  game/format inside that shared module.
-- **Format ↔ structure**: `1v1` and `2v2` lock entity and player counts
-  (the +/× controls hide when `canResize` is false). `FFA` is the only
+  advance; click a filled pip to roll back. Filled pips inherit the
+  entity's `--port-color`.
+- **Best Of / Format / radio choices**: use `<Segmented>`.
+- **Port/team color**: pack-defined via `portColors`/`teamColors`,
+  falling back to the legacy RGBY palette. Shared logic in
+  `frontend/src/portColors.ts` (mirrored in `app.go`).
+- **Format ↔ structure**: `1v1`/`2v2` lock entity and player counts
+  (resize controls hide when `canResize` is false). `FFA` is the only
   structurally-flexible format. Switching format runs `reshapeForFormat`;
   switching Best Of runs `clampScores`.
-- **Navigation** is a tab strip (`<nav class="tabs">`) directly under
-  the topbar with three tabs: Player Info, Presets, Settings. Active
-  state is the `--accent` underline on `aria-selected="true"`. Config
-  saves itself on blur/change — there is no Save Config button.
-- **Topbar** carries (in order): title, OBS source URL, and the
-  `<select class="game-select">` for the active game pack. No action
-  buttons live here; the Game select auto-saves through `commitConfig`,
-  same path as every Settings field. So if a user only ever streams P+,
-  they pick once and never see it again.
-- **Auto-update**: every change to `StreamState` (typing a name,
-  picking a character, clicking a pip, changing format/bestOf, picking
-  a set) auto-pushes to OBS after a 300ms debounce. There is no
-  manual Update button — the `useEffect` watching `state` handles it
-  silently, skipping only the initial load.
+- **Navigation** is the left sidebar (`.sidebar-nav`), five sections:
+  Player Info, Presets, Overlay, Hotkeys, System. Active item via
+  `aria-current="page"`. Config saves on blur/change — no Save button.
+- **Game pack** selection lives in the sidebar footer (a `radiogroup`),
+  next to open-folder / refresh actions and a server-status pill. Picking
+  a game auto-saves through `commitConfig` and clears per-player
+  character/costume (art is pack-specific).
+- **Auto-update**: every `StreamState` change auto-pushes to OBS after a
+  300ms debounce (App.tsx `useEffect`), skipping the initial load and
+  Go-originated echoes. No manual Update button.
+- **Window auto-resize**: the window height tracks content via a
+  `ResizeObserver` calling `ResizeWindow` (width fixed 1280).
 
 ## Presets & StartGG integration
 
-- **`streamfighter.secrets.json`** (gitignored, mode 0600). Holds the
-  start.gg API token. Loaded once on startup, written on `SetSecrets`.
-  Same forward-compat unmarshal pattern as `streamfighter.config.json`.
-- **`players.json` / `casters.json`** are flat JSON arrays of presets,
-  cwd-relative, hand-editable. The `List*` Wails methods reload from
-  disk on every call, so a hand-edit shows up on the next refresh
-  (switch tabs away and back, or pick a set). IDs are app-assigned
-  the first time `Save*Preset` is called for a row; copying a row in
-  your text editor is fine as long as you blank or change the ID.
-- **Player matching** when applying a preset to a typed name (in
-  `ScoreEntitiesEditor`) or to a player pulled from start.gg (in
-  `applyStartggSet`): startgg ID exact match wins; falls back to name
-  case-insensitive; falls back to alias case-insensitive. Anything
-  unmatched becomes a blank player carrying the gamer tag and startgg
-  ID so a future preset can be made from it.
-- **Pick Set flow**: paste a `https://www.start.gg/tournament/<slug>`
-  URL into the Tournament card → click Pick Set → modal lists recent
-  sets across events. Picking a set rebuilds entities (1v1/2v2/FFA
-  inferred), populates round label and tournament name, and adopts
-  BestOf from `set.totalGames` when it's 3/5/7 (else preserves prev).
-  Tournament URL persists in `OutputConfig` so it survives restarts.
+- **`streamfighter.secrets.json`** (in `ConfigDir()`, gitignored, mode
+  0600). Holds the start.gg API token, loaded once on startup, written
+  on `SetSecrets`.
+- **`players.json` / `casters.json`** (in `DataDir()`) are flat JSON
+  arrays of presets, hand-editable. The `List*` Wails methods reload
+  from disk on every call. IDs are app-assigned on first `Save*Preset`.
+- **Player matching** (applying a preset to a typed name, or to a player
+  pulled from start.gg): startgg ID exact match wins; falls back to name
+  (case-insensitive); falls back to alias. Multiple matches surface in
+  `PresetDisambiguator`. Anything unmatched becomes a blank player
+  carrying the gamer tag and startgg ID.
+- **Pick Set flow**: paste a `start.gg/tournament/<slug>` URL into the
+  Tournament card → Pick Set → `SetPicker` lists recent sets across
+  events. Picking a set (after disambiguation if needed) rebuilds
+  entities (1v1/2v2/FFA inferred), populates round label and tournament
+  name, and adopts BestOf from `set.totalGames` when 3/5/7 (else
+  preserves prev). Tournament URL persists in `OutputConfig`.
 
 ## Known soft edges
 
+- **Global hotkeys are not implemented.** `hotkeyManager` stores and
+  logs bindings but doesn't register with the OS, so hotkeys only fire
+  while the StreamFighter window is focused (frontend listener). Wiring
+  `golang.design/x/hotkey` (or similar) is a future pass.
 - Changing `HTTPPort` or `EnableServer` requires an app restart — the
-  server boots in `startup()` and there's no live restart path.
-  Changing `GamesDir` likewise needs a restart (or a `ReloadGames()`
-  call after `SetConfig`).
+  server boots in `Startup()` and there's no live restart path. Changing
+  `GamesDir` likewise needs a restart (or a `ReloadGames()` call after
+  `SetConfig`; the sidebar refresh button does exactly this).
 - The file manifest is in-memory only. A mid-stream crash plus an
   entity-shrink on the next run leaves stale files on disk. Cheap fix is
   persisting the manifest to a dotfile in `OutputDir`.
 - `types.ts` is hand-mirrored from `models.go` (and `games.go`). Keep
-  them in sync when adding fields. (We don't use the Wails-generated
-  classes directly because they fight spread updates.)
-- Game-pack art is fetched from the overlay HTTP server (`AssetsBaseURL()`).
-  If the user disables `EnableServer` in Settings, every portrait and
-  stock icon goes broken-image until the app restarts with the server
-  re-enabled. We don't currently surface this in the UI — consider an
-  inline warning if it bites users in practice.
-- Packaged builds don't seed `games/` for end users — the repo ships
-  skeletons in dev, but the binary has no embed for the game-pack tree.
-  Decide whether to seed-on-first-run (like `overlay.html`) or document
-  a manual download before public release.
+  them in sync when adding fields.
+- Game-pack art is fetched from the overlay HTTP server
+  (`AssetsBaseURL()`). Disabling `EnableServer` breaks every portrait and
+  stock icon until restart. The sidebar status pill warns when the
+  server is off, but the broken images themselves aren't called out.
+- Packaged builds don't seed `games/` for end users — the binary embeds
+  only `overlay/`, not the game-pack tree. Decide whether to seed on
+  first run or document a manual download before public release.
+- `ConfigDir()` and `DataDir()` currently resolve to the same path; the
+  split exists in the API but not yet in behavior.
