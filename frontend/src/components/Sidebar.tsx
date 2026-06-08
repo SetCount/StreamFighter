@@ -87,7 +87,12 @@ export function Sidebar({
                 onClick={() => onTabClick(t.id)}
                 title={t.label}
               >
-                <Icon name={t.icon} width={18} height={18} className="nav-icon" />
+                <Icon
+                  name={t.icon}
+                  width={18}
+                  height={18}
+                  className="nav-icon"
+                />
                 <span className="nav-label">{t.label}</span>
               </button>
             </li>
@@ -111,9 +116,7 @@ export function Sidebar({
           </a>
         )}
 
-        <div className="sidebar-version">
-          v{updateInfo?.current ?? "0.0.0"}
-        </div>
+        <div className="sidebar-version">v{updateInfo?.current ?? "0.0.0"}</div>
 
         <div className="sidebar-game-header">
           <span className="sidebar-footer-label">Game pack</span>
@@ -137,7 +140,11 @@ export function Sidebar({
           </div>
         </div>
 
-        <div className="sidebar-game-picker" role="radiogroup" aria-label="Game pack">
+        <div
+          className="sidebar-game-picker"
+          role="radiogroup"
+          aria-label="Game pack"
+        >
           <button
             type="button"
             className={`sidebar-game-option${configGame === "" ? " is-active" : ""}`}

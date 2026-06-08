@@ -65,21 +65,30 @@ function App() {
 
   if (appearance.layout === "widescreen") {
     return html`<${WidescreenLayout}
-      scoreEntities=${scoreEntities} setInfo=${setInfo}
-      casters=${casters} bestOf=${bestOf} appearance=${appearance}
+      scoreEntities=${scoreEntities}
+      setInfo=${setInfo}
+      casters=${casters}
+      bestOf=${bestOf}
+      appearance=${appearance}
     />`;
   }
 
   if (appearance.layout === "single") {
     return html`<${SingleLayout}
-      scoreEntities=${scoreEntities} setInfo=${setInfo}
-      casters=${casters} bestOf=${bestOf} appearance=${appearance}
+      scoreEntities=${scoreEntities}
+      setInfo=${setInfo}
+      casters=${casters}
+      bestOf=${bestOf}
+      appearance=${appearance}
     />`;
   }
 
   return html`<${DualLayout}
-    scoreEntities=${scoreEntities} setInfo=${setInfo} casters=${casters}
-    bestOf=${bestOf} appearance=${appearance}
+    scoreEntities=${scoreEntities}
+    setInfo=${setInfo}
+    casters=${casters}
+    bestOf=${bestOf}
+    appearance=${appearance}
   />`;
 }
 

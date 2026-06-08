@@ -1,6 +1,6 @@
 {
-    "73:60": ["dual", "single"],
-    "19:15": ["dual", "single"],
-    "4:3": ["dual", "single"],
-    "16:9": ["widescreen"]
+  "73:60": ["dual", "single"],
+  "19:15": ["dual", "single"],
+  "4:3": ["dual", "single"],
+  "16:9": ["widescreen"]
 }

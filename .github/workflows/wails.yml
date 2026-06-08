@@ -3,8 +3,8 @@ name: Wails build
 on:
   push:
     tags:
-    # Match version tags only, e.g. v1.2.3
-      - 'v*'
+      # Match version tags only, e.g. v1.2.3
+      - "v*"
 
 env:
   # Necessary for most environments as build failure can occur due to OOM issues
@@ -13,18 +13,18 @@ env:
 jobs:
   build:
     strategy:
-    # Failure in one platform build won't impact the others
+      # Failure in one platform build won't impact the others
       fail-fast: false
       matrix:
         build:
-          - name: 'StreamFighter'
-            platform:  'linux/amd64'
-            os: 'ubuntu-22.04'
-            bin: 'StreamFighter'
-          - name: 'StreamFighter'
-            platform:  'windows/amd64'
-            os: 'windows-latest'
-            bin: 'StreamFighter.exe'
+          - name: "StreamFighter"
+            platform: "linux/amd64"
+            os: "ubuntu-22.04"
+            bin: "StreamFighter"
+          - name: "StreamFighter"
+            platform: "windows/amd64"
+            os: "windows-latest"
+            bin: "StreamFighter.exe"
           # - name: 'StreamFighter'
           #   platform:  'darwin/universal'
           #   os: 'macos-latest'
@@ -40,12 +40,12 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: "1.24"
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'

@@ -39,9 +39,7 @@ export function useAutoSave() {
   }
 
   // Listen for Go-side state changes
-  function useGoStateSync(
-    setSt: (s: StreamState) => void,
-  ) {
+  function useGoStateSync(setSt: (s: StreamState) => void) {
     useEffect(() => {
       const cancel = EventsOn("state:changed", (newState: StreamState) => {
         fromGoRef.current = true;

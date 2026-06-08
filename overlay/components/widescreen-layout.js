@@ -5,7 +5,8 @@ function PlayerStrip({ entity, bestOf, side }) {
   return html`
     <div class="ws-player ws-${side}">
       <div class="ws-name-block">
-        ${prefix && html`<span class="ws-prefix">${prefix.toUpperCase()}</span>`}
+        ${prefix &&
+        html`<span class="ws-prefix">${prefix.toUpperCase()}</span>`}
         <${FitText} text=${name} class="ws-name" />
       </div>
       <${WinPips} score=${score} bestOf=${bestOf} color=${color} />

@@ -18,19 +18,23 @@ function TopBar({ setInfo, scoreEntities }) {
   return html`
     <div class="bg-topbar">
       <div class="bg-tournament">
-        ${tournamentName && html`<span class="bg-tournament-name">${tournamentName}</span>`}
-        ${roundLabel && html`<span class="bg-round">${roundLabel.toUpperCase()}</span>`}
+        ${tournamentName &&
+        html`<span class="bg-tournament-name">${tournamentName}</span>`}
+        ${roundLabel &&
+        html`<span class="bg-round">${roundLabel.toUpperCase()}</span>`}
       </div>
       <div class="bg-matchup">
         <div class="bg-player">
-          ${leftPrefix && html`<span class="bg-player-prefix">${leftPrefix}</span>`}
+          ${leftPrefix &&
+          html`<span class="bg-player-prefix">${leftPrefix}</span>`}
           <span class="bg-player-name">${leftName}</span>
         </div>
         <${WinPips} score=${leftScore} bestOf=${bestOf} color=${leftColor} />
         <span class="bg-vs">VS</span>
         <${WinPips} score=${rightScore} bestOf=${bestOf} color=${rightColor} />
         <div class="bg-player">
-          ${rightPrefix && html`<span class="bg-player-prefix">${rightPrefix}</span>`}
+          ${rightPrefix &&
+          html`<span class="bg-player-prefix">${rightPrefix}</span>`}
           <span class="bg-player-name">${rightName}</span>
         </div>
       </div>
@@ -45,14 +49,17 @@ function CasterBanner({ caster }) {
     <div class="bg-caster-banner">
       <div class="caster-name">${caster.name}</div>
       ${pronouns && html`<div class="caster-pronouns">${pronouns}</div>`}
-      ${socials.length > 0 && html`
+      ${socials.length > 0 &&
+      html`
         <div class="caster-socials">
-          ${socials.map((s) => html`
-            <span class="caster-social">
-              <${Icon} name=${s.icon} class="caster-social-icon" />
-              <span class="caster-social-handle">${s.handle}</span>
-            </span>
-          `)}
+          ${socials.map(
+            (s) => html`
+              <span class="caster-social">
+                <${Icon} name=${s.icon} class="caster-social-icon" />
+                <span class="caster-social-handle">${s.handle}</span>
+              </span>
+            `,
+          )}
         </div>
       `}
     </div>

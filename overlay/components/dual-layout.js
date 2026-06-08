@@ -1,4 +1,13 @@
-import { html, WinPips, FitText, BrandLogo, CasterList, TournamentName, SetInfo, useEntity } from "./shared.js";
+import {
+  html,
+  WinPips,
+  FitText,
+  BrandLogo,
+  CasterList,
+  TournamentName,
+  SetInfo,
+  useEntity,
+} from "./shared.js";
 import { SponsorRotator } from "./sponsor-rotator.js";
 
 function PlayerPanel({ entity, bestOf }) {
@@ -10,7 +19,8 @@ function PlayerPanel({ entity, bestOf }) {
         <div class="cam-label">CAM</div>
       </div>
       <div class="name-strip">
-        ${prefix && html`<div class="player-prefix">${prefix.toUpperCase()}</div>`}
+        ${prefix &&
+        html`<div class="player-prefix">${prefix.toUpperCase()}</div>`}
         <${FitText} text=${name} class="player-name" />
         ${pronouns && html`<div class="player-pronouns">${pronouns}</div>`}
       </div>
@@ -21,7 +31,13 @@ function PlayerPanel({ entity, bestOf }) {
   `;
 }
 
-export function DualLayout({ scoreEntities, setInfo, casters, bestOf, appearance }) {
+export function DualLayout({
+  scoreEntities,
+  setInfo,
+  casters,
+  bestOf,
+  appearance,
+}) {
   const [left, right] = scoreEntities;
 
   return html`
@@ -42,7 +58,8 @@ export function DualLayout({ scoreEntities, setInfo, casters, bestOf, appearance
         <div class="sidebar-spacer"></div>
         <div class="sidebar-bottom">
           <${SponsorRotator} appearance=${appearance} inline=${true} />
-          ${appearance.logoUrl && html`<${BrandLogo} logoUrl=${appearance.logoUrl} />`}
+          ${appearance.logoUrl &&
+          html`<${BrandLogo} logoUrl=${appearance.logoUrl} />`}
           <${TournamentName} name=${setInfo?.tournamentName} />
         </div>
       </div>

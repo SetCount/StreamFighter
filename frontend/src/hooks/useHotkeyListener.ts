@@ -32,9 +32,7 @@ function formatKeyCombo(e: KeyboardEvent): string {
 
 export { formatKeyCombo };
 
-export function useHotkeyListener(
-  hotkeyConfig: HotkeyConfig,
-) {
+export function useHotkeyListener(hotkeyConfig: HotkeyConfig) {
   const configRef = useRef(hotkeyConfig);
   configRef.current = hotkeyConfig;
 

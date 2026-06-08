@@ -136,3 +136,22 @@ code {
   padding: 1px 5px;
   border-radius: var(--radius-sm);
 }
+
+.card-section-hint code,
+.card-subtitle code {
+  font-size: 0.9em;
+}
+
+/* Screen-reader-only label for inputs whose meaning is carried by the
+   CardSection title above them. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

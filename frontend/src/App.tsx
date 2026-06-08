@@ -1,9 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Icon } from "./icons";
 import {
   GetState,
@@ -107,10 +102,13 @@ function App() {
   const pickerUrlRef = useRef("");
 
   const [disambigOpen, setDisambigOpen] = useState(false);
-  const [disambigAmbiguities, setDisambigAmbiguities] = useState<Ambiguity[]>([]);
+  const [disambigAmbiguities, setDisambigAmbiguities] = useState<Ambiguity[]>(
+    [],
+  );
   const disambigSetRef = useRef<StartggSet | null>(null);
 
-  const { flash, toast, setToast, useAutoSaveEffect, useGoStateSync } = useAutoSave();
+  const { flash, toast, setToast, useAutoSaveEffect, useGoStateSync } =
+    useAutoSave();
 
   // Toast auto-dismiss
   useEffect(() => {
@@ -588,7 +586,11 @@ function App() {
       </div>
 
       {toast && (
-        <div className={`toast is-${toast.kind}`} role="status" aria-live="polite">
+        <div
+          className={`toast is-${toast.kind}`}
+          role="status"
+          aria-live="polite"
+        >
           {toast.message}
         </div>
       )}

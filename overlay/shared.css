@@ -115,7 +115,9 @@ body {
   max-width: 100%;
   max-height: 120px;
   object-fit: contain;
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 40%, transparent));
+  filter: drop-shadow(
+    0 0 8px color-mix(in srgb, var(--accent) 40%, transparent)
+  );
 }
 
 /* ── Casters (shared by all layouts) ── */

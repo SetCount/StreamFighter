@@ -13,20 +13,20 @@ import (
 
 // Pack is a single game's metadata discovered on disk.
 type Pack struct {
-	ID              string       `json:"id"`
-	Name            string       `json:"name"`
-	ShortName       string       `json:"shortName"`
-	AspectRatios    []string     `json:"aspectRatios,omitempty"`
-	CharacterLayout [][]string   `json:"characterLayout,omitempty"`
-	PortColors      []string     `json:"portColors,omitempty"`
-	TeamColors      []string     `json:"teamColors,omitempty"`
-	Characters      []Character  `json:"characters"`
+	ID              string      `json:"id"`
+	Name            string      `json:"name"`
+	ShortName       string      `json:"shortName"`
+	AspectRatios    []string    `json:"aspectRatios,omitempty"`
+	CharacterLayout [][]string  `json:"characterLayout,omitempty"`
+	PortColors      []string    `json:"portColors,omitempty"`
+	TeamColors      []string    `json:"teamColors,omitempty"`
+	Characters      []Character `json:"characters"`
 }
 
 // Character is one playable fighter within a Pack.
 type Character struct {
-	ID       string   `json:"id"`
-	Name     string   `json:"name"`
+	ID       string    `json:"id"`
+	Name     string    `json:"name"`
 	Costumes []Costume `json:"costumes"`
 }
 

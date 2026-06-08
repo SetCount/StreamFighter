@@ -47,9 +47,11 @@ function PlayerRow({ entity, bestOf }) {
   const { name, prefix, pronouns, score, color } = useEntity(entity);
   return html`
     <div style="margin: 12px 0;">
-      ${prefix && html`<div style="font-size: 14px; color: var(--accent);">${prefix}</div>`}
+      ${prefix &&
+      html`<div style="font-size: 14px; color: var(--accent);">${prefix}</div>`}
       <${FitText} text=${name} class="tournament-name" />
-      ${pronouns && html`<div style="font-size: 12px; color: #999;">${pronouns}</div>`}
+      ${pronouns &&
+      html`<div style="font-size: 12px; color: #999;">${pronouns}</div>`}
       <${WinPips} score=${score} bestOf=${bestOf} color=${color} />
     </div>
   `;
@@ -67,9 +69,11 @@ function App() {
       <${TournamentName} name=${setInfo?.tournamentName} />
       <${SetInfo} setInfo=${setInfo} />
 
-      ${scoreEntities.map((e, i) => html`
-        <${PlayerRow} key=${i} entity=${e} bestOf=${bestOf} />
-      `)}
+      ${scoreEntities.map(
+        (e, i) => html`
+          <${PlayerRow} key=${i} entity=${e} bestOf=${bestOf} />
+        `,
+      )}
 
       <${CasterList} casters=${casters} />
     </div>

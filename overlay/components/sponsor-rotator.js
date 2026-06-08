@@ -3,18 +3,21 @@ import { html } from "./shared.js";
 
 export function SponsorRotator({ appearance, inline = false }) {
   const intervalMs = (appearance?.sponsorInterval ?? 5) * 1000;
-  const width      = appearance?.sponsorWidth  ?? 200;
-  const height     = appearance?.sponsorHeight ?? 0;
-  const padding    = appearance?.sponsorPadding ?? 16;
+  const width = appearance?.sponsorWidth ?? 200;
+  const height = appearance?.sponsorHeight ?? 0;
+  const padding = appearance?.sponsorPadding ?? 16;
 
   const [images, setImages] = useState([]);
-  const [index, setIndex]   = useState(0);
-  const [faded, setFaded]   = useState(false);
+  const [index, setIndex] = useState(0);
+  const [faded, setFaded] = useState(false);
 
   useEffect(() => {
     fetch("/sponsors.json")
-      .then(r => r.json())
-      .then(list => { setImages(list); setIndex(0); })
+      .then((r) => r.json())
+      .then((list) => {
+        setImages(list);
+        setIndex(0);
+      })
       .catch(() => {});
   }, []);
 
@@ -23,7 +26,7 @@ export function SponsorRotator({ appearance, inline = false }) {
     const id = setInterval(() => {
       setFaded(true);
       setTimeout(() => {
-        setIndex(i => (i + 1) % images.length);
+        setIndex((i) => (i + 1) % images.length);
         setFaded(false);
       }, 400);
     }, intervalMs);
@@ -33,12 +36,12 @@ export function SponsorRotator({ appearance, inline = false }) {
   if (images.length === 0) return null;
 
   const baseStyle = {
-    width:         width  ? width  + "px" : "auto",
-    height:        height ? height + "px" : "auto",
-    opacity:       faded ? 0 : 1,
-    transition:    "opacity 0.4s ease",
+    width: width ? width + "px" : "auto",
+    height: height ? height + "px" : "auto",
+    opacity: faded ? 0 : 1,
+    transition: "opacity 0.4s ease",
     pointerEvents: "none",
-    objectFit:     "contain",
+    objectFit: "contain",
   };
 
   const style = inline
@@ -49,5 +52,9 @@ export function SponsorRotator({ appearance, inline = false }) {
         return { ...baseStyle, position: "fixed", ...vPos, ...hPos };
       })();
 
-  return html`<img src=${"/sponsors/" + images[index]} style=${style} alt="" />`;
+  return html`<img
+    src=${"/sponsors/" + images[index]}
+    style=${style}
+    alt=""
+  />`;
 }

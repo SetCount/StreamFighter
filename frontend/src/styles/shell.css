@@ -469,29 +469,3 @@
   border-color: var(--warn);
   color: var(--warn);
 }
-
-/* ---------- Player Info: two-zone layout ----------------------------- */
-/* Left column owns the entity board (the focus). Right column is a
-   sticky stack with Match info + Casters. On narrow main areas the
-   right column moves to a horizontal strip above the board so the
-   entity cards can use the full width without going single-column. */
-
-.player-info-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.player-info-row {
-  display: grid;
-  grid-template-columns: 1fr minmax(280px, 420px);
-  gap: 16px;
-  align-items: start;
-  min-width: 0;
-}
-
-@media (max-width: 900px) {
-  .player-info-row {
-    grid-template-columns: 1fr;
-  }
-}
