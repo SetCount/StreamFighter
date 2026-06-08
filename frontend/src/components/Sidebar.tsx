@@ -70,10 +70,22 @@ export function Sidebar({
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <span className="sidebar-brand-eyebrow">
-          {activePack ? (activePack.shortName ?? activePack.name) : "No game"}
-        </span>
         <span className="sidebar-brand-name">StreamFighter</span>
+        <span className="sidebar-brand-version">
+          v{(updateInfo?.current ?? "0.0.0").replace(/^v/, "")}
+        </span>
+        {updateInfo?.outdated && (
+          <a
+            href={updateInfo.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sidebar-update"
+            title={`Download ${updateInfo.latest}`}
+          >
+            <Icon name="open" width={14} height={14} />
+            <span>Update to {updateInfo.latest.replace(/^v/, "")}</span>
+          </a>
+        )}
       </div>
 
       <nav aria-label="Section">
@@ -103,23 +115,10 @@ export function Sidebar({
       <div className="sidebar-footer">
         <div className={statusClass}>{statusBody}</div>
 
-        {updateInfo?.outdated && (
-          <a
-            href={updateInfo.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="sidebar-update"
-            title={`Download ${updateInfo.latest}`}
-          >
-            <Icon name="open" width={14} height={14} />
-            <span>Update available: {updateInfo.latest}</span>
-          </a>
-        )}
-
-        <div className="sidebar-version">v{updateInfo?.current ?? "0.0.0"}</div>
-
         <div className="sidebar-game-header">
-          <span className="sidebar-footer-label">Game pack</span>
+          <span className="sidebar-game-label">
+            {activePack ? (activePack.shortName ?? activePack.name) : "No game"}
+          </span>
           <div className="sidebar-game-actions">
             <button
               type="button"
